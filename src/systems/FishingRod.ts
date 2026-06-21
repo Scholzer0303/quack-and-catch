@@ -58,6 +58,9 @@ export class FishingRod {
   private readonly reelFrom = new THREE.Vector3(); // Fangposition beim Hit
   private readonly reelPos = new THREE.Vector3(); // Scratch für die Lerp-Pose
 
+  /** Flacher Ring um die anvisierte Ente; Game hängt ihn in die Szene. */
+  readonly highlight: THREE.Mesh;
+
   private state: RodState = 'idle';
   private timer = 0; // Sekunden im aktuellen Zustand
   private lockDuck: Duck | null = null;
@@ -68,7 +71,14 @@ export class FishingRod {
     private readonly camera: THREE.Camera,
     private readonly ducks: DuckSpawner,
     private readonly bus: EventBus<GameEvents>,
-  ) {}
+  ) {
+    const geo = new THREE.TorusGeometry(BALANCE.hook.catchRadius * 0.8, 0.03, 8, 24);
+    const mat = new THREE.MeshBasicMaterial({ color: 0x5cf2a0, transparent: true, opacity: 0.85 });
+    mat.fog = false;
+    this.highlight = new THREE.Mesh(geo, mat);
+    this.highlight.rotation.x = Math.PI / 2; // flach auf die Wasserfläche
+    this.highlight.visible = false;
+  }
 
   // ---- Dauern (Sekunden), aus BALANCE.hook + Rod-Stats abgeleitet ----
   private get castDur(): number {
@@ -156,6 +166,19 @@ export class FishingRod {
         }
         break;
     }
+    this.updateHighlight();
+  }
+
+  private updateHighlight(): void {
+    const show = this.state === 'idle' && this.hovered !== null;
+    this.highlight.visible = show;
+    if (show && this.hovered) {
+      this.highlight.position.set(
+        this.hovered.worldX,
+        BALANCE.basin.waterY + 0.05,
+        this.hovered.worldZ,
+      );
+    }
   }
 
   /** Auflösung beim Loslassen im Window (oder beim Timeout). */
@@ -230,6 +253,8 @@ export class FishingRod {
   }
 
   dispose(): void {
-    // Noch keine eigenen Ressourcen (Highlight-Ring folgt in Schritt 5).
+    this.highlight.geometry.dispose();
+    (this.highlight.material as THREE.Material).dispose();
+    this.highlight.removeFromParent();
   }
 }
