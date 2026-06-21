@@ -27,14 +27,15 @@ Legende: `[ ]` offen · `[x]` erledigt · `[~]` in Arbeit
 - [x] `events/EventBus` (typisiert)
 - Verifiziert: typecheck/lint/build grün, Playwright-Screenshot (0 Konsolenfehler), Enten sichtbar auf der Bahn.
 
-## M2 — Hak-Mechanik
-- [ ] `systems/InputSystem` (Pointer Events, Aim normalisiert)
-- [ ] `systems/HookRaycaster` (Aim-Ray vs. gecachte Bounding-Spheres)
-- [ ] `systems/FishingRod` State-Machine (aim→cast→hook→reel→land)
-- [ ] Timing-Window + Perfect-Sub-Window
-- [ ] Reel-Animation + `removeAndRespawn`
-- [ ] Miss-Handling + Cooldown, Aim-Reticle/Hover-Highlight
-- [ ] `lineStrength`-Gate (schwere Enten reißen ab, kein Softlock)
+## M2 — Hak-Mechanik ✅
+- [x] `systems/InputSystem` (Pointer Events, Aim normalisiert) + Kamera-Aim-Schwenk im Cone
+- [x] `systems/HookRaycaster` (Aim-Ray vs. gecachte Bounding-Spheres, reach ab Haken)
+- [x] `systems/FishingRod` State-Machine (Halten-Laden/Loslassen: idle→casting→window→reel→cooldown)
+- [x] Timing-Window + Perfect-Sub-Window
+- [x] Reel-Animation + `removeAndRespawn`
+- [x] Miss-Handling + Cooldown, `ui/Reticle` (Timing-Feedback) + Hover-Highlight
+- [x] `lineStrength`-Gate (schwere Enten reißen ab, kein Softlock)
+- Verifiziert: typecheck/lint/build grün; Playwright-Smoke (0 Konsolenfehler) + `scripts/catch_test.py` (Hit→Reel→Respawn, Becken bleibt voll, Perfect & Softlock-Schutz).
 
 ## M3 — Belohnung + HUD + Screens
 - [ ] `data/ducks.ts` Raritäten + `DuckFactory`-Materialien; Loot-Roll (Tier 0)
