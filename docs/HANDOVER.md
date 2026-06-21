@@ -3,11 +3,11 @@
 > **Start hier in einer neuen Session.** Diese Datei macht den Wiedereinstieg nahtlos. Danach `docs/STATUS.md` + `docs/BACKLOG.md` lesen.
 
 ## TL;DR
-3D-Entenangel-Lernspiel (Three.js + Vite + TS strict). **M0 + M1 fertig & gepusht.** Nächster Meilenstein: **M2 — Hak-Mechanik**. Repo: https://github.com/Scholzer0303/quack-and-catch (öffentlich).
+3D-Entenangel-Lernspiel (Three.js + Vite + TS strict). **M0 + M1 + M2 fertig & gepusht.** Nächster Meilenstein: **M3 — Belohnung + HUD + Screens**. Repo: https://github.com/Scholzer0303/quack-and-catch (öffentlich).
 
 ## Session-Start-Routine (Pflicht)
 ```bash
-git log --oneline -15   # zuletzt: f28087b = M1
+git log --oneline -15   # zuletzt: 5419d0d = M2-Doku (M2 abgeschlossen)
 git status              # sollte clean sein
 npm install             # falls node_modules fehlt
 ```
@@ -43,34 +43,47 @@ npm run format     # prettier --write .
 
 ## Architektur-Karte (wo liegt was)
 ```
-src/config/balance.ts   ← ALLE Tunables (render, camera, basin, duck, round, hook, rewards, audio, save, ui)
-src/config/derived.ts   ← (noch nicht angelegt) reine Ableitungs-Funktionen
-src/core/               ← Game (Orchestrator), GameLoop, Renderer/Scene/CameraRig
-src/systems/            ← DuckSpawner (M1). M2+: InputSystem, HookRaycaster, FishingRod, RewardSystem, Economy, SaveSystem, AudioManager
-src/world/              ← prozedurale Meshes: StallBuilder, BasinBuilder(+shaders/water), RodBuilder, DuckFactory
-src/ui/                 ← (noch leer) HUD, Screens, Shop, Codex ab M3
-src/data/               ← (noch leer) tips.ts, ducks.ts, rods.ts ab M3
+src/config/balance.ts   ← ALLE Tunables (render, camera[aimYaw/Pitch/Smooth], basin, duck, round,
+                           hook[+catchRadius/baseLineStrength/reelEndScale], rewards, audio, save, ui)
+src/config/derived.ts   ← (immer noch NICHT angelegt; FishingRod rechnet ms→s inline via Gettern)
+src/core/               ← Game (Orchestrator, +Dev-Hook window.__qc), GameLoop, Renderer/Scene,
+                           CameraRig (+Aim-Schwenk im Cone: setAimTarget/update)
+src/systems/            ← DuckSpawner (M1, +Reel-API), InputSystem, HookRaycaster, FishingRod (M2).
+                           M3+: RewardSystem, Economy, SaveSystem, AudioManager
+src/world/              ← StallBuilder, BasinBuilder(+shaders/water), RodBuilder(+HOOK_ANCHOR_LOCAL),
+                           DuckFactory (M3: braucht Per-Instanz-Farben für Raritäten)
+src/ui/                 ← Reticle (M2, erstes ui/-File). Ab M3: UIRoot+styles.css, HUD, Screens, Shop, Codex
+src/data/               ← (noch leer) ducks.ts, tips.ts, rods.ts ab M3
 src/events/EventBus.ts  ← typisiertes Pub/Sub
 src/types/              ← domain.ts, events.ts (state.ts ab M4)
 src/utils/              ← math (oval/lerp/clamp/damp), rng (mulberry32/weightedPick)
+scripts/                ← smoke_test.py (Render, 0 Fehler) + catch_test.py (Fang-Loop, braucht __qc)
 ```
-Datenfluss: `main.ts` → `Game` baut Welt + Loop. `Game.update(dt,elapsed)` treibt `basin.update` + `ducks.update` + render. Systeme/UI sprechen über `EventBus`.
+Datenfluss: `main.ts` → `Game` baut Welt + Loop. `Game.update(dt,elapsed)` Reihenfolge:
+`cameraRig.update` → `basin.update` → `ducks.update` (schreibt frische `worldX/Y/Z`) →
+`fishingRod.update` (Raycast/State/Reel) → `reticle.render` → render. Eingabe ist event-getrieben
+(InputSystem-Listener, kein Update-Slot). Systeme/UI sprechen über `EventBus`.
+**Dev-Hook:** `window.__qc = { bus, ducks, rod }` (nur `import.meta.env.DEV`, in Prod getreeshakt) — für Konsole/Tests.
 
-## Nächster Meilenstein: M2 — Hak-Mechanik (Aufgaben)
-Reihenfolge (jede ≈ 1 Commit/Push). Balance-Werte liegen schon in `BALANCE.hook` (reach/window/perfect/cast/reel/cooldown).
-1. `src/systems/InputSystem.ts` — Pointer Events (pointerdown/move/up, Maus+Touch+Pen), Aim normalisiert auf NDC [-1,1]; `press`/`release` über EventBus oder Callback. Kein Pointer-Lock.
-2. `src/systems/HookRaycaster.ts` — `THREE.Raycaster` vom Aim-NDC durch die Kamera; Treffer gegen die **gecachten** `duck.worldX/Y/Z` (analytisches Ray-Sphere, nicht Instanz-Matrix-Raycast). Nächste lebende Ente innerhalb `reach`.
-3. `src/systems/FishingRod.ts` — State-Machine `idle→aiming→cast→(hit?)→reel→land→idle`; Timing-Window + Perfect-Sub-Window aus `BALANCE.hook`; emittiert `hook:result`.
-4. Reel-Animation: gehakte Ente lerpt zum Haken → zum Spieler; dann `DuckSpawner.removeAndRespawn(slot)` (Methode neu — Ente `alive=false`, neu seeden, `alive=true`).
-5. Miss + `cooldownMs`; Aim-Reticle/Hover-Highlight der anvisierten Ente.
-6. `lineStrength`-Gate: Ente schwerer als Linie → reißt ab (Feedback), **kein Softlock**.
-Verifikation M2: Fang-Loop mit **Maus UND Touch** (DevTools-Touch), stabile Entenzahl, Gate ohne Softlock, Gate grün.
+## Nächster Meilenstein: M3 — Belohnung + HUD + Screens (Aufgaben)
+Reihenfolge (jede ≈ 1 Commit/Push). M2 emittiert schon `duck:landed {rarity,value}` + `hook:result {hit,perfect,duck}` — M3 hängt sich an den `EventBus`.
+1. `src/data/ducks.ts` — Raritäten (RarityDef: Farbe/emissive/weight/baseValue, DESIGN-Tabelle) + Loot-Roll Tier 0 (`weightedPick`). **Ersetzt** die provisorische `RARITY_INFO`-Map in `FishingRod.ts`. `DuckFactory`/`DuckSpawner` brauchen **Per-Instanz-Farben** (`InstancedMesh.instanceColor`) statt Einzel-Material.
+2. `src/data/tips.ts` — erste ~12 deutsche, faktisch geprüfte Karten (Schema in DESIGN.md).
+3. `src/systems/RewardSystem` (Rarität→Tokens-Range + Tipp) + `src/systems/Economy` (Token-Saldo, `economy:changed`).
+4. `src/ui/UIRoot` + `styles.css` + `src/ui/HUD` (Score/Tokens/Timer/Rod). **Reticle ist das erste ui/-File** — von UIRoot aufnehmen/koexistieren lassen.
+5. `src/core/GameStateMachine` (`phase:changed` schon definiert) + `src/ui/StartScreen` + Rundentimer (`round.durationSec` 75, Low-Time 10).
+6. `src/ui/CardReveal` (Karten-Reveal) + `src/ui/SummaryScreen` (`round:ended`).
+Verifikation M3: Fang → Karte/Tokens sichtbar, Timer läuft, Runde endet → Summary; Gate grün, 0 Konsolenfehler, Mobile.
 
 ## Gotchas / gelernt (Details in LESSONS_LEARNED.md)
 - TS strict + `noUncheckedIndexedAccess` + `exactOptionalPropertyTypes` sind AN → Array-Zugriffe absichern (`?? fallback!`), `EventBus`-Map ist `type` (nicht `interface`, sonst Constraint-Fehler).
 - Enten: `DuckSpawner` nutzt `frustumCulled=false` (sonst stale Bounding-Sphere); Bahn-Radius = Beckenradius × `trackInset`.
 - Windows: `.gitattributes` erzwingt LF (Vercel/Linux). Git-`commit`/`push`-Aufrufe nutzen `-c user.name/email` (gesetzt: Scholzer0303 / lukas.scholz.99@googlemail.com).
 - WebGL-Robustheit ist drin (try/catch in main, context-lost + visibility in Game).
+- **M2-Zielen:** Reticle ist zentriert → Fang-Ray = Kamera-Center-Strahl; der Pointer schwenkt die Kamera, nicht den Ray separat. Enten sitzen tief → zum Zielen muss man nach unten schwenken (Near-Apex der Bahn ≈ `worldZ -0.51`).
+- **M2-Reichweite:** `HookRaycaster` misst `reach` ab dem **Haken-Anker** (nicht ab Kamera) — sonst ist keine Ente erreichbar. Aim-Toleranz senkrecht zum Strahl = `catchRadius`.
+- **M2-Halten-Modell:** Window-Timeout = **Fehlversuch** (Halten allein fängt nicht). Reel nutzt eigenen `reelDummy` (Scale ≠ 1), `reeling`-Set überspringt gehakte Slots in `writeMatrices`. Softlock-Schutz: `setPointerCapture` + `pointercancel`/`blur`→`cancel`.
+- **M2 provisorisch (M3 ablösen):** `RARITY_INFO` (Gewicht/Wert) in `FishingRod.ts` → nach `data/ducks.ts`. Tier-0-Rod-Stats kommen aus `BALANCE.hook` bis M6 (`data/rods.ts`).
 
 ## Roadmap-Rest
 M2 Hak-Mechanik → M3 Belohnung+HUD+Screens → M4 Save+Deploy-Check → **M4.5 Vercel-Live-Deploy** → M5 Codex → M6 Shop → M7 Progression → M8 Juice+Audio → M9 Stretch. Tipp-Codex: ~50–60 eigene, faktisch geprüfte deutsche Karten (Tier+Kategorie), Wissensbasis = Top Claude/Claude-Code-Wissen.
