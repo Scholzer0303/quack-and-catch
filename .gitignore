@@ -12,6 +12,9 @@ npm-debug.log*
 # Smoke-Test-Artefakt
 smoke_screenshot.png
 
+# Claude Code (lokale Session-Artefakte)
+.claude/
+
 # Editor / OS
 .DS_Store
 .idea/

@@ -19,7 +19,9 @@ function paint(geo: THREE.BufferGeometry, hex: number): THREE.BufferGeometry {
 /**
  * Baut eine stilisierte Low-Poly-Ente (Kugel-Körper + Kopf, Kegel-Schnabel,
  * Augen, Schwanz) als EINE gemergte Geometrie — eine InstancedMesh, ein
- * Draw-Call. Raritätsfarben kommen in M3 über Instanz-Farben.
+ * Draw-Call. Körper/Kopf/Schwanz sind WEISS gebacken, damit die per-Instanz-
+ * Raritätsfarbe (InstancedMesh.instanceColor, multipliziert mit der Vertex-Farbe)
+ * exakt durchschlägt. Schnabel/Augen behalten ihre Farbe (werden leicht mitgetönt).
  */
 export const DuckFactory = {
   buildGeometry(): THREE.BufferGeometry {
@@ -29,11 +31,11 @@ export const DuckFactory = {
 
     const body = new THREE.SphereGeometry(d.bodyRadius, 16, 12);
     body.scale(1, 0.85, 1.15);
-    paint(body, d.baseColor);
+    paint(body, 0xffffff);
 
     const head = new THREE.SphereGeometry(d.headRadius, 14, 10);
     head.translate(0, hy, hz);
-    paint(head, d.baseColor);
+    paint(head, 0xffffff);
 
     const beak = new THREE.ConeGeometry(0.12, 0.26, 8);
     beak.rotateX(Math.PI / 2);
@@ -51,7 +53,7 @@ export const DuckFactory = {
     const tail = new THREE.ConeGeometry(0.16, 0.3, 8);
     tail.rotateX(-Math.PI / 2);
     tail.translate(0, 0.12, -d.bodyRadius - 0.04);
-    paint(tail, d.baseColor);
+    paint(tail, 0xffffff);
 
     const parts = [body, head, beak, eyeL, eyeR, tail];
     const merged = mergeGeometries(parts, false);

@@ -3,10 +3,11 @@ import { BALANCE } from '../config/balance';
 import { clamp, lerp } from '../utils/math';
 import type { EventBus } from '../events/EventBus';
 import type { GameEvents } from '../types/events';
-import type { Duck, DuckRarity } from '../types/domain';
+import type { Duck } from '../types/domain';
 import { DuckSpawner } from './DuckSpawner';
 import { HookRaycaster } from './HookRaycaster';
 import { HOOK_ANCHOR_LOCAL } from '../world/RodBuilder';
+import { RARITY_DEFS } from '../data/ducks';
 
 export type RodState = 'idle' | 'casting' | 'window' | 'reel' | 'cooldown';
 
@@ -25,15 +26,6 @@ const TIER0_STATS: RodStats = {
   reelSpeed: 1,
   timingWindowMul: 1,
   lineStrength: BALANCE.hook.baseLineStrength,
-};
-
-/** Rarität → Linien-Gewicht + Score-Wert (DESIGN-Tabelle); abgelöst durch data/ducks.ts in M3. */
-const RARITY_INFO: Record<DuckRarity, { weight: number; value: number }> = {
-  common: { weight: 1, value: 10 },
-  uncommon: { weight: 2, value: 25 },
-  rare: { weight: 3, value: 60 },
-  epic: { weight: 4, value: 140 },
-  legendary: { weight: 5, value: 350 },
 };
 
 /** Schnappschuss für das Reticle (kein neuer Event-Typ nötig). */
@@ -190,7 +182,7 @@ export class FishingRod {
       return;
     }
     // lineStrength-Gate: zu schwere Ente reißt ab (Feedback, kein Softlock).
-    if (RARITY_INFO[this.lockDuck.rarity].weight > this.stats.lineStrength) {
+    if (RARITY_DEFS[this.lockDuck.rarity].weight > this.stats.lineStrength) {
       this.resolveSnap(this.lockDuck);
       return;
     }
@@ -227,9 +219,9 @@ export class FishingRod {
   }
 
   private finishLand(duck: Duck): void {
-    const info = RARITY_INFO[duck.rarity];
+    const value = RARITY_DEFS[duck.rarity].baseValue;
     this.ducks.removeAndRespawn(duck.slot);
-    this.bus.emit('duck:landed', { rarity: duck.rarity, value: info.value });
+    this.bus.emit('duck:landed', { rarity: duck.rarity, value });
     this.lockDuck = null;
     this.toCooldown();
   }

@@ -3,7 +3,8 @@ import { BALANCE } from '../config/balance';
 import { DuckFactory } from '../world/DuckFactory';
 import { ovalPoint, wrap01, TWO_PI } from '../utils/math';
 import { randRange, type Rng } from '../utils/rng';
-import type { Duck } from '../types/domain';
+import type { Duck, DuckRarity } from '../types/domain';
+import { RARITY_DEFS, rollRarity } from '../data/ducks';
 
 /**
  * Verwaltet den Entenpool als EINE InstancedMesh. Enten rotieren auf
@@ -16,13 +17,16 @@ export class DuckSpawner {
   private readonly dummy = new THREE.Object3D();
   private readonly reelDummy = new THREE.Object3D(); // eigener Dummy (Scale ≠ 1 beim Reel)
   private readonly reeling = new Set<number>(); // Slots, deren Pose extern (FishingRod) gesetzt wird
+  private readonly color = new THREE.Color(); // Scratch für per-Instanz-Raritätsfarbe
   private readonly geometry: THREE.BufferGeometry;
   private readonly material: THREE.Material;
   private readonly count: number;
   private readonly rng: Rng;
+  private readonly tier: number;
 
   constructor(rng: Rng, tier = 0) {
     this.rng = rng;
+    this.tier = tier;
     const b = BALANCE.basin;
     this.count = b.duckCountByTier[tier] ?? b.duckCountByTier[0]!;
     this.geometry = DuckFactory.buildGeometry();
@@ -37,9 +41,10 @@ export class DuckSpawner {
     const baseSpeed = b.baseRotationSpeed * speedMul;
 
     for (let i = 0; i < this.count; i++) {
+      const rarity = rollRarity(rng, tier);
       this.ducks.push({
         slot: i,
-        rarity: 'common',
+        rarity,
         trackT: i / this.count,
         speed: baseSpeed * (1 + randRange(rng, -b.speedVariance, b.speedVariance)),
         laneOffset: randRange(rng, -b.laneJitter, b.laneJitter),
@@ -49,8 +54,16 @@ export class DuckSpawner {
         worldY: 0,
         worldZ: 0,
       });
+      this.setInstanceColor(i, rarity);
     }
     this.writeMatrices(0);
+  }
+
+  /** Setzt die Raritäts-Körperfarbe eines Slots (InstancedMesh.instanceColor). */
+  private setInstanceColor(slot: number, rarity: DuckRarity): void {
+    this.color.setHex(RARITY_DEFS[rarity].bodyColor);
+    this.mesh.setColorAt(slot, this.color);
+    if (this.mesh.instanceColor) this.mesh.instanceColor.needsUpdate = true;
   }
 
   update(dt: number, elapsed: number): void {
@@ -109,7 +122,7 @@ export class DuckSpawner {
 
   /**
    * Gefangene Ente entfernen und an neuer Bahnposition wiederbeleben — das
-   * Becken bleibt dauerhaft voll. (Rarität bleibt bis M3-Loot „common".)
+   * Becken bleibt dauerhaft voll. Rarität wird neu gewürfelt (Loot-Table des Tiers).
    */
   removeAndRespawn(slot: number): void {
     const duck = this.ducks[slot];
@@ -117,7 +130,9 @@ export class DuckSpawner {
     this.reeling.delete(slot);
     duck.trackT = this.rng();
     duck.bobPhase = this.rng() * TWO_PI;
+    duck.rarity = rollRarity(this.rng, this.tier);
     duck.alive = true;
+    this.setInstanceColor(slot, duck.rarity);
   }
 
   dispose(): void {
