@@ -17,8 +17,10 @@ export class DuckSpawner {
   private readonly geometry: THREE.BufferGeometry;
   private readonly material: THREE.Material;
   private readonly count: number;
+  private readonly rng: Rng;
 
   constructor(rng: Rng, tier = 0) {
+    this.rng = rng;
     const b = BALANCE.basin;
     this.count = b.duckCountByTier[tier] ?? b.duckCountByTier[0]!;
     this.geometry = DuckFactory.buildGeometry();
@@ -81,6 +83,18 @@ export class DuckSpawner {
       duck.worldY = y;
       duck.worldZ = z + b.centerZ;
     }
+  }
+
+  /**
+   * Gefangene Ente entfernen und an neuer Bahnposition wiederbeleben — das
+   * Becken bleibt dauerhaft voll. (Rarität bleibt bis M3-Loot „common".)
+   */
+  removeAndRespawn(slot: number): void {
+    const duck = this.ducks[slot];
+    if (!duck) return;
+    duck.trackT = this.rng();
+    duck.bobPhase = this.rng() * TWO_PI;
+    duck.alive = true;
   }
 
   dispose(): void {

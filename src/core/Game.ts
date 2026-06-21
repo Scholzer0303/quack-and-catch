@@ -9,6 +9,7 @@ import { buildRod } from '../world/RodBuilder';
 import { BasinBuilder } from '../world/BasinBuilder';
 import { DuckSpawner } from '../systems/DuckSpawner';
 import { InputSystem } from '../systems/InputSystem';
+import { FishingRod } from '../systems/FishingRod';
 import { mulberry32 } from '../utils/rng';
 
 /** Top-Orchestrator: besitzt Systeme, verdrahtet den Loop, hält die Welt. */
@@ -21,6 +22,7 @@ export class Game {
   private readonly basin: BasinBuilder;
   private readonly ducks: DuckSpawner;
   private readonly input: InputSystem;
+  private readonly fishingRod: FishingRod;
 
   constructor(container: HTMLElement) {
     this.renderer = new RendererManager();
@@ -47,9 +49,15 @@ export class Game {
 
     const canvas = this.renderer.domElement;
 
-    // Eingabe: Pointer schwenkt Blick/Rute im Aim-Cone (press/release ab M2-Fang).
+    // Fang-Mechanik: zielt über die Kamera, fängt aus dem Entenpool.
+    this.fishingRod = new FishingRod(this.cameraRig.camera, this.ducks, this.bus);
+
+    // Eingabe: Pointer schwenkt Blick/Rute im Aim-Cone; Halten/Loslassen fängt.
     this.input = new InputSystem(canvas, {
       onAim: (ax, ay) => this.cameraRig.setAimTarget(ax, ay),
+      onPress: (ax, ay) => this.fishingRod.press(ax, ay),
+      onRelease: () => this.fishingRod.release(),
+      onCancel: () => this.fishingRod.cancel(),
     });
 
     window.addEventListener('resize', this.onResize);
@@ -64,9 +72,10 @@ export class Game {
   }
 
   private update(dt: number, elapsed: number): void {
-    this.cameraRig.update(dt); // Aim anwenden, bevor gerendert wird
+    this.cameraRig.update(dt); // Aim anwenden, bevor geraycastet/gerendert wird
     this.basin.update(elapsed);
-    this.ducks.update(dt, elapsed);
+    this.ducks.update(dt, elapsed); // schreibt frische worldX/Y/Z vor dem Raycast
+    this.fishingRod.update(dt);
     this.renderer.render(this.sceneManager.scene, this.cameraRig.camera);
   }
 
@@ -100,6 +109,7 @@ export class Game {
     canvas.removeEventListener('webglcontextrestored', this.onContextRestored);
     document.removeEventListener('visibilitychange', this.onVisibility);
     this.input.dispose();
+    this.fishingRod.dispose();
     this.ducks.dispose();
     this.basin.dispose();
     this.sceneManager.dispose();
