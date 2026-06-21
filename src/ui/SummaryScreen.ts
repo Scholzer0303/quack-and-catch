@@ -30,7 +30,8 @@ export class SummaryScreen {
     );
     this.unsub.push(
       bus.on('phase:changed', (e) => {
-        if (e.to === 'playing') this.collected.length = 0;
+        // Nur eine FRISCHE Runde leert die Liste — Resume aus der Pause behält sie.
+        if (e.to === 'playing' && e.from !== 'paused') this.collected.length = 0;
       }),
     );
     this.unsub.push(bus.on('round:ended', (e) => this.render(e.score, onRestart)));

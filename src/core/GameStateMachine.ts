@@ -20,7 +20,11 @@ export class GameStateMachine {
   constructor(private readonly bus: EventBus<GameEvents>) {
     this.unsub.push(
       bus.on('duck:landed', (e) => {
-        if (this.phase === 'playing') this.score += e.value;
+        if (this.phase !== 'playing') return;
+        this.score += e.value;
+        // Sofort-Tick: ein Fang pausiert direkt danach (Tipp-Modal) — ohne dies
+        // bliebe der HUD-Score bis zum „Weiter" auf dem alten Wert.
+        this.bus.emit('round:tick', { timeRemaining: this.timeRemaining, score: this.score });
       }),
     );
   }

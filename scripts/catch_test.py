@@ -26,14 +26,21 @@ with sync_playwright() as p:
     page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
 
     page.goto(URL, wait_until="networkidle")
-    page.wait_for_function("() => window.__qc && window.__qc.rod && window.__qc.bus", timeout=10000)
+    page.wait_for_function(
+        "() => window.__qc && window.__qc.rod && window.__qc.bus && window.__qc.state",
+        timeout=10000,
+    )
     page.evaluate(
         """() => {
-          window.__ev = { results: [], landed: [] };
+          window.__ev = { results: [], landed: [], rewards: [], economy: [] };
           window.__qc.bus.on('hook:result', r => window.__ev.results.push(r));
           window.__qc.bus.on('duck:landed', d => window.__ev.landed.push(d));
+          window.__qc.bus.on('reward:granted', r => window.__ev.rewards.push(r));
+          window.__qc.bus.on('economy:changed', e => window.__ev.economy.push(e));
         }"""
     )
+    # M3: Spiel startet im Start-Screen — Runde aktivieren (Phase-Gate fürs Fischen).
+    page.evaluate("() => window.__qc.state.start()")
 
     # Pointer tiefer als Bildmitte -> Kamera pitcht runter auf den Near-Apex der
     # Entenbahn (worldZ ~ -0.51, in reach). Bei exakt 360 blickt man ueber die Enten.
@@ -62,6 +69,8 @@ with sync_playwright() as p:
         """() => ({
           duckCount: window.__qc.ducks.ducks.length,
           aliveCount: window.__qc.ducks.ducks.filter(d => d.alive).length,
+          tokens: window.__qc.economy.getTokens(),
+          phase: window.__qc.state.getPhase(),
         })"""
     )
     ev = page.evaluate("() => window.__ev")
@@ -70,7 +79,16 @@ with sync_playwright() as p:
 results = ev["results"]
 hits = sum(1 for r in results if r["hit"])
 perfects = sum(1 for r in results if r["hit"] and r.get("perfect"))
-ok = hits >= 1 and state["duckCount"] == 8 and not errors
+rewards = ev["rewards"]
+# M3: ein Treffer -> Belohnung (Tokens) + Pause (Tipp-Modal).
+ok = (
+    hits >= 1
+    and state["duckCount"] == 8
+    and len(rewards) >= 1
+    and state["tokens"] > 0
+    and state["phase"] == "paused"
+    and not errors
+)
 print(
     json.dumps(
         {
@@ -79,6 +97,9 @@ print(
             "perfects": perfects,
             "total_attempts_resolved": len(results),
             "landed": len(ev["landed"]),
+            "rewards": len(rewards),
+            "tokens": state["tokens"],
+            "phase_after_catch": state["phase"],
             "duckCount": state["duckCount"],
             "aliveCount_after_settle": state["aliveCount"],
             "errors": errors,
