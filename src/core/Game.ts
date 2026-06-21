@@ -68,6 +68,15 @@ export class Game {
     canvas.addEventListener('webglcontextlost', this.onContextLost);
     canvas.addEventListener('webglcontextrestored', this.onContextRestored);
     document.addEventListener('visibilitychange', this.onVisibility);
+
+    // Dev-Hook für Verifikation/Konsole; in Prod via import.meta.env.DEV getreeshakt.
+    if (import.meta.env.DEV) {
+      (window as unknown as { __qc?: unknown }).__qc = {
+        bus: this.bus,
+        ducks: this.ducks,
+        rod: this.fishingRod,
+      };
+    }
   }
 
   start(): void {

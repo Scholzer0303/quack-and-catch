@@ -1,0 +1,89 @@
+"""Interaktions-Test: Fang-Loop (Halten -> Loslassen -> Hit -> Reel -> Respawn).
+
+Braucht einen laufenden DEV-Server (window.__qc exponiert bus/rod/ducks).
+Treibt echte Pointer-Events und prueft: mind. 1 Treffer, Becken bleibt voll
+(8 Enten), keine Konsolen-/Page-Errors. Zielt das Loslassen ins Window-Zentrum
+(~Perfect) -> meist perfect=true.
+
+Nutzung (DEV-Server muss laufen):
+    python scripts/catch_test.py [URL]
+"""
+
+import json
+import sys
+from playwright.sync_api import sync_playwright
+
+URL = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:5173"
+
+with sync_playwright() as p:
+    browser = p.chromium.launch(
+        headless=True,
+        args=["--use-gl=swiftshader", "--enable-webgl", "--ignore-gpu-blocklist"],
+    )
+    page = browser.new_page(viewport={"width": 1280, "height": 720})
+    errors = []
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
+
+    page.goto(URL, wait_until="networkidle")
+    page.wait_for_function("() => window.__qc && window.__qc.rod && window.__qc.bus", timeout=10000)
+    page.evaluate(
+        """() => {
+          window.__ev = { results: [], landed: [] };
+          window.__qc.bus.on('hook:result', r => window.__ev.results.push(r));
+          window.__qc.bus.on('duck:landed', d => window.__ev.landed.push(d));
+        }"""
+    )
+
+    # Pointer tiefer als Bildmitte -> Kamera pitcht runter auf den Near-Apex der
+    # Entenbahn (worldZ ~ -0.51, in reach). Bei exakt 360 blickt man ueber die Enten.
+    cx, cy = 640, 655
+    hits = 0
+    for _ in range(40):
+        page.mouse.move(cx, cy)
+        # Warten, bis eine Ente unter dem zentrierten Fadenkreuz lockbar ist.
+        try:
+            page.wait_for_function(
+                "() => window.__qc.rod.getView().hasTarget === true", timeout=4000
+            )
+        except Exception:
+            continue
+        page.mouse.down()
+        # Cast (220 ms) abwarten, dann ins Window-Zentrum (+~140 ms) loslassen -> Perfect.
+        page.wait_for_timeout(360)
+        page.mouse.up()
+        # Reel (600 ms) + Cooldown (250 ms) abklingen lassen.
+        page.wait_for_timeout(1000)
+        hits = sum(1 for r in page.evaluate("() => window.__ev.results") if r["hit"])
+        if hits >= 1:
+            break
+
+    state = page.evaluate(
+        """() => ({
+          duckCount: window.__qc.ducks.ducks.length,
+          aliveCount: window.__qc.ducks.ducks.filter(d => d.alive).length,
+        })"""
+    )
+    ev = page.evaluate("() => window.__ev")
+    browser.close()
+
+results = ev["results"]
+hits = sum(1 for r in results if r["hit"])
+perfects = sum(1 for r in results if r["hit"] and r.get("perfect"))
+ok = hits >= 1 and state["duckCount"] == 8 and not errors
+print(
+    json.dumps(
+        {
+            "ok": ok,
+            "hits": hits,
+            "perfects": perfects,
+            "total_attempts_resolved": len(results),
+            "landed": len(ev["landed"]),
+            "duckCount": state["duckCount"],
+            "aliveCount_after_settle": state["aliveCount"],
+            "errors": errors,
+        },
+        indent=2,
+    )
+)
+sys.exit(0 if ok else 1)
