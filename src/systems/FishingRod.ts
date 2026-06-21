@@ -152,8 +152,9 @@ export class FishingRod {
         break;
       case 'window':
         this.timer += dt;
-        // Auto-Resolve am Fensterende: nie hängender Hold (auch ohne release).
-        if (this.timer >= this.windowDur) this.resolveAtRelease();
+        // Nicht im Fenster losgelassen → Fehlversuch (Halten allein fängt nicht;
+        // zugleich Softlock-Schutz: nie hängender Hold).
+        if (this.timer >= this.windowDur) this.resolveMiss();
         break;
       case 'reel':
         this.updateReel(dt);
