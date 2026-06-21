@@ -1,0 +1,293 @@
+/* Quack & Catch — UI-Schicht (HUD + Screens + Karten-Modal).
+   Palette passend zur Szene: Nachtblau-Hintergrund, Gold-Akzent, Mintgrün.
+   Overlays liegen über dem Reticle (z-index 10). */
+
+:root {
+  --qc-bg: #0b2942;
+  --qc-panel: rgba(8, 28, 46, 0.82);
+  --qc-gold: #ffcf3f;
+  --qc-green: #5cf2a0;
+  --qc-text: #e8eef4;
+  --qc-muted: rgba(232, 238, 244, 0.65);
+}
+
+.qc-ui {
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+  pointer-events: none;
+  color: var(--qc-text);
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+}
+
+/* ---------- HUD ---------- */
+.qc-hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: clamp(0.5rem, 2vw, 1rem);
+}
+.qc-hud-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--qc-panel);
+  border: 1px solid rgba(255, 207, 63, 0.25);
+  border-radius: 0.7rem;
+  padding: 0.35rem 0.75rem;
+  backdrop-filter: blur(6px);
+  min-width: 4.5rem;
+}
+.qc-hud-group.qc-hud-left {
+  align-items: flex-start;
+}
+.qc-hud-group.qc-hud-right {
+  align-items: flex-end;
+}
+.qc-stat-label {
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--qc-muted);
+}
+.qc-stat-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.qc-stat-value.qc-tokens {
+  color: var(--qc-gold);
+}
+.qc-timer {
+  font-size: clamp(1.6rem, 5vw, 2.3rem);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.qc-timer.low-time {
+  color: #ff6b6b;
+  animation: qc-pulse 0.7s ease-in-out infinite;
+}
+.qc-rod {
+  position: absolute;
+  bottom: clamp(0.5rem, 2vw, 1rem);
+  left: clamp(0.5rem, 2vw, 1rem);
+  background: var(--qc-panel);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 2rem;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.8rem;
+  color: var(--qc-muted);
+  backdrop-filter: blur(6px);
+}
+
+@keyframes qc-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 0.7;
+  }
+}
+
+/* ---------- Overlays (Screens + Modal) ---------- */
+.qc-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  pointer-events: auto;
+  background: radial-gradient(circle at 50% 35%, rgba(11, 41, 66, 0.6), rgba(4, 14, 24, 0.92));
+  animation: qc-fade-in 0.25s ease-out;
+}
+.qc-overlay[hidden] {
+  display: none;
+}
+
+.qc-screen {
+  width: min(28rem, 100%);
+  background: var(--qc-panel);
+  border: 1px solid rgba(255, 207, 63, 0.3);
+  border-radius: 1.2rem;
+  padding: 1.6rem 1.6rem 1.4rem;
+  text-align: center;
+  box-shadow: 0 1.5rem 3rem rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(10px);
+}
+.qc-title {
+  margin: 0 0 0.3rem;
+  font-size: clamp(1.6rem, 6vw, 2.2rem);
+  color: var(--qc-gold);
+}
+.qc-subtitle {
+  margin: 0 0 1.1rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--qc-muted);
+}
+.qc-score-big {
+  font-size: clamp(2.4rem, 10vw, 3.4rem);
+  font-weight: 800;
+  color: var(--qc-green);
+  line-height: 1;
+  margin: 0.2rem 0 0.1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.qc-btn {
+  pointer-events: auto;
+  cursor: pointer;
+  border: none;
+  border-radius: 0.7rem;
+  padding: 0.7rem 1.6rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0b2942;
+  background: linear-gradient(180deg, #ffe07a, var(--qc-gold));
+  box-shadow: 0 0.3rem 0 rgba(0, 0, 0, 0.25);
+  transition:
+    transform 0.08s ease,
+    filter 0.15s ease;
+}
+.qc-btn:hover {
+  filter: brightness(1.07);
+}
+.qc-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 0.1rem 0 rgba(0, 0, 0, 0.25);
+}
+
+/* ---------- Tipp-Liste (Summary) ---------- */
+.qc-tip-list {
+  list-style: none;
+  margin: 0.4rem 0 1.2rem;
+  padding: 0;
+  text-align: left;
+  max-height: 13rem;
+  overflow-y: auto;
+}
+.qc-tip-list li {
+  padding: 0.45rem 0.6rem;
+  border-left: 3px solid var(--qc-gold);
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 0 0.4rem 0.4rem 0;
+  margin-bottom: 0.4rem;
+  font-size: 0.85rem;
+}
+.qc-tip-list .qc-tip-cat {
+  display: block;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--qc-muted);
+}
+.qc-empty {
+  color: var(--qc-muted);
+  font-size: 0.9rem;
+  margin: 0.6rem 0 1.2rem;
+}
+
+/* ---------- Karten-Modal (Reward) ---------- */
+.qc-card {
+  width: min(24rem, 100%);
+  background: var(--qc-panel);
+  border: 2px solid var(--qc-gold);
+  border-radius: 1.1rem;
+  padding: 1.3rem 1.4rem;
+  text-align: center;
+  box-shadow: 0 1.2rem 2.6rem rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  animation: qc-card-in 0.35s cubic-bezier(0.18, 0.9, 0.3, 1.2);
+}
+.qc-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+.qc-rarity {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.qc-tokens-gain {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--qc-gold);
+  font-variant-numeric: tabular-nums;
+}
+.qc-badge {
+  display: inline-block;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #0b2942;
+  background: var(--qc-green);
+  border-radius: 1rem;
+  padding: 0.1rem 0.5rem;
+  margin-left: 0.4rem;
+  vertical-align: middle;
+}
+.qc-card-title {
+  margin: 0.2rem 0 0.1rem;
+  font-size: 1.15rem;
+}
+.qc-card-cat {
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--qc-muted);
+  margin-bottom: 0.5rem;
+}
+.qc-card-text {
+  font-size: 0.92rem;
+  line-height: 1.55;
+  margin: 0 0 1.1rem;
+  color: var(--qc-text);
+}
+
+@keyframes qc-card-in {
+  from {
+    transform: scale(0.85) translateY(12px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+@keyframes qc-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qc-timer.low-time,
+  .qc-card,
+  .qc-overlay {
+    animation: none;
+  }
+}
