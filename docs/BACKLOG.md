@@ -37,13 +37,14 @@ Legende: `[ ]` offen · `[x]` erledigt · `[~]` in Arbeit
 - [x] `lineStrength`-Gate (schwere Enten reißen ab, kein Softlock)
 - Verifiziert: typecheck/lint/build grün; Playwright-Smoke (0 Konsolenfehler) + `scripts/catch_test.py` (Hit→Reel→Respawn, Becken bleibt voll, Perfect & Softlock-Schutz).
 
-## M3 — Belohnung + HUD + Screens
-- [ ] `data/ducks.ts` Raritäten + `DuckFactory`-Materialien; Loot-Roll (Tier 0)
-- [ ] `data/tips.ts` erste ~12 Karten (Deutsch)
-- [ ] `systems/RewardSystem` (Rarität→Tokens + Tipp) + `systems/Economy`
-- [ ] `ui/UIRoot` + `styles.css` + `ui/HUD` (Score/Tokens/Timer/Rod)
-- [ ] `core/GameStateMachine` + `ui/StartScreen` + Rundentimer
-- [ ] `ui/CardReveal` (Karten-Reveal-Animation) + `ui/SummaryScreen`
+## M3 — Belohnung + HUD + Screens ✅
+- [x] `data/ducks.ts` Raritäten + per-Instanz-Farben (`instanceColor`); Loot-Roll (Tier 0–3)
+- [x] `data/tips.ts` erste 12 Karten (Deutsch, geprüft)
+- [x] `systems/RewardSystem` (Rarität→Tokens + Perfect-Bonus + Tipp) + `systems/Economy`
+- [x] `ui/UIRoot` + `styles.css` + `ui/HUD` (Score/Tokens/Timer/Rod)
+- [x] `core/GameStateMachine` (Phasen + Rundentimer + Score) + `ui/StartScreen`
+- [x] `ui/CardReveal` (blockierendes Tipp-Modal, Pause) + `ui/SummaryScreen`
+- Verifiziert: typecheck/lint/build grün; Smoke (0 Konsolenfehler) + `catch_test.py` (Hit→Reward→Pause, Tokens>0, Becken voll); Screenshots Start/HUD/Modal/Summary, Raritätsfarben sichtbar.
 
 ## M4 — Save + Deploy-Check
 - [ ] `types/state.ts` final + `systems/SaveSystem` (versioniert, debounced, korruptionssicher)
