@@ -1,0 +1,13 @@
+# LF im Repo erzwingen (deterministisch, Linux/Vercel-kompatibel)
+* text=auto eol=lf
+
+# Binärdateien unangetastet lassen
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.mp3 binary
+*.wav binary

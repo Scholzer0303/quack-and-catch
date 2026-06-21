@@ -11,10 +11,10 @@ Legende: `[ ]` offen · `[x]` erledigt · `[~]` in Arbeit
 - [x] Repo `Scholzer0303/quack-and-catch` (öffentlich) anlegen, `origin` setzen, Verbindungstest-Push
 - [x] Projekt-`CLAUDE.md` mit Push-Regeln + Session-Routine
 - [x] Planungsdokumente (STATUS, BACKLOG, DESIGN, LESSONS_LEARNED)
-- [~] Vite + TS (strict) + Three.js scaffolden; `package.json`-Scripts (dev/build/preview/typecheck/lint/format)
-- [ ] `vite.config.ts` (`base: './'`, `outDir: 'dist'`), `tsconfig` strict-Flags
-- [ ] ESLint (flat config) + Prettier + `.gitattributes` (LF)
-- [ ] `index.html` + leeres `src/main.ts`, Smoke-Build grün
+- [x] Vite + TS (strict) + Three.js scaffolden; `package.json`-Scripts (dev/build/preview/typecheck/lint/format)
+- [x] `vite.config.ts` (`base: './'`, `outDir: 'dist'`), `tsconfig` strict-Flags
+- [x] ESLint (flat config) + Prettier + `.gitattributes` (LF)
+- [x] `index.html` + leeres `src/main.ts`, Smoke-Build grün (typecheck/lint/build/preview ✓)
 
 ## M1 — First-Person-Szene
 - [ ] `core/RendererManager` + `SceneManager` + `CameraRig` (FP-Pose, pixelRatio-Cap, Resize)

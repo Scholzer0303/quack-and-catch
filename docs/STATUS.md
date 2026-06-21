@@ -3,8 +3,8 @@
 > Schnellüberblick für den Session-Start. Wird nach jedem Meilenstein aktualisiert.
 
 **Stand:** 2026-06-21
-**Aktueller Meilenstein:** M0 — Setup & GitHub-Anbindung
-**Letzter Build:** noch kein App-Build (Scaffold folgt in M0)
+**Aktueller Meilenstein:** M0 ✅ abgeschlossen → als Nächstes M1
+**Letzter Build:** grün (typecheck/lint/build/preview ✓; dist/ mit relativen Pfaden)
 **Live-URL:** _(folgt nach MVP, M4.5 — Vercel)_
 **Repo:** https://github.com/Scholzer0303/quack-and-catch
 
@@ -14,10 +14,10 @@
 - Planungsdokumente angelegt (STATUS, BACKLOG, DESIGN, LESSONS_LEARNED).
 
 ## 🔧 In Arbeit
-- M0: Vite + TypeScript (strict) + Three.js scaffolden, ESLint(flat) + Prettier, `vite.config.ts` (`base: './'`).
+- M1 — First-Person-Szene (Start): Renderer/Scene/CameraRig, GameLoop.
 
 ## ⏭️ Als Nächstes
-- M1 — First-Person-Szene: Stand, ovales Wasserbecken + animiertes Wasser, 8 rotierende Enten (InstancedMesh), Angel/Haken im Vordergrund.
+- M1 fertigstellen: Stand, ovales Wasserbecken + animiertes Wasser, 8 rotierende Enten (InstancedMesh), Angel/Haken im Vordergrund.
 
 ## 📌 Offene Punkte / Entscheidungen
 - Keine offenen Blocker. Codex-Inhalt: eigene, geprüfte Karten (~50–60), siehe DESIGN.md.
