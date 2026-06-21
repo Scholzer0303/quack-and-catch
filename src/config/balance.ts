@@ -81,6 +81,9 @@ export const BALANCE = {
     castDurationMs: 220, // Tier 0 (geteilt durch castSpeed)
     reelDurationMs: 600, // Tier 0 (geteilt durch reelSpeed)
     cooldownMs: 250, // nach einem Fehlversuch
+    catchRadius: 0.45, // räuml. Ziel-Toleranz (Enten-Body ~0.21 + Puffer)
+    baseLineStrength: 3, // Tier-0-Linienstärke (Bambus), bis M6 echte Rods kommen
+    reelEndScale: 0.6, // Ente schrumpft beim Einholen (Juice)
   },
 
   rewards: {

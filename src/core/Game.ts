@@ -8,6 +8,7 @@ import { buildStall } from '../world/StallBuilder';
 import { buildRod } from '../world/RodBuilder';
 import { BasinBuilder } from '../world/BasinBuilder';
 import { DuckSpawner } from '../systems/DuckSpawner';
+import { InputSystem } from '../systems/InputSystem';
 import { mulberry32 } from '../utils/rng';
 
 /** Top-Orchestrator: besitzt Systeme, verdrahtet den Loop, hält die Welt. */
@@ -19,6 +20,7 @@ export class Game {
   private readonly loop: GameLoop;
   private readonly basin: BasinBuilder;
   private readonly ducks: DuckSpawner;
+  private readonly input: InputSystem;
 
   constructor(container: HTMLElement) {
     this.renderer = new RendererManager();
@@ -44,6 +46,12 @@ export class Game {
     this.loop = new GameLoop((dt, elapsed) => this.update(dt, elapsed));
 
     const canvas = this.renderer.domElement;
+
+    // Eingabe: Pointer schwenkt Blick/Rute im Aim-Cone (press/release ab M2-Fang).
+    this.input = new InputSystem(canvas, {
+      onAim: (ax, ay) => this.cameraRig.setAimTarget(ax, ay),
+    });
+
     window.addEventListener('resize', this.onResize);
     canvas.addEventListener('webglcontextlost', this.onContextLost);
     canvas.addEventListener('webglcontextrestored', this.onContextRestored);
@@ -56,6 +64,7 @@ export class Game {
   }
 
   private update(dt: number, elapsed: number): void {
+    this.cameraRig.update(dt); // Aim anwenden, bevor gerendert wird
     this.basin.update(elapsed);
     this.ducks.update(dt, elapsed);
     this.renderer.render(this.sceneManager.scene, this.cameraRig.camera);
@@ -90,6 +99,7 @@ export class Game {
     canvas.removeEventListener('webglcontextlost', this.onContextLost);
     canvas.removeEventListener('webglcontextrestored', this.onContextRestored);
     document.removeEventListener('visibilitychange', this.onVisibility);
+    this.input.dispose();
     this.ducks.dispose();
     this.basin.dispose();
     this.sceneManager.dispose();
