@@ -1,8 +1,25 @@
-// Einstiegspunkt. In M1 wird hier das Spiel (core/Game) gebootstrappt.
-// Vorerst nur ein Lebenszeichen, damit das Setup verifizierbar ist.
+import { Game } from './core/Game';
 
-const app = document.querySelector<HTMLDivElement>('#app');
+const container = document.querySelector<HTMLDivElement>('#app');
+if (!container) {
+  throw new Error('#app-Container nicht gefunden');
+}
 
-if (app) {
-  app.textContent = 'Quack & Catch — Setup OK. Das Spiel folgt in Meilenstein 1 …';
+try {
+  const game = new Game(container);
+  game.start();
+} catch (err) {
+  // Häufigste Ursache: kein/blockiertes WebGL. Statt Blank-Screen eine
+  // verständliche Meldung zeigen (kein Softlock).
+  console.error('Spielstart fehlgeschlagen:', err);
+  container.replaceChildren();
+  const box = document.createElement('div');
+  box.className = 'fatal';
+  const title = document.createElement('h1');
+  title.textContent = '🦆 Quack & Catch';
+  const msg = document.createElement('p');
+  msg.textContent =
+    'Dein Browser oder Gerät unterstützt kein WebGL (3D). Bitte aktiviere die Hardware-Beschleunigung oder nutze einen aktuellen Browser.';
+  box.append(title, msg);
+  container.append(box);
 }

@@ -3,21 +3,20 @@
 > Schnellüberblick für den Session-Start. Wird nach jedem Meilenstein aktualisiert.
 
 **Stand:** 2026-06-21
-**Aktueller Meilenstein:** M0 ✅ abgeschlossen → als Nächstes M1
-**Letzter Build:** grün (typecheck/lint/build/preview ✓; dist/ mit relativen Pfaden)
+**Aktueller Meilenstein:** M1 ✅ abgeschlossen → Review-Pause, dann M2 (nach Freigabe)
+**Letzter Build:** grün (typecheck/lint/build ✓); Browser-Render via Playwright verifiziert, 0 Konsolenfehler
 **Live-URL:** _(folgt nach MVP, M4.5 — Vercel)_
 **Repo:** https://github.com/Scholzer0303/quack-and-catch
 
 ## ✅ Erledigt
-- Git initialisiert (`main`), erstes Commit, Repo `Scholzer0303/quack-and-catch` (öffentlich) angelegt, `origin` gesetzt + Verbindungstest-Push erfolgreich.
-- Projekt-`CLAUDE.md` mit Push-Regeln + Session-Routine.
-- Planungsdokumente angelegt (STATUS, BACKLOG, DESIGN, LESSONS_LEARNED).
+- **M0:** Git/Repo/origin/Push-Test, Projekt-`CLAUDE.md`, Planungsdokumente, Vite+TS(strict)+Three-Scaffold (deploy-ready).
+- **M1:** First-Person-Szene — Core (Renderer/Scene/Kamera/Loop/Game), EventBus, Balance-Config, Utils (math/rng), Welt (Stand, ovales Becken + animiertes Wasser-Shader, Angel/Haken), 8 Enten als InstancedMesh auf Oval-Bahn. Visuell verifiziert.
 
 ## 🔧 In Arbeit
-- M1 — First-Person-Szene (Start): Renderer/Scene/CameraRig, GameLoop.
+- Review-Pause M1: `/code-review` + Doku.
 
-## ⏭️ Als Nächstes
-- M1 fertigstellen: Stand, ovales Wasserbecken + animiertes Wasser, 8 rotierende Enten (InstancedMesh), Angel/Haken im Vordergrund.
+## ⏭️ Als Nächstes (nach Freigabe)
+- M2 — Hak-Mechanik: Input (Pointer Events), HookRaycaster, FishingRod-State-Machine, Timing-Window, Reel + Respawn.
 
 ## 📌 Offene Punkte / Entscheidungen
 - Keine offenen Blocker. Codex-Inhalt: eigene, geprüfte Karten (~50–60), siehe DESIGN.md.

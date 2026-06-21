@@ -16,15 +16,16 @@ Legende: `[ ]` offen · `[x]` erledigt · `[~]` in Arbeit
 - [x] ESLint (flat config) + Prettier + `.gitattributes` (LF)
 - [x] `index.html` + leeres `src/main.ts`, Smoke-Build grün (typecheck/lint/build/preview ✓)
 
-## M1 — First-Person-Szene
-- [ ] `core/RendererManager` + `SceneManager` + `CameraRig` (FP-Pose, pixelRatio-Cap, Resize)
-- [ ] `core/GameLoop` (geclampter dt) + `core/Game`
-- [ ] `config/balance.ts`-Skelett + `utils/math` (Oval, lerp/clamp) + `utils/rng`
-- [ ] `world/StallBuilder` (Stand/Theke/Markise/Backdrop)
-- [ ] `world/BasinBuilder` (ovaler Kanal) + Wasser-Shader (animiert)
-- [ ] `world/DuckFactory` + `systems/DuckSpawner` (8 rotierende Enten, InstancedMesh)
-- [ ] `world/RodBuilder` (Angel/Schnur/Haken im Vordergrund)
-- [ ] `events/EventBus` (typisiert)
+## M1 — First-Person-Szene ✅
+- [x] `core/RendererManager` + `SceneManager` + `CameraRig` (FP-Pose, pixelRatio-Cap, Resize)
+- [x] `core/GameLoop` (geclampter dt) + `core/Game`
+- [x] `config/balance.ts`-Skelett + `utils/math` (Oval, lerp/clamp) + `utils/rng`
+- [x] `world/StallBuilder` (Stand/Theke/Markise/Backdrop)
+- [x] `world/BasinBuilder` (ovaler Kanal) + Wasser-Shader (animiert)
+- [x] `world/DuckFactory` + `systems/DuckSpawner` (8 rotierende Enten, InstancedMesh)
+- [x] `world/RodBuilder` (Angel/Schnur/Haken im Vordergrund)
+- [x] `events/EventBus` (typisiert)
+- Verifiziert: typecheck/lint/build grün, Playwright-Screenshot (0 Konsolenfehler), Enten sichtbar auf der Bahn.
 
 ## M2 — Hak-Mechanik
 - [ ] `systems/InputSystem` (Pointer Events, Aim normalisiert)

@@ -62,4 +62,10 @@ npm run format     # Prettier
 ```
 
 ## Arbeitsweise
-Iterativ in Meilensteinen (siehe `docs/BACKLOG.md`). Nach jedem Meilenstein: Qualitäts-Gate grün, committen + pushen, `docs/STATUS.md` aktualisieren, Erkenntnisse in `docs/LESSONS_LEARNED.md` festhalten. Bei echten Produkt-/Design-Entscheidungen kurz nachfragen statt raten.
+Iterativ in Meilensteinen (siehe `docs/BACKLOG.md`). Bei echten Produkt-/Design-Entscheidungen kurz nachfragen statt raten.
+
+**Pflicht-Rhythmus nach JEDEM Meilenstein (M-Abschnitt):**
+1. **Pause** — nicht ungefragt in den nächsten Meilenstein starten.
+2. **Doku-Überarbeitung** — `docs/STATUS.md`, `docs/BACKLOG.md` (Häkchen), `docs/LESSONS_LEARNED.md` aktualisieren; README bei Bedarf.
+3. **Code-Review** — `/code-review` über den Meilenstein-Diff laufen lassen, kritische Findings beheben (Qualitäts-Gate danach erneut grün).
+4. Committen + pushen, dann auf Freigabe für den nächsten Meilenstein warten.
