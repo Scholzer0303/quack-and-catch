@@ -65,7 +65,6 @@ export const BALANCE = {
     headOffset: [0.0, 0.42, 0.34] as [number, number, number],
     beakColor: 0xff8c1a,
     eyeColor: 0x14202a,
-    baseColor: 0xffd24a, // Default-Gelb (M1); Raritätsfarben ab M3
   },
 
   round: {
