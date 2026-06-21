@@ -9,6 +9,9 @@ dist-ssr/
 *.log
 npm-debug.log*
 
+# Smoke-Test-Artefakt
+smoke_screenshot.png
+
 # Editor / OS
 .DS_Store
 .idea/

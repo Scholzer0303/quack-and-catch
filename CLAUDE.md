@@ -24,7 +24,7 @@ Zu Beginn jeder neuen Session **zuerst orientieren**, dann nahtlos weiterbauen:
 git log --oneline -15
 git status
 ```
-Danach `docs/STATUS.md` und `docs/BACKLOG.md` lesen → wissen, was zuletzt lief und was als Nächstes dran ist → weiterbauen, weiterhin Push nach jedem Schritt.
+Danach **`docs/HANDOVER.md`** lesen (Wiedereinstieg, Architektur-Karte, nächste Aufgaben, Gotchas), dann `docs/STATUS.md` + `docs/BACKLOG.md` → weiterbauen, weiterhin Push nach jedem Schritt.
 
 ## ✅ Qualitäts-Gate (vor jeder Abnahme / vor „fertig")
 - `npm run typecheck` grün

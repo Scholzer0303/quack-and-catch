@@ -13,10 +13,11 @@
 - **M1:** First-Person-Szene — Core (Renderer/Scene/Kamera/Loop/Game), EventBus, Balance-Config, Utils (math/rng), Welt (Stand, ovales Becken + animiertes Wasser-Shader, Angel/Haken), 8 Enten als InstancedMesh auf Oval-Bahn. Visuell verifiziert.
 
 ## 🔧 In Arbeit
-- Review-Pause M1: `/code-review` + Doku.
+- Nichts offen. M1 inkl. Code-Review abgeschlossen + gepusht (`f28087b`). **Session-Ende — Handover bereit.**
 
 ## ⏭️ Als Nächstes (nach Freigabe)
 - M2 — Hak-Mechanik: Input (Pointer Events), HookRaycaster, FishingRod-State-Machine, Timing-Window, Reel + Respawn.
+- **Neuer Kontext?** Zuerst [`docs/HANDOVER.md`](HANDOVER.md) lesen — enthält Routine, Architektur-Karte, M2-Aufgaben, Gotchas.
 
 ## 📌 Offene Punkte / Entscheidungen
 - Keine offenen Blocker. Codex-Inhalt: eigene, geprüfte Karten (~50–60), siehe DESIGN.md.
