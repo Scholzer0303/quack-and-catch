@@ -10,7 +10,11 @@ import { BasinBuilder } from '../world/BasinBuilder';
 import { DuckSpawner } from '../systems/DuckSpawner';
 import { InputSystem } from '../systems/InputSystem';
 import { FishingRod } from '../systems/FishingRod';
+import { Economy } from '../systems/Economy';
+import { RewardSystem } from '../systems/RewardSystem';
+import { GameStateMachine } from './GameStateMachine';
 import { Reticle } from '../ui/Reticle';
+import { UIRoot } from '../ui/UIRoot';
 import { mulberry32 } from '../utils/rng';
 
 /** Top-Orchestrator: besitzt Systeme, verdrahtet den Loop, hält die Welt. */
@@ -25,6 +29,11 @@ export class Game {
   private readonly input: InputSystem;
   private readonly fishingRod: FishingRod;
   private readonly reticle: Reticle;
+  private readonly state: GameStateMachine;
+  private readonly economy: Economy;
+  private readonly reward: RewardSystem;
+  private readonly ui: UIRoot;
+  private readonly busUnsub: Array<() => void> = [];
 
   constructor(container: HTMLElement) {
     this.renderer = new RendererManager();
@@ -56,10 +65,34 @@ export class Game {
     this.sceneManager.add(this.fishingRod.highlight); // Hover-Ring um die Zielente
     this.reticle = new Reticle(); // Fadenkreuz + Timing-Feedback (Halten-Modell)
 
+    // Belohnung/Ökonomie/Phasen (entkoppelt über den EventBus). Economy zuerst
+    // (RewardSystem hält die Referenz für isNewTip); eigener RNG-Seed.
+    this.state = new GameStateMachine(this.bus);
+    this.economy = new Economy(this.bus);
+    this.reward = new RewardSystem(this.bus, this.economy, mulberry32(0x5eed01));
+    this.ui = new UIRoot(this.bus, {
+      onStart: () => this.state.start(),
+      onRestart: () => this.state.restart(),
+      onResume: () => this.state.setPhase('playing'),
+    });
+
+    // Fang löst die Tipp-Karte aus → Runde pausieren bis „Weiter".
+    this.busUnsub.push(this.bus.on('reward:granted', () => this.state.setPhase('paused')));
+    // Verlässt das Spiel 'playing', laufenden Hold sauber auflösen (kein stuck Hold).
+    this.busUnsub.push(
+      this.bus.on('phase:changed', (e) => {
+        if (e.to !== 'playing') this.fishingRod.cancel();
+      }),
+    );
+
     // Eingabe: Pointer schwenkt Blick/Rute im Aim-Cone; Halten/Loslassen fängt.
+    // Auswerfen nur in 'playing' (Phase-Gate); Loslassen/Abbruch bleiben offen,
+    // damit ein laufender Hold sich immer auflösen kann.
     this.input = new InputSystem(canvas, {
       onAim: (ax, ay) => this.cameraRig.setAimTarget(ax, ay),
-      onPress: (ax, ay) => this.fishingRod.press(ax, ay),
+      onPress: (ax, ay) => {
+        if (this.state.isPlaying()) this.fishingRod.press(ax, ay);
+      },
       onRelease: () => this.fishingRod.release(),
       onCancel: () => this.fishingRod.cancel(),
     });
@@ -75,19 +108,25 @@ export class Game {
         bus: this.bus,
         ducks: this.ducks,
         rod: this.fishingRod,
+        state: this.state,
+        economy: this.economy,
       };
     }
   }
 
   start(): void {
+    // Spiel bootet im Start-Screen; der Start-Button startet die Runde.
     this.loop.start();
-    this.bus.emit('phase:changed', { from: 'start', to: 'playing' });
   }
 
   private update(dt: number, elapsed: number): void {
     this.cameraRig.update(dt); // Aim anwenden, bevor geraycastet/gerendert wird
-    this.basin.update(elapsed);
-    this.ducks.update(dt, elapsed); // schreibt frische worldX/Y/Z vor dem Raycast
+    this.state.update(dt); // Rundentimer (zählt nur in 'playing')
+    // Becken/Enten nur im Tipp-Modal einfrieren — hinter Start/Summary leben sie.
+    if (this.state.getPhase() !== 'paused') {
+      this.basin.update(elapsed);
+      this.ducks.update(dt, elapsed); // schreibt frische worldX/Y/Z vor dem Raycast
+    }
     this.fishingRod.update(dt);
     this.reticle.render(this.fishingRod.getView());
     this.renderer.render(this.sceneManager.scene, this.cameraRig.camera);
@@ -122,7 +161,13 @@ export class Game {
     canvas.removeEventListener('webglcontextlost', this.onContextLost);
     canvas.removeEventListener('webglcontextrestored', this.onContextRestored);
     document.removeEventListener('visibilitychange', this.onVisibility);
+    for (const off of this.busUnsub) off();
+    this.busUnsub.length = 0;
     this.input.dispose();
+    this.ui.dispose();
+    this.reward.dispose();
+    this.economy.dispose();
+    this.state.dispose();
     this.reticle.dispose();
     this.fishingRod.dispose();
     this.ducks.dispose();
