@@ -120,14 +120,6 @@ export class DuckSpawner {
     duck.alive = true;
   }
 
-  /** Ente ohne Respawn freigeben (Linien-Abriss): fährt auf der Bahn weiter. */
-  releaseDuck(slot: number): void {
-    const duck = this.ducks[slot];
-    if (!duck) return;
-    this.reeling.delete(slot);
-    duck.alive = true;
-  }
-
   dispose(): void {
     this.geometry.dispose();
     this.material.dispose();

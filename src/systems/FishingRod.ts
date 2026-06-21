@@ -188,6 +188,11 @@ export class FishingRod {
       this.resolveMiss();
       return;
     }
+    // lineStrength-Gate: zu schwere Ente reißt ab (Feedback, kein Softlock).
+    if (RARITY_INFO[this.lockDuck.rarity].weight > this.stats.lineStrength) {
+      this.resolveSnap(this.lockDuck);
+      return;
+    }
     // Perfect = Loslassen im zentralen Band des Fensters.
     const half = this.perfectDur / 2;
     const center = this.windowDur / 2;
@@ -230,6 +235,14 @@ export class FishingRod {
 
   private resolveMiss(): void {
     this.bus.emit('hook:result', { hit: false, perfect: false, duck: null });
+    this.lockDuck = null;
+    this.perfect = false;
+    this.toCooldown();
+  }
+
+  /** Linien-Abriss: Ente bleibt auf der Bahn (nie gehakt), nur Feedback + Cooldown. */
+  private resolveSnap(duck: Duck): void {
+    this.bus.emit('hook:result', { hit: false, perfect: false, duck });
     this.lockDuck = null;
     this.perfect = false;
     this.toCooldown();
