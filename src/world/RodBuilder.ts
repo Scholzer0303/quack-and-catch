@@ -1,5 +1,8 @@
 import * as THREE from 'three';
 
+/** Haken-Anker in Kamera-lokalen Koordinaten — Single Source für Reel-Ziel (FishingRod). */
+export const HOOK_ANCHOR_LOCAL = new THREE.Vector3(0.04, -0.3, -1.73);
+
 /**
  * Angel + Schnur + Haken im Vordergrund (Hand-Feel). Als Kind der Kamera
  * gedacht, daher in Kamera-lokalen Koordinaten (Blickrichtung = -Z).
@@ -39,9 +42,9 @@ export function buildRod(): THREE.Group {
   );
   group.add(grip);
 
-  // Schnur: von der Spitze nach unten zum Haken.
+  // Schnur: von der Spitze nach unten zum Haken (Anker = Reel-Ziel).
   const hookTop = tip.clone();
-  const hookBottom = tip.clone().add(new THREE.Vector3(0, -0.42, 0.02));
+  const hookBottom = HOOK_ANCHOR_LOCAL.clone();
   segment(hookTop, hookBottom, 0.004, lineMat);
 
   // Haken (kleiner Torus + Spitze).

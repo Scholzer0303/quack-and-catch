@@ -14,6 +14,8 @@ export class DuckSpawner {
   readonly mesh: THREE.InstancedMesh;
   readonly ducks: Duck[] = [];
   private readonly dummy = new THREE.Object3D();
+  private readonly reelDummy = new THREE.Object3D(); // eigener Dummy (Scale ≠ 1 beim Reel)
+  private readonly reeling = new Set<number>(); // Slots, deren Pose extern (FishingRod) gesetzt wird
   private readonly geometry: THREE.BufferGeometry;
   private readonly material: THREE.Material;
   private readonly count: number;
@@ -63,6 +65,8 @@ export class DuckSpawner {
   private writeMatrices(elapsed: number): void {
     const b = BALANCE.basin;
     for (const duck of this.ducks) {
+      // Gehakte Enten: Pose kommt von FishingRod (setReelPose) — hier nicht überschreiben.
+      if (this.reeling.has(duck.slot)) continue;
       const rx = b.radiusX * b.trackInset + duck.laneOffset;
       const rz = b.radiusZ * b.trackInset + duck.laneOffset;
       const [x, z] = ovalPoint(duck.trackT, rx, rz);
@@ -85,6 +89,24 @@ export class DuckSpawner {
     }
   }
 
+  /** Reel starten: Ente einfrieren, ihre Pose steuert ab jetzt FishingRod. */
+  beginReel(slot: number): Duck | null {
+    const duck = this.ducks[slot];
+    if (!duck) return null;
+    duck.alive = false;
+    this.reeling.add(slot);
+    return duck;
+  }
+
+  /** Pose einer gehakten Ente extern setzen (Einhol-Animation). */
+  setReelPose(slot: number, x: number, y: number, z: number, scale: number): void {
+    this.reelDummy.position.set(x, y, z);
+    this.reelDummy.scale.setScalar(scale);
+    this.reelDummy.updateMatrix();
+    this.mesh.setMatrixAt(slot, this.reelDummy.matrix);
+    this.mesh.instanceMatrix.needsUpdate = true;
+  }
+
   /**
    * Gefangene Ente entfernen und an neuer Bahnposition wiederbeleben — das
    * Becken bleibt dauerhaft voll. (Rarität bleibt bis M3-Loot „common".)
@@ -92,8 +114,17 @@ export class DuckSpawner {
   removeAndRespawn(slot: number): void {
     const duck = this.ducks[slot];
     if (!duck) return;
+    this.reeling.delete(slot);
     duck.trackT = this.rng();
     duck.bobPhase = this.rng() * TWO_PI;
+    duck.alive = true;
+  }
+
+  /** Ente ohne Respawn freigeben (Linien-Abriss): fährt auf der Bahn weiter. */
+  releaseDuck(slot: number): void {
+    const duck = this.ducks[slot];
+    if (!duck) return;
+    this.reeling.delete(slot);
     duck.alive = true;
   }
 

@@ -1,13 +1,14 @@
 import * as THREE from 'three';
 import { BALANCE } from '../config/balance';
-import { clamp } from '../utils/math';
+import { clamp, lerp } from '../utils/math';
 import type { EventBus } from '../events/EventBus';
 import type { GameEvents } from '../types/events';
 import type { Duck, DuckRarity } from '../types/domain';
 import { DuckSpawner } from './DuckSpawner';
 import { HookRaycaster } from './HookRaycaster';
+import { HOOK_ANCHOR_LOCAL } from '../world/RodBuilder';
 
-export type RodState = 'idle' | 'casting' | 'window' | 'cooldown';
+export type RodState = 'idle' | 'casting' | 'window' | 'reel' | 'cooldown';
 
 /** Stat-Block der aktiven Angel (Tier 0 bis M6 echte Rods verdrahtet). */
 interface RodStats {
@@ -35,9 +36,6 @@ const RARITY_INFO: Record<DuckRarity, { weight: number; value: number }> = {
   legendary: { weight: 5, value: 350 },
 };
 
-/** Haken-Anker in Kamera-lokalen Koordinaten (deckt sich mit RodBuilder). */
-const HOOK_LOCAL = new THREE.Vector3(0.04, -0.3, -1.73);
-
 /** Schnappschuss für das Reticle (kein neuer Event-Typ nötig). */
 export interface RodView {
   state: RodState;
@@ -57,6 +55,8 @@ export class FishingRod {
   private readonly raycaster = new HookRaycaster();
   private readonly stats = TIER0_STATS;
   private readonly hookWorld = new THREE.Vector3();
+  private readonly reelFrom = new THREE.Vector3(); // Fangposition beim Hit
+  private readonly reelPos = new THREE.Vector3(); // Scratch für die Lerp-Pose
 
   private state: RodState = 'idle';
   private timer = 0; // Sekunden im aktuellen Zustand
@@ -83,10 +83,13 @@ export class FishingRod {
   private get cooldownDur(): number {
     return BALANCE.hook.cooldownMs / 1000;
   }
+  private get reelDur(): number {
+    return BALANCE.hook.reelDurationMs / 1000 / this.stats.reelSpeed;
+  }
 
   /** Haken-Weltposition (Kamera schwenkt → pro Aufruf frisch). */
   private hookAnchor(): THREE.Vector3 {
-    return this.camera.localToWorld(this.hookWorld.copy(HOOK_LOCAL));
+    return this.camera.localToWorld(this.hookWorld.copy(HOOK_ANCHOR_LOCAL));
   }
 
   private aimTarget(): Duck | null {
@@ -142,6 +145,9 @@ export class FishingRod {
         // Auto-Resolve am Fensterende: nie hängender Hold (auch ohne release).
         if (this.timer >= this.windowDur) this.resolveAtRelease();
         break;
+      case 'reel':
+        this.updateReel(dt);
+        break;
       case 'cooldown':
         this.timer += dt;
         if (this.timer >= this.cooldownDur) {
@@ -166,10 +172,34 @@ export class FishingRod {
     this.land(this.lockDuck);
   }
 
+  /** Treffer steht: Reel-Animation starten (Ente lerpt zum Haken). */
   private land(duck: Duck): void {
+    this.bus.emit('hook:result', { hit: true, perfect: this.perfect, duck });
+    this.ducks.beginReel(duck.slot);
+    this.reelFrom.set(duck.worldX, duck.worldY, duck.worldZ);
+    this.state = 'reel';
+    this.timer = 0;
+  }
+
+  private updateReel(dt: number): void {
+    this.timer += dt;
+    const duck = this.lockDuck;
+    if (!duck) {
+      this.toCooldown();
+      return;
+    }
+    const p = clamp(this.timer / this.reelDur, 0, 1);
+    const e = p * p * (3 - 2 * p); // smoothstep
+    const to = this.hookAnchor();
+    this.reelPos.copy(this.reelFrom).lerp(to, e);
+    const scale = lerp(1, BALANCE.hook.reelEndScale, e);
+    this.ducks.setReelPose(duck.slot, this.reelPos.x, this.reelPos.y, this.reelPos.z, scale);
+    if (p >= 1) this.finishLand(duck);
+  }
+
+  private finishLand(duck: Duck): void {
     const info = RARITY_INFO[duck.rarity];
     this.ducks.removeAndRespawn(duck.slot);
-    this.bus.emit('hook:result', { hit: true, perfect: this.perfect, duck });
     this.bus.emit('duck:landed', { rarity: duck.rarity, value: info.value });
     this.lockDuck = null;
     this.toCooldown();
