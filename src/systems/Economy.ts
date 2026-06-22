@@ -37,6 +37,20 @@ export class Economy {
     return this.unlockedTips.size;
   }
 
+  /** Serialisierbarer Economy-Slice fürs SaveSystem (ohne Save-Schema-Wissen). */
+  snapshot(): { tokens: number; unlockedTips: string[] } {
+    return { tokens: this.tokens, unlockedTips: [...this.unlockedTips] };
+  }
+
+  /** Geladenen Stand übernehmen und das HUD über `economy:changed` aktualisieren
+   *  (HUD liest den Token-Saldo ausschließlich aus diesem Event). */
+  hydrate(data: { tokens: number; unlockedTips: readonly string[] }): void {
+    this.tokens = data.tokens;
+    this.unlockedTips.clear();
+    for (const id of data.unlockedTips) this.unlockedTips.add(id);
+    this.bus.emit('economy:changed', { tokens: this.tokens });
+  }
+
   dispose(): void {
     for (const off of this.unsub) off();
     this.unsub.length = 0;

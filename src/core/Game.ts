@@ -12,6 +12,7 @@ import { InputSystem } from '../systems/InputSystem';
 import { FishingRod } from '../systems/FishingRod';
 import { Economy } from '../systems/Economy';
 import { RewardSystem } from '../systems/RewardSystem';
+import { SaveSystem } from '../systems/SaveSystem';
 import { GameStateMachine } from './GameStateMachine';
 import { Reticle } from '../ui/Reticle';
 import { UIRoot } from '../ui/UIRoot';
@@ -32,6 +33,7 @@ export class Game {
   private readonly state: GameStateMachine;
   private readonly economy: Economy;
   private readonly reward: RewardSystem;
+  private readonly save: SaveSystem;
   private readonly ui: UIRoot;
   private readonly busUnsub: Array<() => void> = [];
 
@@ -76,6 +78,11 @@ export class Game {
       onResume: () => this.state.setPhase('playing'),
     });
 
+    // Persistenz: NACH der UIRoot laden, damit der hydrate-Emit (`economy:changed`)
+    // das bereits gebaute HUD erreicht und der geladene Token-Saldo erscheint.
+    this.save = new SaveSystem(this.bus, this.economy);
+    this.save.load();
+
     // Fang löst die Tipp-Karte aus → Runde pausieren bis „Weiter".
     this.busUnsub.push(this.bus.on('reward:granted', () => this.state.setPhase('paused')));
     // Verlässt das Spiel 'playing', laufenden Hold sauber auflösen (kein stuck Hold).
@@ -110,6 +117,7 @@ export class Game {
         rod: this.fishingRod,
         state: this.state,
         economy: this.economy,
+        save: this.save,
       };
     }
   }
@@ -166,6 +174,7 @@ export class Game {
     this.input.dispose();
     this.ui.dispose();
     this.reward.dispose();
+    this.save.dispose(); // vor economy/bus: Flush braucht lebende Economy + Bus
     this.economy.dispose();
     this.state.dispose();
     this.reticle.dispose();

@@ -104,6 +104,7 @@ export const BALANCE = {
   save: {
     storageKey: 'quack-and-catch:v1',
     schemaVersion: 1,
+    debounceMs: 400, // Schreib-Zusammenfassung; Flush bei pagehide sichert den Rest
   },
 
   ui: {
