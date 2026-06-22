@@ -53,6 +53,19 @@ Legende: `[ ]` offen · `[x]` erledigt · `[~]` in Arbeit
 - [x] Prod-Härtung (pixelRatio-Cap ✓, dispose-Audit, Error-Boundary ✓), `build`+`preview` aus `dist/` (✓ `__qc` getreeshakt)
 - Verifiziert: typecheck/lint/build/preview grün; `scripts/save_test.py` (Fang→Flush→Reload behält Tokens+Tipps; 3 Korruptionsfälle → sauberer Default); Smoke (0 Konsolenfehler) auf Dev + Prod-Build.
 
+## M4.6 — Game-Feel & Bright-Comic-Overhaul (IN ARBEIT, höchste Priorität)
+Eingeschoben nach Nutzer-Live-Test (Wettbewerb): Steuerung muss „cool" sein + Comic-Optik. Details/Feedback in `docs/HANDOVER.md` → „AKTUELL: M4.6".
+- [x] Step 1: Direktes Fadenkreuz + Pointer-Raycast + Instant-Aim (Auswerfen funktioniert; `fc76f17`)
+- [x] Step 2: Heller Comic-Tag (Himmel/Rasen/Wasser/Stand; `f6c716a`)
+- [x] Step 3: Toon/Cel-Shading auf Enten (`a9ff24b`)
+- [x] Step 4: Schwarze Comic-Outlines auf Enten (Inverted-Hull; `4d1a834`)
+- [ ] **Steuerungs-Redesign:** Rute folgt Maus sichtbar; **Halten senkt Haken / Loslassen hebt**; Fang im grün/gold-Ring über einer Ente (Rute aktuell statisch — `Game` verwirft `buildRod()`-Ref)
+- [ ] Rute/Haken-Optik echter + sichtbare Auf-/Ab-Bewegung (`RodBuilder.ts`)
+- [ ] Jahrmarkt-Welt: graue Wand weg → Buden/Wimpel/Kulisse; Becken-Rand statt dickem Reifen (`StallBuilder.ts`/`BasinBuilder.ts`)
+- [ ] Juice: Splash/Catch-Pop/Perfect-Flash/Mini-Screenshake/HUD-Count-up (`src/fx/`) + optional Bloom/Glow (`core/postprocessing/`)
+- [ ] Tipp-Modal schicker (`CardReveal.ts`/`styles.css`; optional Icon/Visualisierung je Tipp)
+- [ ] Optional: Intro-Sequenz (Ticket → Verkäuferin → Angel → Start; neue Phase `intro`)
+
 ## M4.5 — Vercel-Live-Deploy (nach MVP)
 - [ ] GitHub-Repo mit Vercel verbinden (Auto-Deploy von `main`), Live-URL holen
 - [ ] Live-URL in README + STATUS eintragen
