@@ -4,6 +4,32 @@ Laufendes Log: Entscheidungen, Stolpersteine, Fixes, Balance-Erkenntnisse. Neues
 
 ---
 
+## 2026-06-22 — M4.6 Steps 10+11: Tipp-Modal-Politur + Intro-Sequenz (+ Multi-Agent-Review)
+
+**Produkt-Entscheidungen (vom Nutzer)**
+- **Step 10 Tipp-Modal:** volle Politur — Rarität-Theming + Reveal-Drama **und** Emoji je Tipp.
+- **Step 11 Intro:** CSS-Storyboard-Overlay (3 Steps: Bude → Ticket → Angel), läuft pro Boot mit „Überspringen" — bewusst kein 3D-Cinematic, kein Save-Flag (geringes Risiko, bestehender Overlay-Pattern).
+
+**Architektur (beide Steps rein additiv/Präsentation)**
+- **`Tip.icon` als Pflichtfeld** (kein Fallback-Magic) → `tsc` erzwingt Emoji für alle 12 Karten. **Save-sicher:** `SaveSystem` persistiert nur `unlockedTips` (IDs), nie volle `Tip`-Objekte → kein Schema-Eingriff.
+- **Rarität-Glow rein CSS:** `CardReveal` setzt nur `data-rarity` + `--qc-accent`; die `box-shadow`-Stufen je Rarität leben in `styles.css` (`color-mix`). Bewusst **kein `balance.ts`-Tunable** (Präsentation, keine Gameplay-Zahl).
+- **Intro als reines DOM-Overlay in Phase `start`:** `IntroScreen` ersetzt `StartScreen`, **keine neue `GamePhase`, keine `GameStateMachine`-/`SaveData`-Änderung**. `UIRoot` tauscht nur den Screen (gleiche API). Tests unberührt — `smoke/catch/save_test` starten via `__qc.state.start()` direkt, umgehen das Overlay.
+
+**Stolpersteine / Erkenntnisse**
+- **reduced-motion-Spezifität-Falle:** Der epic/legendary-Glow-Puls hängt an `.qc-card[data-rarity='epic']` — höhere Spezifität als `.qc-card`. Im `@media (prefers-reduced-motion)`-Block müssen diese Selektoren **explizit** gelistet werden, sonst läuft der Puls trotz „reduce" weiter.
+- **rAF-Count-up:** Timestamp-Arg des rAF-Callbacks nutzen (kein `Date.now`); Handle in `dismiss()`/`dispose()` **und** am Anfang von `show()` canceln (sonst doppelte Loops bei schnellem Re-Fang).
+
+**Multi-Agent-Review (xhigh, 21 Agenten, 10 Finder-Angles → Verify → Sweep) — 11 Findings, alle low/medium, kein Crash. Behoben:**
+- **Onboarding-Regress (medium):** „Überspringen" rief sofort `onStart()` → ein Erststarter sah den Steuerungs-Hinweis (nur in Step 3) nie. Fix: Skip springt zum **letzten Schritt** (Steuerung + „Los geht's!"), wie die alte StartScreen Hinweis+Start zwingend zusammen führte.
+- **`color-mix` im Shorthand ohne Fallback:** Auf alten Browsern (iOS Safari < 16.2) verwirft ein ungültiger `color-mix`-Token die **gesamte** `background`/`box-shadow`-Deklaration der `.qc-card` — inkl. der `var(--qc-panel)`-Füllung → unlesbare Karte. Fix: **Plain-Fallback-Deklaration voranstellen** (Cascade: gültige frühere Zeile bleibt, moderne Browser überschreiben).
+- **reduced-motion-Konsistenz:** `prefersReducedMotion()` wurde pro `show()` abgefragt; `reducedMotion.ts` schreibt ausdrücklich **Cachen im Konstruktor** vor (wie HUD/Reticle/CameraRig). Fix: einmal als `private readonly reduced` cachen.
+- **Toter Code + Doku-Drift:** `IntroScreen.setVisible` hatte einen Step-Reset-Branch, der nie feuert (Phase kehrt nie nach `start` zurück). Doku behauptete „läuft jedes Mal" — falsch: Intro läuft **einmal pro Seitenaufruf (Boot)**. Branch entfernt, Doku korrigiert.
+- **Kosmetik:** Token-Gain vor dem ersten rAF-Frame auf `+0` initialisiert (kein leerer Frame).
+- **Bewusst nicht behoben (Idiom/Scope):** `STEPS[step]!` (durch Guard sicher), Count-up-Duplikat zu HUD (Refactor zu invasiv für event-getriebenes Modal), `el()`→`utils` (andere Dateien), Chip/Medaillon-`color-mix` (rein kosmetische Degradation auf Alt-Browsern).
+
+**Verifikation**
+- typecheck/lint/build grün; smoke (`canvas:2`, 0 Fehler) + catch grün (`state.start()` unberührt); Modal-Screenshots je Rarität + Intro-Step-Screenshots gesichtet; Skip→Steuerung per Assertion verifiziert (`cta="Los geht's!"`, `has_controls_text=true`, `phase="start"`).
+
 ## 2026-06-22 — M4.6 Step 9: Juice + Bloom/Glow (Splash/Pop/Flash/Shake/Count-up + Postprocessing)
 
 **Produkt-Entscheidungen (vom Nutzer)**
