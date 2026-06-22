@@ -58,13 +58,21 @@ def catch_one(page):
         except Exception:
             continue
         page.mouse.down()
-        # Raeumlicher Fang: kurz halten bis dip>=arm (~240 ms), dann loslassen
-        # (engere catchRadius + schnellere Enten -> weniger Drift in der Haltezeit).
-        page.wait_for_timeout(240)
+        # Halten bis dip>=arm (zustandsbasiert, fps-unabhaengig -> robust auch bei
+        # Bloom, das headless/swiftshader stark verlangsamen kann). Kein Re-Aim
+        # zwischen down/up -> Wasserpunkt W bleibt unter dem ruhenden Cursor.
+        try:
+            page.wait_for_function("() => window.__qc.rod.getView().dip >= 0.6", timeout=6000)
+        except Exception:
+            page.mouse.up()
+            continue
         page.mouse.up()
-        page.wait_for_timeout(1000)
-        if page.evaluate("() => window.__qc.economy.getTokens()") > 0:
+        # Auf die Belohnungskette warten (Reel -> landed -> reward -> Tokens).
+        try:
+            page.wait_for_function("() => window.__qc.economy.getTokens() > 0", timeout=10000)
             return True
+        except Exception:
+            continue
     return False
 
 

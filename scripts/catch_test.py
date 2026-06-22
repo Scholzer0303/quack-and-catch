@@ -86,15 +86,26 @@ with sync_playwright() as p:
         except Exception:
             continue
         page.mouse.down()
-        # Halten, bis der Haken im Wasser ist (dip >= armProgress; lowerDuration 260 ms),
-        # dann loslassen -> raeumlicher Fang. Kurz halten (~240 ms): genug Dip, aber die
-        # (schnelleren) Enten driften kaum aus der engeren catchRadius.
-        page.wait_for_timeout(240)
+        # Halten, bis der Haken im Wasser ist (dip >= armProgress=0.6) -> raeumlicher Fang.
+        # ZUSTANDSBASIERT statt fixer Wartezeit: fps-unabhaengig. (Bloom kann headless/
+        # swiftshader stark verlangsamen; dt ist geclamped, Spielzeit laeuft dann langsamer,
+        # eine fixe Wartezeit wuerde dip nicht zuverlaessig armen.) Kein Re-Aim zwischen
+        # down/up (nur dip lesen) -> Wasserpunkt W bleibt unter dem ruhenden Cursor.
+        try:
+            page.wait_for_function("() => window.__qc.rod.getView().dip >= 0.6", timeout=6000)
+        except Exception:
+            page.mouse.up()
+            continue
         page.mouse.up()
-        # Reel (600 ms) + Cooldown (250 ms) abklingen lassen.
-        page.wait_for_timeout(1000)
+        # Auf das aufgeloeste Ergebnis warten (Treffer ODER Miss feuert hook:result);
+        # bei Treffer zusaetzlich auf die Belohnungskette (Reel -> landed -> reward -> Pause).
+        try:
+            page.wait_for_function("() => window.__ev.results.length > 0", timeout=6000)
+        except Exception:
+            continue
         hits = sum(1 for r in page.evaluate("() => window.__ev.results") if r["hit"])
         if hits >= 1:
+            page.wait_for_function("() => window.__ev.rewards.length >= 1", timeout=10000)
             break
 
     state = page.evaluate(

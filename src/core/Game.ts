@@ -2,6 +2,7 @@ import { RendererManager } from './RendererManager';
 import { SceneManager } from './SceneManager';
 import { CameraRig } from './CameraRig';
 import { GameLoop } from './GameLoop';
+import { Postprocessing } from './postprocessing/Postprocessing';
 import { EventBus } from '../events/EventBus';
 import type { GameEvents } from '../types/events';
 import { buildStall, type StallParts } from '../world/StallBuilder';
@@ -25,6 +26,7 @@ export class Game {
   private readonly renderer: RendererManager;
   private readonly sceneManager: SceneManager;
   private readonly cameraRig: CameraRig;
+  private readonly post: Postprocessing | null;
   private readonly loop: GameLoop;
   private readonly stall: StallParts;
   private readonly basin: BasinBuilder;
@@ -73,6 +75,18 @@ export class Game {
     this.reticle = new Reticle(); // Fadenkreuz am Wasser-Zielpunkt
     this.splashFx = new SplashFx(); // Wasser-Splash beim Fang
     this.sceneManager.add(this.splashFx.group);
+
+    // Bloom je nach Quality-Guard; null = direkter Render-Fallback (Mobile/off).
+    const postFx = Game.resolvePostFx();
+    this.post =
+      postFx === 'off'
+        ? null
+        : new Postprocessing(this.renderer.renderer, this.sceneManager.scene, this.cameraRig.camera, {
+            resScale: BALANCE.quality.bloomResolutionScale[postFx] ?? 1,
+            strength: BALANCE.quality.bloomStrength,
+            radius: BALANCE.quality.bloomRadius,
+            threshold: BALANCE.quality.bloomThreshold,
+          });
 
     // Belohnung/Ökonomie/Phasen (entkoppelt über den EventBus). Economy zuerst
     // (RewardSystem hält die Referenz für isNewTip); eigener RNG-Seed.
@@ -157,6 +171,14 @@ export class Game {
     this.loop.start();
   }
 
+  /** Quality-Guard: Mobile (coarse pointer) wird auf die schwächere Stufe gestellt. */
+  private static resolvePostFx(): 'off' | 'low' | 'high' {
+    const q = BALANCE.quality;
+    const coarse =
+      typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches;
+    return coarse ? q.coarsePointerPostFx : q.postFx;
+  }
+
   private update(dt: number, elapsed: number): void {
     this.cameraRig.update(dt); // Aim anwenden, bevor geraycastet/gerendert wird
     this.state.update(dt); // Rundentimer (zählt nur in 'playing')
@@ -169,12 +191,14 @@ export class Game {
     this.splashFx.update(dt);
     this.ui.animateHud(dt);
     this.reticle.render(this.fishingRod.getView(), dt);
-    this.renderer.render(this.sceneManager.scene, this.cameraRig.camera);
+    if (this.post) this.post.render();
+    else this.renderer.render(this.sceneManager.scene, this.cameraRig.camera);
   }
 
   private readonly onResize = (): void => {
     this.renderer.resize();
     this.cameraRig.resize(this.renderer.aspect);
+    this.post?.setSize(window.innerWidth, window.innerHeight);
   };
 
   // GPU-Kontextverlust (v. a. Mobile): Render-Loop anhalten und bei
@@ -215,6 +239,7 @@ export class Game {
     this.ducks.dispose();
     this.basin.dispose();
     this.stall.dispose();
+    this.post?.dispose();
     this.sceneManager.dispose();
     this.renderer.dispose();
     this.bus.clear();

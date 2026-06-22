@@ -190,6 +190,16 @@ export const BALANCE = {
     },
   },
 
+  // Postprocessing-Qualität (Bloom). Mobile (coarse pointer) wird herabgestuft.
+  quality: {
+    postFx: 'high' as 'off' | 'low' | 'high', // Desktop-Default
+    coarsePointerPostFx: 'low' as 'off' | 'low' | 'high', // Mobile: Bloom in halber Auflösung
+    bloomResolutionScale: { low: 0.5, high: 1.0 } as Record<string, number>,
+    bloomStrength: 0.55, // moderat — Glanzlichter, kein Washout
+    bloomRadius: 0.4,
+    bloomThreshold: 0.9, // hoch → nur die hellsten Elemente blühen (heller Comic-Tag bleibt klar)
+  },
+
   rewards: {
     // Token-Spanne [min, max] je Rarität
     tokensByRarity: {
