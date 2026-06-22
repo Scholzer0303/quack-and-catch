@@ -16,6 +16,7 @@ import { SaveSystem } from '../systems/SaveSystem';
 import { GameStateMachine } from './GameStateMachine';
 import { Reticle } from '../ui/Reticle';
 import { SplashFx } from '../fx/SplashFx';
+import { DuckGlowFx } from '../fx/DuckGlowFx';
 import { UIRoot } from '../ui/UIRoot';
 import { mulberry32 } from '../utils/rng';
 import { BALANCE } from '../config/balance';
@@ -35,6 +36,7 @@ export class Game {
   private readonly fishingRod: FishingRod;
   private readonly reticle: Reticle;
   private readonly splashFx: SplashFx;
+  private readonly duckGlow: DuckGlowFx | null;
   private readonly state: GameStateMachine;
   private readonly economy: Economy;
   private readonly reward: RewardSystem;
@@ -87,6 +89,10 @@ export class Game {
             radius: BALANCE.quality.bloomRadius,
             threshold: BALANCE.quality.bloomThreshold,
           });
+
+    // Glow seltener Enten füttert das Bloom — nur sinnvoll, wenn Bloom aktiv ist.
+    this.duckGlow = this.post ? new DuckGlowFx(this.ducks) : null;
+    if (this.duckGlow) this.sceneManager.add(this.duckGlow.mesh);
 
     // Belohnung/Ökonomie/Phasen (entkoppelt über den EventBus). Economy zuerst
     // (RewardSystem hält die Referenz für isNewTip); eigener RNG-Seed.
@@ -186,6 +192,7 @@ export class Game {
     if (this.state.getPhase() !== 'paused') {
       this.basin.update(elapsed);
       this.ducks.update(dt, elapsed); // schreibt frische worldX/Y/Z vor dem Raycast
+      this.duckGlow?.update(); // Glow-Halos den Enten nachführen
     }
     this.fishingRod.update(dt);
     this.splashFx.update(dt);
@@ -236,6 +243,7 @@ export class Game {
     this.reticle.dispose();
     this.fishingRod.dispose();
     this.splashFx.dispose();
+    this.duckGlow?.dispose();
     this.ducks.dispose();
     this.basin.dispose();
     this.stall.dispose();

@@ -188,6 +188,12 @@ export const BALANCE = {
     hud: {
       countUpMs: 360, // Score + Tokens zählen hoch statt zu springen
     },
+    glow: {
+      // Additives Halo um seltene Enten (füttert Bloom). Nur bei aktivem postFx.
+      minEmissive: 0.1, // ab uncommon (RARITY_DEFS.emissiveIntensity) leuchten
+      haloScale: 1.05, // Halo-Durchmesser (Welteinheiten), etwas größer als die Ente
+      intensity: 1.6, // Helligkeitsfaktor × emissiveIntensity (hell genug fürs Bloom)
+    },
   },
 
   // Postprocessing-Qualität (Bloom). Mobile (coarse pointer) wird herabgestuft.
