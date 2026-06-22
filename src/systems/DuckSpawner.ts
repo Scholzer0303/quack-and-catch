@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { BALANCE } from '../config/balance';
 import { DuckFactory } from '../world/DuckFactory';
+import { buildOutlineMaterial } from '../world/materials/OutlineMaterial';
 import { ovalPoint, wrap01, TWO_PI } from '../utils/math';
 import { randRange, type Rng } from '../utils/rng';
 import type { Duck, DuckRarity } from '../types/domain';
@@ -13,6 +14,8 @@ import { RARITY_DEFS, rollRarity } from '../data/ducks';
  */
 export class DuckSpawner {
   readonly mesh: THREE.InstancedMesh;
+  /** Schwarze Kontur als 2. InstancedMesh (teilt Geometrie + instanceMatrix). */
+  readonly outlineMesh: THREE.InstancedMesh | null;
   readonly ducks: Duck[] = [];
   private readonly dummy = new THREE.Object3D();
   private readonly reelDummy = new THREE.Object3D(); // eigener Dummy (Scale ≠ 1 beim Reel)
@@ -20,6 +23,7 @@ export class DuckSpawner {
   private readonly color = new THREE.Color(); // Scratch für per-Instanz-Raritätsfarbe
   private readonly geometry: THREE.BufferGeometry;
   private readonly material: THREE.Material;
+  private readonly outlineMaterial: THREE.MeshBasicMaterial | null;
   private readonly count: number;
   private readonly rng: Rng;
   private readonly tier: number;
@@ -36,6 +40,19 @@ export class DuckSpawner {
     // Bounding-Sphere des InstancedMesh wird nur einmal berechnet und mit den
     // bewegten Enten stale -> Culling abschalten (max. 14 Instanzen, kein Gewinn).
     this.mesh.frustumCulled = false;
+
+    // Inverted-Hull-Kontur: zweites InstancedMesh, teilt Geometrie + dieselbe
+    // instanceMatrix (by reference) → Bewegung/Reel/Respawn spiegeln gratis.
+    if (BALANCE.outline.enabled) {
+      this.outlineMaterial = buildOutlineMaterial(BALANCE.outline.color, BALANCE.outline.thickness);
+      this.outlineMesh = new THREE.InstancedMesh(this.geometry, this.outlineMaterial, this.count);
+      this.outlineMesh.instanceMatrix = this.mesh.instanceMatrix; // geteilt
+      this.outlineMesh.position.copy(this.mesh.position);
+      this.outlineMesh.frustumCulled = false;
+    } else {
+      this.outlineMaterial = null;
+      this.outlineMesh = null;
+    }
 
     const speedMul = b.rotationSpeedMulByTier[tier] ?? b.rotationSpeedMulByTier[0]!;
     const baseSpeed = b.baseRotationSpeed * speedMul;
@@ -142,5 +159,7 @@ export class DuckSpawner {
     if (gm) gm.dispose();
     this.material.dispose();
     this.mesh.dispose();
+    if (this.outlineMaterial) this.outlineMaterial.dispose();
+    if (this.outlineMesh) this.outlineMesh.dispose();
   }
 }

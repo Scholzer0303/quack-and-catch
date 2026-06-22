@@ -93,6 +93,13 @@ export const BALANCE = {
     gradientStops: [0.45, 0.72, 1.0] as number[],
   },
 
+  // Schwarze Comic-Kontur um die Enten (Inverted-Hull, als 2. InstancedMesh).
+  outline: {
+    enabled: true,
+    color: 0x16202a, // sehr dunkles Blau-Schwarz (weicher als reines Schwarz)
+    thickness: 0.02, // Aufblähung entlang der Normalen (Objektraum-Einheiten)
+  },
+
   round: {
     durationSec: 75,
     lowTimeWarnSec: 10,
