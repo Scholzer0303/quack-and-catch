@@ -1,6 +1,6 @@
 import './styles.css';
 import { HUD } from './HUD';
-import { StartScreen } from './StartScreen';
+import { IntroScreen } from './IntroScreen';
 import { SummaryScreen } from './SummaryScreen';
 import { CardReveal } from './CardReveal';
 import type { EventBus } from '../events/EventBus';
@@ -20,7 +20,7 @@ export interface UICallbacks {
 export class UIRoot {
   private readonly root: HTMLDivElement;
   private readonly hud: HUD;
-  private readonly startScreen: StartScreen;
+  private readonly introScreen: IntroScreen;
   private readonly summaryScreen: SummaryScreen;
   private readonly cardReveal: CardReveal;
   private readonly unsub: Array<() => void> = [];
@@ -31,13 +31,13 @@ export class UIRoot {
     document.body.appendChild(this.root);
 
     this.hud = new HUD(this.root, bus);
-    this.startScreen = new StartScreen(this.root, callbacks.onStart);
+    this.introScreen = new IntroScreen(this.root, callbacks.onStart);
     this.summaryScreen = new SummaryScreen(this.root, bus, callbacks.onRestart);
     this.cardReveal = new CardReveal(this.root, bus, callbacks.onResume);
 
     // Boot-Zustand ist 'start' (kein phase:changed beim Boot) → initial setzen.
     this.hud.setVisible(false);
-    this.startScreen.setVisible(true);
+    this.introScreen.setVisible(true);
     this.summaryScreen.setVisible(false);
 
     this.unsub.push(bus.on('phase:changed', (e) => this.onPhase(e.to)));
@@ -49,7 +49,7 @@ export class UIRoot {
   }
 
   private onPhase(to: GamePhase): void {
-    this.startScreen.setVisible(to === 'start');
+    this.introScreen.setVisible(to === 'start');
     this.summaryScreen.setVisible(to === 'summary');
     // HUD bleibt während der Pause (Tipp-Modal) sichtbar.
     this.hud.setVisible(to === 'playing' || to === 'paused');
@@ -60,7 +60,7 @@ export class UIRoot {
     this.unsub.length = 0;
     this.cardReveal.dispose();
     this.summaryScreen.dispose();
-    this.startScreen.dispose();
+    this.introScreen.dispose();
     this.hud.dispose();
     this.root.remove();
   }

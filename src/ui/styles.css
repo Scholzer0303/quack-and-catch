@@ -364,12 +364,129 @@
   }
 }
 
+/* ---------- Intro-Storyboard ---------- */
+.qc-intro {
+  width: min(30rem, 100%);
+  position: relative;
+}
+.qc-intro-scene {
+  position: relative;
+  height: 7rem;
+  margin: 0.2rem 0 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9rem;
+}
+.qc-intro-booth {
+  font-size: 4.2rem;
+  line-height: 1;
+  animation: qc-intro-pop 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+.qc-intro-figure {
+  font-size: 3.4rem;
+  line-height: 1;
+  animation: qc-intro-rise 0.45s ease-out both;
+}
+.qc-intro-prop {
+  font-size: 2.6rem;
+  line-height: 1;
+}
+.qc-intro-ticket {
+  animation: qc-intro-slide 0.6s ease-out both;
+}
+.qc-intro-rod {
+  animation: qc-intro-pop 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) 0.15s both;
+}
+.qc-intro-speech {
+  position: absolute;
+  top: 0;
+  right: 1.2rem;
+  background: var(--qc-text);
+  color: var(--qc-bg);
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.7rem 0.7rem 0.7rem 0;
+  box-shadow: 0 0.3rem 0.7rem rgba(0, 0, 0, 0.35);
+  animation: qc-intro-rise 0.4s ease-out 0.2s both;
+}
+.qc-intro-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.4rem;
+  margin: 0 0 1rem;
+}
+.qc-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+}
+.qc-dot-on {
+  background: var(--qc-gold);
+}
+.qc-intro-skip {
+  pointer-events: auto;
+  position: absolute;
+  bottom: clamp(0.6rem, 2vw, 1.4rem);
+  right: clamp(0.6rem, 2vw, 1.4rem);
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  color: var(--qc-muted);
+  font-size: 0.82rem;
+  padding: 0.4rem 0.6rem;
+  transition: color 0.15s ease;
+}
+.qc-intro-skip:hover {
+  color: var(--qc-text);
+}
+
+@keyframes qc-intro-pop {
+  from {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15);
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes qc-intro-rise {
+  from {
+    transform: translateY(0.6rem);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+@keyframes qc-intro-slide {
+  from {
+    transform: translateX(6rem);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .qc-timer.low-time,
   .qc-card,
   .qc-card[data-rarity='epic'],
   .qc-card[data-rarity='legendary'],
   .qc-card-medal,
+  .qc-intro-booth,
+  .qc-intro-figure,
+  .qc-intro-prop,
+  .qc-intro-speech,
   .qc-overlay {
     animation: none;
   }
