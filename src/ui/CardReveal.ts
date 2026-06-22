@@ -21,6 +21,7 @@ function hex(color: number): string {
 export class CardReveal {
   private readonly overlay: HTMLDivElement;
   private readonly unsub: () => void;
+  private readonly reduced = prefersReducedMotion(); // einmal cachen (wie HUD/Reticle)
   private raf = 0; // laufender Count-up-Frame (0 = keiner)
 
   constructor(
@@ -104,10 +105,11 @@ export class CardReveal {
 
   /** Token-Gain von +0 auf +tokens hochzählen (rAF). reduced-motion → sofort. */
   private startCountUp(el: HTMLElement, tokens: number): void {
-    if (prefersReducedMotion() || tokens <= 0) {
+    if (this.reduced || tokens <= 0) {
       el.textContent = `+${tokens} 🪙`;
       return;
     }
+    el.textContent = '+0 🪙'; // sofort sichtbar, bevor der erste Frame zählt
     const dur = BALANCE.juice.hud.countUpMs;
     let start = -1;
     const step = (ts: number): void => {

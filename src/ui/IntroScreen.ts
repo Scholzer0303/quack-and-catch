@@ -74,7 +74,10 @@ export class IntroScreen {
 
     const skip = el('button', 'qc-intro-skip', 'Überspringen ⏭');
     skip.type = 'button';
-    skip.addEventListener('click', () => this.onStart());
+    // Springt zum letzten Schritt (Steuerungs-Hinweis), nicht direkt ins Spiel —
+    // sonst sähe ein Erststarter die Fang-Steuerung nie (wie die alte StartScreen,
+    // die Hinweis + Start zwingend auf einem Screen führte).
+    skip.addEventListener('click', () => this.skipToControls());
     this.overlay.appendChild(skip);
 
     parent.appendChild(this.overlay);
@@ -115,12 +118,18 @@ export class IntroScreen {
     }
   }
 
-  setVisible(visible: boolean): void {
-    this.overlay.hidden = !visible;
-    if (visible && this.step !== 0) {
-      this.step = 0;
+  /** „Überspringen" → direkt zum letzten Schritt (Steuerungs-Hinweis + Start). */
+  private skipToControls(): void {
+    if (this.step !== STEPS.length - 1) {
+      this.step = STEPS.length - 1;
       this.render();
     }
+  }
+
+  setVisible(visible: boolean): void {
+    // Intro läuft einmal pro Seitenaufruf (Boot, Phase `start`); die Phase kehrt
+    // nie nach `start` zurück → kein Re-Show, kein Step-Reset nötig.
+    this.overlay.hidden = !visible;
   }
 
   dispose(): void {

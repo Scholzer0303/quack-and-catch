@@ -208,6 +208,9 @@
 .qc-card {
   --qc-accent: var(--qc-gold);
   width: min(24rem, 100%);
+  /* Fallback ohne color-mix (alte Browser verwerfen sonst den ganzen Shorthand
+     inkl. Panel-BG → unlesbare Karte). Moderne Browser nehmen die Zeile danach. */
+  background: var(--qc-panel);
   background:
     radial-gradient(
       120% 80% at 50% 0%,
@@ -219,6 +222,7 @@
   border-radius: 1.1rem;
   padding: 1.4rem 1.4rem 1.3rem;
   text-align: center;
+  box-shadow: 0 1.2rem 2.6rem rgba(0, 0, 0, 0.5); /* Fallback ohne color-mix */
   box-shadow:
     0 1.2rem 2.6rem rgba(0, 0, 0, 0.5),
     0 0 0 1px color-mix(in srgb, var(--qc-accent) 35%, transparent),
