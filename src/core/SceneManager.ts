@@ -11,7 +11,7 @@ export class SceneManager {
     this.scene.fog = new THREE.Fog(BALANCE.render.clearColor, BALANCE.render.fogNear, BALANCE.render.fogFar);
 
     const ambient = new THREE.AmbientLight(0xffffff, BALANCE.render.ambientIntensity);
-    const dir = new THREE.DirectionalLight(0xfff2d8, BALANCE.render.dirIntensity);
+    const dir = new THREE.DirectionalLight(BALANCE.render.dirColor, BALANCE.render.dirIntensity);
     dir.position.set(...BALANCE.render.dirPosition);
     // Kühles Gegenlicht für etwas Tiefe, ohne teure Schatten.
     const rim = new THREE.DirectionalLight(BALANCE.render.rimColor, BALANCE.render.rimIntensity);

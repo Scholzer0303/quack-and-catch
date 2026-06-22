@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { BALANCE } from '../config/balance';
 
 /**
  * Jahrmarkt-Stand, der das Sichtfeld rahmt: Boden, Theke, zwei Pfosten,
@@ -7,11 +8,12 @@ import * as THREE from 'three';
 export function buildStall(): THREE.Group {
   const group = new THREE.Group();
   const disposeGeos: THREE.BufferGeometry[] = [];
+  const c = BALANCE.stall;
 
-  const wood = new THREE.MeshStandardMaterial({ color: 0x7a5230, roughness: 0.8 });
-  const woodDark = new THREE.MeshStandardMaterial({ color: 0x5a3a20, roughness: 0.85 });
-  const stripeRed = new THREE.MeshStandardMaterial({ color: 0xc8413b, roughness: 0.7 });
-  const stripeCream = new THREE.MeshStandardMaterial({ color: 0xefe3c8, roughness: 0.7 });
+  const wood = new THREE.MeshStandardMaterial({ color: c.wood, roughness: 0.8 });
+  const woodDark = new THREE.MeshStandardMaterial({ color: c.woodDark, roughness: 0.85 });
+  const stripeRed = new THREE.MeshStandardMaterial({ color: c.stripeRed, roughness: 0.7 });
+  const stripeCream = new THREE.MeshStandardMaterial({ color: c.stripeCream, roughness: 0.7 });
 
   const addBox = (
     w: number,
@@ -32,7 +34,7 @@ export function buildStall(): THREE.Group {
   // Boden (großer Jahrmarktplatz)
   const floorGeo = new THREE.CircleGeometry(22, 48);
   disposeGeos.push(floorGeo);
-  const floorMat = new THREE.MeshStandardMaterial({ color: 0x223240, roughness: 1 });
+  const floorMat = new THREE.MeshStandardMaterial({ color: c.floor, roughness: 1 });
   const floor = new THREE.Mesh(floorGeo, floorMat);
   floor.rotation.x = -Math.PI / 2;
   floor.position.y = -0.35;
@@ -58,7 +60,7 @@ export function buildStall(): THREE.Group {
   }
 
   // Hintergrund-Wand hinter dem Becken (Tiefe + kein Leeraum)
-  addBox(18, 4.2, 0.3, 0, 1.7, -6.6, new THREE.MeshStandardMaterial({ color: 0x16263a, roughness: 1 }));
+  addBox(18, 4.2, 0.3, 0, 1.7, -6.6, new THREE.MeshStandardMaterial({ color: c.back, roughness: 1 }));
 
   return group;
 }

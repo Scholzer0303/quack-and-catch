@@ -11,14 +11,15 @@ export const BALANCE = {
     fov: 60,
     near: 0.1,
     far: 100,
-    fogNear: 9,
-    fogFar: 42,
-    clearColor: 0x0b2942, // tiefes Nachtblau (Jahrmarkt-Stimmung)
-    ambientIntensity: 0.75,
-    dirIntensity: 1.05,
+    fogNear: 18, // luftiger heller Tag — Fog erst spät, kaum Culling
+    fogFar: 80,
+    clearColor: 0x9ed8ff, // heller sonniger Himmel (Comic-Tag)
+    ambientIntensity: 1.05, // helle, gleichmäßige Grundausleuchtung
+    dirColor: 0xfff4d6, // warmes Sonnenlicht
+    dirIntensity: 1.25,
     dirPosition: [3.5, 7, 4] as [number, number, number],
-    rimColor: 0x5fa8d8, // kühles Gegenlicht für Tiefe
-    rimIntensity: 0.35,
+    rimColor: 0x9bd6ff, // helles, kühles Gegenlicht
+    rimIntensity: 0.45,
     rimPosition: [-4, 3, -5] as [number, number, number],
   },
 
@@ -49,10 +50,10 @@ export const BALANCE = {
     waveAmplitude: 0.06,
     waveFrequency: 1.9,
     rippleSpeed: 0.65,
-    waterColor: 0x2f7fb5,
-    waterDeepColor: 0x123a59,
-    rimColor: 0x6b4a2f, // Holzrand
-    innerWallColor: 0x10384f, // dunkle Innenwand (Tiefe)
+    waterColor: 0x49d6ef, // helles Türkis (Comic-Wasser)
+    waterDeepColor: 0x1f93c9, // sattes Blau in der Tiefe
+    rimColor: 0xe0a35a, // heller Karamell-Holzrand
+    innerWallColor: 0x2f9fce, // helle Innenwand (kein dunkles Loch mehr)
     innerWallHeight: 0.5,
     innerWallDrop: 0.2, // wie weit die Innenwand unter die Wasserlinie reicht
     // Progression: Index = Beckenspeed-Tier (= Rod-Tier)
@@ -65,6 +66,16 @@ export const BALANCE = {
     bobAmplitude: 0.05,
     bobSpeed: 1.25,
     speedVariance: 0.18, // ± individuelle Geschwindigkeit pro Ente
+  },
+
+  // Jahrmarkt-Stand-Farben (heller Comic-Tag). Früher hart in StallBuilder.
+  stall: {
+    wood: 0xd99a52, // helles Karamell-Holz
+    woodDark: 0xb87836, // gesättigtes dunkleres Holz
+    stripeRed: 0xf2564e, // kräftiges Markisen-Rot
+    stripeCream: 0xfff3da, // helles Creme
+    floor: 0x86c64e, // grüner Jahrmarkt-Rasen (freundlich, hell)
+    back: 0x83bdec, // helle Hintergrundwand (geht in den Himmel über)
   },
 
   duck: {
