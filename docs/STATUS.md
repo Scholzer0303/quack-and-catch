@@ -3,8 +3,8 @@
 > Schnellüberblick für den Session-Start. Wird nach jedem Meilenstein aktualisiert.
 
 **Stand:** 2026-06-22
-**Aktueller Meilenstein:** **M4.6 — Game-Feel & Bright-Comic-Overhaul (IN ARBEIT)** — Steps 1–9 gepusht (Step 8 = Jahrmarkt-Welt; **Step 9 = Juice + Bloom/Glow: Splash · Catch-Pop · Perfect-Flash · Mini-Screenshake (skaliert) · HUD-Count-up · Bloom-Postprocessing (Mobile-Guards) · Glow seltener Enten**). **Nächster Schritt: Tipp-Modals schicker.** (Details: HANDOVER „AKTUELL: M4.6".)
-**Letzter Build:** grün (typecheck/lint/build ✓); Smoke/Catch/Save via Playwright verifiziert (0 Konsolenfehler, `canvas:2`); In-Game-Screenshots (Splash/Bloom/Glow) gesichtet; Diff adversarial reviewt (6 erhoben, 5 bestätigt, alle behoben). Hinweis: Bloom drückt headless/swiftshader auf ~10 fps → Tests jetzt zustandsbasiert (echte GPU unbetroffen).
+**Aktueller Meilenstein:** **M4.6 — Game-Feel & Bright-Comic-Overhaul (IN ARBEIT)** — Steps 1–10 gepusht (Step 9 = Juice + Bloom/Glow; **Step 10 = Tipp-Modal schicker: Emoji-Medaillon je Tipp · Rarität-Glow/Theming · Token-Count-up · Rarität-/Kategorie-Chips · Summary-Emoji**). **Nächster Schritt: optionale Intro-Sequenz** (sonst M4.6 zum Abschluss → /code-review + Abnahme). (Details: HANDOVER „AKTUELL: M4.6".)
+**Letzter Build:** grün (typecheck/lint/build ✓); Smoke/Catch via Playwright verifiziert (0 Konsolenfehler, `canvas:2`); Modal-Screenshots je Rarität gesichtet (Medaillon/Glow/Count-up korrekt). Hinweis: Bloom drückt headless/swiftshader auf ~10 fps → Tests zustandsbasiert (echte GPU unbetroffen).
 **Live-URL:** _(folgt nach MVP, M4.5 — Vercel)_
 **Repo:** https://github.com/Scholzer0303/quack-and-catch
 
@@ -15,14 +15,14 @@
 - **M3:** Belohnung + HUD + Screens — `data/ducks.ts` (Raritäten + Loot-Tables + per-Instanz-Farben), `data/tips.ts` (12 geprüfte Karten), `RewardSystem` (Tokens + Perfect-Bonus + Tipp) + `Economy` (Saldo + Unlock-Set + Bonus), `GameStateMachine` (Phasen + Rundentimer + Score), `ui/UIRoot`+`HUD`+`StartScreen`+`CardReveal` (blockierendes Tipp-Modal, Pause) + `SummaryScreen`. Core-Loop schließt: Fang → Tokens + Tipp → Timer → Summary.
 - **M4:** Save + Deploy-Check — `types/state.ts` (SaveData + `createDefaultSave`), `systems/SaveSystem` (localStorage: versioniert, debounced, korruptionssicher; Flush bei `pagehide`/Tab-Wechsel), `Economy.snapshot()/hydrate()`, Verdrahtung in `Game` (Laden nach UIRoot → HUD zeigt geladenen Saldo), README ausgebaut, dispose-Audit. Tokens + freigeschaltete Tipps überleben Reload; defekte Daten → sauberer Default.
 
-- **M4.6 (Steps 1–9 ✅ gepusht):** Direktes Fadenkreuz, heller Comic-Tag, Toon-Cel-Shading + schwarze Outlines auf Enten, **Steuerungs-Redesign**, **Fang-Engine-Neumodell** (feste Schräg-Sicht aufs ganze Becken; Maus → Wasserpunkt W; Halten senkt Haken **ins Wasser** bei W; **räumlicher Fang** mit Ente ≤ catchRadius, Perfect = mittig; Rute schwenkt stark; Rute/Haken Toon+Outline), **Schwierigkeit je Rarität** (`catchMulByRarity`), **Jahrmarkt-Welt** (Budenreihe + Wimpel-/Lichterketten + Riesenrad/Zelt-Fernkulisse, alles Toon+Outline; schlanker Holz-Plankenrand), **Juice + Bloom/Glow** (Splash · Catch-Pop · Perfect-Flash · Mini-Screenshake (skaliert nach Rarität/Perfect) · HUD-Count-up · Bloom-Postprocessing mit Mobile-Quality-Guards · Glow seltener Enten; reduced-motion respektiert).
+- **M4.6 (Steps 1–10 ✅ gepusht):** Direktes Fadenkreuz, heller Comic-Tag, Toon-Cel-Shading + schwarze Outlines auf Enten, **Steuerungs-Redesign**, **Fang-Engine-Neumodell** (feste Schräg-Sicht aufs ganze Becken; Maus → Wasserpunkt W; Halten senkt Haken **ins Wasser** bei W; **räumlicher Fang** mit Ente ≤ catchRadius, Perfect = mittig; Rute schwenkt stark; Rute/Haken Toon+Outline), **Schwierigkeit je Rarität** (`catchMulByRarity`), **Jahrmarkt-Welt** (Budenreihe + Wimpel-/Lichterketten + Riesenrad/Zelt-Fernkulisse, alles Toon+Outline; schlanker Holz-Plankenrand), **Juice + Bloom/Glow** (Splash · Catch-Pop · Perfect-Flash · Mini-Screenshake (skaliert nach Rarität/Perfect) · HUD-Count-up · Bloom-Postprocessing mit Mobile-Quality-Guards · Glow seltener Enten; reduced-motion respektiert), **Tipp-Modal-Politur** (Emoji-Medaillon je Tipp · Rarität-Glow/Theming via `data-rarity`+`--qc-accent` · Token-Count-up · Rarität-/Kategorie-Chips · Summary-Emoji; reduced-motion gated).
 
 ## 🔧 In Arbeit — M4.6 Rest (höchste Priorität)
 1. ~~Steuerungs-Redesign + Fang-Engine + Rute/Haken-Optik + Schwierigkeit je Rarität~~ ✅ — räumliches Modell (W = Strahl ∩ Wasser), Rute schwenkt sichtbar, Haken geht echt ins Wasser, Toon+Outline, kleinere Fang-Zone je seltener.
 2. ~~Jahrmarkt-Welt~~ ✅ — Budenreihe + Wimpel-/Lichterketten + Riesenrad/Zelt-Fernkulisse; schlanker Holz-Plankenrand (Toon+Outline) statt dickem Reifen.
 3. ~~Juice + Bloom/Glow~~ ✅ — Splash/Pop/Perfect-Flash/Mini-Screenshake/HUD-Count-up + Bloom (Mobile-Guards) + Glow seltener Enten.
-4. **Tipp-Modals schicker (NÄCHSTER SCHRITT)** (evtl. Icon/Visualisierung je Tipp).
-5. **Optional:** Intro-Sequenz (Ticket → Verkäuferin → Angel → Start).
+4. ~~Tipp-Modal schicker~~ ✅ (Step 10) — Emoji-Medaillon je Tipp (`Tip.icon`), Rarität-Glow/Theming (`data-rarity`+`--qc-accent`), Token-Count-up, Rarität-/Kategorie-Chips; Summary-Liste mit Emoji.
+5. **Optional (NÄCHSTER SCHRITT):** Intro-Sequenz (Ticket → Verkäuferin → Angel → Start) — sonst M4.6 abschließen (/code-review über Gesamt-Diff + Abnahme).
 
 ## ⏭️ Danach
 - M5 — Tipp-Codex-Screen (~50–60 Karten + `ui/CodexScreen`).

@@ -204,16 +204,59 @@
 }
 
 /* ---------- Karten-Modal (Reward) ---------- */
+/* --qc-accent wird je Fang von CardReveal gesetzt (Rarität-Bodyfarbe bzw. Gold). */
 .qc-card {
+  --qc-accent: var(--qc-gold);
   width: min(24rem, 100%);
-  background: var(--qc-panel);
-  border: 2px solid var(--qc-gold);
+  background:
+    radial-gradient(
+      120% 80% at 50% 0%,
+      color-mix(in srgb, var(--qc-accent) 16%, transparent),
+      transparent 70%
+    ),
+    var(--qc-panel);
+  border: 2px solid var(--qc-accent);
   border-radius: 1.1rem;
-  padding: 1.3rem 1.4rem;
+  padding: 1.4rem 1.4rem 1.3rem;
   text-align: center;
-  box-shadow: 0 1.2rem 2.6rem rgba(0, 0, 0, 0.5);
+  box-shadow:
+    0 1.2rem 2.6rem rgba(0, 0, 0, 0.5),
+    0 0 0 1px color-mix(in srgb, var(--qc-accent) 35%, transparent),
+    0 0 2.2rem color-mix(in srgb, var(--qc-accent) 22%, transparent);
   backdrop-filter: blur(10px);
   animation: qc-card-in 0.35s cubic-bezier(0.18, 0.9, 0.3, 1.2);
+}
+/* Glow skaliert mit Rarität (Sprache wie der Enten-Glow); Puls nur epic/legendary. */
+.qc-card[data-rarity='rare'] {
+  box-shadow:
+    0 1.2rem 2.6rem rgba(0, 0, 0, 0.5),
+    0 0 0 1px color-mix(in srgb, var(--qc-accent) 45%, transparent),
+    0 0 2.8rem color-mix(in srgb, var(--qc-accent) 30%, transparent);
+}
+.qc-card[data-rarity='epic'],
+.qc-card[data-rarity='legendary'] {
+  box-shadow:
+    0 1.2rem 2.6rem rgba(0, 0, 0, 0.5),
+    0 0 0 1px color-mix(in srgb, var(--qc-accent) 55%, transparent),
+    0 0 3.6rem color-mix(in srgb, var(--qc-accent) 42%, transparent);
+  animation:
+    qc-card-in 0.35s cubic-bezier(0.18, 0.9, 0.3, 1.2),
+    qc-card-glow 1.8s ease-in-out 0.35s infinite;
+}
+.qc-card-medal {
+  width: 4rem;
+  height: 4rem;
+  margin: 0.1rem auto 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.1rem;
+  line-height: 1;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--qc-accent) 14%, rgba(0, 0, 0, 0.25));
+  border: 2px solid color-mix(in srgb, var(--qc-accent) 60%, transparent);
+  box-shadow: inset 0 0 1rem color-mix(in srgb, var(--qc-accent) 25%, transparent);
+  animation: qc-medal-pop 0.45s cubic-bezier(0.2, 1.4, 0.4, 1) 0.12s both;
 }
 .qc-card-head {
   display: flex;
@@ -227,6 +270,10 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
+  color: var(--qc-accent);
+  border: 1px solid color-mix(in srgb, var(--qc-accent) 45%, transparent);
+  border-radius: 1rem;
+  padding: 0.12rem 0.5rem;
 }
 .qc-tokens-gain {
   font-size: 1.5rem;
@@ -252,11 +299,16 @@
   font-size: 1.15rem;
 }
 .qc-card-cat {
-  font-size: 0.66rem;
+  display: inline-block;
+  font-size: 0.64rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--qc-muted);
-  margin-bottom: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid color-mix(in srgb, var(--qc-accent) 30%, transparent);
+  border-radius: 1rem;
+  padding: 0.16rem 0.6rem;
+  margin: 0 0 0.6rem;
 }
 .qc-card-text {
   font-size: 0.92rem;
@@ -283,10 +335,41 @@
     opacity: 1;
   }
 }
+@keyframes qc-medal-pop {
+  from {
+    transform: scale(0.2) rotate(-12deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.18) rotate(4deg);
+  }
+  to {
+    transform: scale(1) rotate(0);
+    opacity: 1;
+  }
+}
+@keyframes qc-card-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 1.2rem 2.6rem rgba(0, 0, 0, 0.5),
+      0 0 0 1px color-mix(in srgb, var(--qc-accent) 55%, transparent),
+      0 0 3.2rem color-mix(in srgb, var(--qc-accent) 38%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 1.2rem 2.6rem rgba(0, 0, 0, 0.5),
+      0 0 0 1px color-mix(in srgb, var(--qc-accent) 70%, transparent),
+      0 0 4.6rem color-mix(in srgb, var(--qc-accent) 55%, transparent);
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .qc-timer.low-time,
   .qc-card,
+  .qc-card[data-rarity='epic'],
+  .qc-card[data-rarity='legendary'],
+  .qc-card-medal,
   .qc-overlay {
     animation: none;
   }

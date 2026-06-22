@@ -66,6 +66,7 @@ export interface Tip {
   id: string;
   tier: TipTier;
   kategorie: string;
+  icon: string; // Emoji-Symbol je Tipp (Reward-Modal + Codex)
   titel: string;
   text: string;
 }

@@ -1,7 +1,10 @@
+import { BALANCE } from '../config/balance';
 import { RARITY_DEFS } from '../data/ducks';
 import type { EventBus } from '../events/EventBus';
+import { prefersReducedMotion } from '../fx/reducedMotion';
 import type { GameEvents } from '../types/events';
 import type { DuckRarity } from '../types/domain';
+import { clamp, lerp } from '../utils/math';
 
 /** Hex-Zahl → CSS-Farbe (#rrggbb). */
 function hex(color: number): string {
@@ -9,13 +12,16 @@ function hex(color: number): string {
 }
 
 /**
- * Belohnungs-Modal beim Fang: zeigt Tokens + Tipp-Karte (Rarität-Farbrand,
- * „Neu!"-Badge). Blockierend — der „Weiter"-Button meldet das Fortsetzen per
- * Callback (Game setzt die Runde aus paused fort). Reagiert auf `reward:granted`.
+ * Belohnungs-Modal beim Fang: zeigt Tokens + Tipp-Karte mit Rarität-Theming
+ * (Akzent-Glow via `data-rarity` + `--qc-accent`), Emoji-Medaillon, animiertem
+ * Token-Count-up und „Neu!"-Badge. Blockierend — der „Weiter"-Button meldet das
+ * Fortsetzen per Callback (Game setzt die Runde aus paused fort). Reagiert auf
+ * `reward:granted`.
  */
 export class CardReveal {
   private readonly overlay: HTMLDivElement;
   private readonly unsub: () => void;
+  private raf = 0; // laufender Count-up-Frame (0 = keiner)
 
   constructor(
     parent: HTMLElement,
@@ -31,27 +37,33 @@ export class CardReveal {
   }
 
   private show(e: GameEvents['reward:granted']): void {
+    this.stopCountUp();
+
     const rarity: DuckRarity | null = e.tip ? e.tip.tier : null;
     const accent = rarity ? hex(RARITY_DEFS[rarity].bodyColor) : 'var(--qc-gold)';
 
     const card = document.createElement('div');
     card.className = 'qc-card';
-    card.style.borderColor = accent;
+    card.dataset.rarity = rarity ?? 'token';
+    card.style.setProperty('--qc-accent', accent);
 
     const head = document.createElement('div');
     head.className = 'qc-card-head';
     if (rarity) {
       const rar = document.createElement('span');
       rar.className = 'qc-rarity';
-      rar.style.color = accent;
       rar.textContent = rarity.toUpperCase();
       head.appendChild(rar);
     }
     const gain = document.createElement('span');
     gain.className = 'qc-tokens-gain';
-    gain.textContent = `+${e.tokens} 🪙`;
     head.appendChild(gain);
     card.appendChild(head);
+
+    const medal = document.createElement('div');
+    medal.className = 'qc-card-medal';
+    medal.textContent = e.tip ? e.tip.icon : '🎣';
+    card.appendChild(medal);
 
     if (e.tip) {
       const title = document.createElement('h2');
@@ -86,15 +98,43 @@ export class CardReveal {
 
     this.overlay.replaceChildren(card);
     this.overlay.hidden = false;
+
+    this.startCountUp(gain, e.tokens);
+  }
+
+  /** Token-Gain von +0 auf +tokens hochzählen (rAF). reduced-motion → sofort. */
+  private startCountUp(el: HTMLElement, tokens: number): void {
+    if (prefersReducedMotion() || tokens <= 0) {
+      el.textContent = `+${tokens} 🪙`;
+      return;
+    }
+    const dur = BALANCE.juice.hud.countUpMs;
+    let start = -1;
+    const step = (ts: number): void => {
+      if (start < 0) start = ts;
+      const t = clamp((ts - start) / dur, 0, 1);
+      el.textContent = `+${Math.round(lerp(0, tokens, t))} 🪙`;
+      this.raf = t < 1 ? requestAnimationFrame(step) : 0;
+    };
+    this.raf = requestAnimationFrame(step);
+  }
+
+  private stopCountUp(): void {
+    if (this.raf) {
+      cancelAnimationFrame(this.raf);
+      this.raf = 0;
+    }
   }
 
   private dismiss(): void {
+    this.stopCountUp();
     this.overlay.hidden = true;
     this.overlay.replaceChildren();
     this.onResume();
   }
 
   dispose(): void {
+    this.stopCountUp();
     this.unsub();
     this.overlay.remove();
   }

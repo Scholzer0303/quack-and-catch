@@ -62,7 +62,7 @@ export class SummaryScreen {
         cat.className = 'qc-tip-cat';
         cat.textContent = `${tip.tier} · ${tip.kategorie}`;
         li.appendChild(cat);
-        li.append(tip.titel);
+        li.append(`${tip.icon} ${tip.titel}`);
         list.appendChild(li);
       }
       nodes.push(list);

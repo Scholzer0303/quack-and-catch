@@ -64,7 +64,7 @@ Eingeschoben nach Nutzer-Live-Test (Wettbewerb): Steuerung muss „cool" sein + 
 - [x] **Schwierigkeit je Rarität:** `catchMulByRarity` verkleinert Fang-/Perfect-Zone je seltener (gelb 1.0 → grün 0.62 → blau 0.4 → epic 0.3 → legendary 0.24); Drop-Zone-Ring skaliert sichtbar mit. Basis-Balance: `catchRadius` 0.42, Enten etwas schneller. (Step 7, `7a92a69`)
 - [x] **Jahrmarkt-Welt:** graue Wand weg → Comic-Jahrmarkt (Budenreihe, Wimpel-/Lichterketten, Riesenrad + Zirkuszelt als Fernkulisse); schlanker Holz-Plankenrand (Toon+Outline) statt dickem Reifen. Alles als gemergte Toon-Geo + 1 Outline + instanced Birnen (~6 Draw-Calls). (Step 8)
 - [x] **Juice + Bloom/Glow:** Splash · Catch-Pop · Perfect-Flash · Mini-Screenshake (skaliert nach Rarität/Perfect) · HUD-Count-up (`src/fx/`) · Bloom-Postprocessing mit Mobile-Quality-Guards (`core/postprocessing/`) · Glow seltener Enten. reduced-motion respektiert. (Step 9)
-- [ ] Tipp-Modal schicker (`CardReveal.ts`/`styles.css`; optional Icon/Visualisierung je Tipp)
+- [x] **Tipp-Modal schicker:** Emoji-Medaillon je Tipp (`Tip.icon` Pflichtfeld + 12 Emojis) · Rarität-Glow/Theming (`data-rarity` + `--qc-accent`, Puls nur epic/legendary) · Token-Count-up · Rarität-/Kategorie-Chips; Summary-Liste mit Emoji-Prefix. reduced-motion gated. (Step 10)
 - [ ] Optional: Intro-Sequenz (Ticket → Verkäuferin → Angel → Start; neue Phase `intro`)
 
 ## M4.5 — Vercel-Live-Deploy (nach MVP)
