@@ -4,6 +4,25 @@ Laufendes Log: Entscheidungen, Stolpersteine, Fixes, Balance-Erkenntnisse. Neues
 
 ---
 
+## 2026-06-22 — M4.6 Step 8: Jahrmarkt-Welt (Buden, Wimpel/Lichter, Riesenrad/Zelt) + schlanker Plankenrand
+
+**Produkt-Entscheidungen (vom Nutzer)**
+- **Voller Jahrmarkt:** Budenreihe + Wimpel-/Lichterketten + Riesenrad **und** Zirkuszelt als Fernkulisse (statt grauer Backdrop-Wand). Becken-Rand = **schlanker Holz-Plankenrand** (Toon+Outline) statt dickem Karamell-Reifen.
+- **Umfang strikt Optik/Layout** — Engine/Gameplay unangetastet (Enten/Rute/Fang-Logik unverändert; nur `StallBuilder`/`BasinBuilder`/Farben + Game-Wiring).
+
+**Architektur / Technik**
+- **Stilkonsistenz billig:** Alle massiven Stall-Teile werden als EINE vertex-gefärbte, gemergte Toon-Geometrie gebaut (1 Draw-Call) + EIN geteiltes Inverted-Hull-Outline-Mesh (1 Draw-Call) — Muster aus `RodBuilder.place()`/`DuckFactory`. Streifen (Markisen) flach ohne Outline (sonst schwarze Linien zwischen Streifen), Wimpel doppelseitig ohne Outline, Glühbirnen als 1 `InstancedMesh`. Gesamter Jahrmarkt ≈ **6 Draw-Calls** (mobil-freundlich).
+- **`mergeGeometries`-Fallen:** alle Teile vor dem Merge auf identische Attribute trimmen (`position/normal/uv/color`) — sonst wirft three. Custom-Wimpel-Dreieck **indexed** halten (Built-ins sind indexed; indexed+non-indexed mischt nicht). Quell-Geometrien nach dem Merge disposen (Daten sind kopiert).
+- **`buildStall()` liefert jetzt `{group, dispose}`** (vorher nackte Group): nötig, weil die Toon-**Gradient-DataTexture** sonst leckt — `SceneManager.dispose()` disposed nur `geometry`+`material` beim Traversen, **keine Texturen und kein `mesh.dispose()`**. Game hält die Referenz und ruft `stall.dispose()`.
+
+**Stolperstein / Fix (per Review gefunden, nicht per Reasoning)**
+- **InstancedMesh-Leak:** Die Lichterketten-`bulbs` (InstancedMesh) wurden nicht disposed — `instanceMatrix`/`instanceColor` sind dedizierte GL-Buffer, die NUR `InstancedMesh.dispose()` freigibt (geometry/material allein reicht nicht). Fix: `bulbs` in die `disposables` aufnehmen (wie `DuckSpawner.dispose()` mit `this.mesh.dispose()`). Praktischer Impact gering (einzige Game-Instanz, kein In-App-Restart), aber Vertrag „keine Leaks" gilt.
+
+**Framing-Lehre (per Screenshot getunt)**
+- **Fernkulisse darf nicht in den Himmel-Ton matchen:** erster `ferrisColor` ≈ Himmelblau → praktisch unsichtbar. Im flachen Comic-Look trägt die **schwarze Outline + ein distinkter, satter Flachton** die Distanz, NICHT atmosphärischer Dunst (Fog greift auf der Distanz kaum). Lösung: kontrastreiche Silhouetten (Indigo-Riesenrad, sattes Zelt-Rot).
+- **Vordergrund-Markise verdeckt den oberen Bildstreifen:** distante hohe Objekte (Riesenrad-/Zeltspitze) müssen ihren sichtbaren Bogen im Band **über der Budenreihe, aber unter der eigenen Markise** halten (Top ≈ y 3.0). Groß-aufragend hinter den Buden liest sich besser als seitlich daneben (dort verdecken die äußeren Buden zu viel).
+- **`_ingame_shot.py` (neu, dev-only):** schießt einen Screenshot der lebenden Welt (Start-Screen via `__qc.state.start()` weg) — Optik-Iteration ohne Modal-Verdeckung. Output `ingame_screenshot.png` gitignored.
+
 ## 2026-06-22 — M4.6 Step 7: Schwierigkeit je Rarität (kleinere Fang-Zone)
 
 - **Nutzer-Wunsch:** gelb (common) so lassen, grün (uncommon) schwerer, blau (rare) sehr schwer — „kleinere Ring oder Timing". Umgesetzt rein räumlich (passt zum Engine-Modell): `balance.hook.catchMulByRarity` multipliziert `catchRadius` UND `perfectRadius` je Rarität (gelb 1.0 → grün 0.62 → blau 0.4 → epic 0.3 → legendary 0.24).

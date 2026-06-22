@@ -1,15 +1,18 @@
 import * as THREE from 'three';
 import { BALANCE } from '../config/balance';
 import { waterVertexShader, waterFragmentShader } from './shaders/water';
+import { buildToonGradient } from './DuckFactory';
+import { buildOutlineMaterial } from './materials/OutlineMaterial';
 
 /**
- * Ovaler Wasserkanal: animierte Wasseroberfläche (Custom-Shader) + Rand-Ring.
+ * Ovaler Wasserkanal: animierte Wasseroberfläche (Custom-Shader) + schlanker
+ * Holz-Plankenrand (Toon + schwarze Outline, stilkonsistent zu Enten/Rute).
  * `update(elapsed)` treibt die Wellen-Uniform.
  */
 export class BasinBuilder {
   readonly group: THREE.Group;
   private readonly waterMaterial: THREE.ShaderMaterial;
-  private readonly disposables: Array<THREE.BufferGeometry | THREE.Material> = [];
+  private readonly disposables: Array<{ dispose(): void }> = [];
 
   constructor() {
     const b = BALANCE.basin;
@@ -38,21 +41,31 @@ export class BasinBuilder {
     water.position.y = b.waterY;
     this.disposables.push(waterGeo, this.waterMaterial);
 
-    // --- Rand-Ring (ovale Röhre aus skaliertem Torus) ---
+    // Gemeinsamer Comic-Look: Toon-Gradient + Inverted-Hull-Outline (wie Enten/Rute).
+    const grad = buildToonGradient(BALANCE.toon.gradientStops);
+    const outlineMat = buildOutlineMaterial(BALANCE.outline.color, BALANCE.outline.thickness);
+    this.disposables.push(grad, outlineMat);
+
+    // --- Schlanker Holz-Plankenrand (ovale Röhre aus skaliertem Torus, toon) ---
     const avg = (b.radiusX + b.radiusZ) / 2;
-    const rimGeo = new THREE.TorusGeometry(avg, b.rimThickness, 12, 64);
-    const rimMat = new THREE.MeshStandardMaterial({ color: b.rimColor, roughness: 0.85, metalness: 0.05 });
+    const rimGeo = new THREE.TorusGeometry(avg, b.rimThickness, 12, 72);
+    const rimMat = new THREE.MeshToonMaterial({ color: b.rimColor, gradientMap: grad });
     const rim = new THREE.Mesh(rimGeo, rimMat);
     rim.rotation.x = -Math.PI / 2;
     rim.scale.set(b.radiusX / avg, b.radiusZ / avg, 1);
     rim.position.y = b.rimY;
+    // Schwarze Kontur: zweites, aufgeblähtes Mesh mit identischer Pose (teilt rimGeo).
+    const rimOutline = new THREE.Mesh(rimGeo, outlineMat);
+    rimOutline.rotation.x = -Math.PI / 2;
+    rimOutline.scale.set(b.radiusX / avg, b.radiusZ / avg, 1);
+    rimOutline.position.y = b.rimY;
     this.disposables.push(rimGeo, rimMat);
 
-    // --- Innenwand (dunkler Zylinder-Ausschnitt für Tiefe) ---
+    // --- Innenwand (Zylinder-Ausschnitt für Tiefe, toon) ---
     const wallGeo = new THREE.CylinderGeometry(1, 1, b.innerWallHeight, 48, 1, true);
-    const wallMat = new THREE.MeshStandardMaterial({
+    const wallMat = new THREE.MeshToonMaterial({
       color: b.innerWallColor,
-      roughness: 1,
+      gradientMap: grad,
       side: THREE.BackSide,
     });
     const wall = new THREE.Mesh(wallGeo, wallMat);
@@ -60,7 +73,7 @@ export class BasinBuilder {
     wall.position.y = b.waterY - b.innerWallDrop;
     this.disposables.push(wallGeo, wallMat);
 
-    this.group.add(water, rim, wall);
+    this.group.add(water, rim, rimOutline, wall);
   }
 
   update(elapsed: number): void {

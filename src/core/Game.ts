@@ -4,7 +4,7 @@ import { CameraRig } from './CameraRig';
 import { GameLoop } from './GameLoop';
 import { EventBus } from '../events/EventBus';
 import type { GameEvents } from '../types/events';
-import { buildStall } from '../world/StallBuilder';
+import { buildStall, type StallParts } from '../world/StallBuilder';
 import { BasinBuilder } from '../world/BasinBuilder';
 import { DuckSpawner } from '../systems/DuckSpawner';
 import { InputSystem } from '../systems/InputSystem';
@@ -24,6 +24,7 @@ export class Game {
   private readonly sceneManager: SceneManager;
   private readonly cameraRig: CameraRig;
   private readonly loop: GameLoop;
+  private readonly stall: StallParts;
   private readonly basin: BasinBuilder;
   private readonly ducks: DuckSpawner;
   private readonly input: InputSystem;
@@ -44,7 +45,8 @@ export class Game {
     this.cameraRig = new CameraRig(this.renderer.aspect);
 
     // Welt aufbauen
-    this.sceneManager.add(buildStall());
+    this.stall = buildStall();
+    this.sceneManager.add(this.stall.group);
     this.basin = new BasinBuilder();
     this.sceneManager.add(this.basin.group);
 
@@ -190,6 +192,7 @@ export class Game {
     this.fishingRod.dispose();
     this.ducks.dispose();
     this.basin.dispose();
+    this.stall.dispose();
     this.sceneManager.dispose();
     this.renderer.dispose();
     this.bus.clear();

@@ -46,14 +46,14 @@ export const BALANCE = {
     radiusZ: 2.35,
     centerZ: -2.2, // Becken liegt vor dem Spieler
     waterY: 0.0,
-    rimY: 0.16,
-    rimThickness: 0.32,
+    rimY: 0.05,
+    rimThickness: 0.11, // schlanker Holz-Plankenrand (statt dickem Reifen)
     waveAmplitude: 0.06,
     waveFrequency: 1.9,
     rippleSpeed: 0.65,
     waterColor: 0x49d6ef, // helles Türkis (Comic-Wasser)
     waterDeepColor: 0x1f93c9, // sattes Blau in der Tiefe
-    rimColor: 0xe0a35a, // heller Karamell-Holzrand
+    rimColor: 0xcf9352, // warmer Holz-Plankenton (passend zu den Buden)
     innerWallColor: 0x2f9fce, // helle Innenwand (kein dunkles Loch mehr)
     innerWallHeight: 0.5,
     innerWallDrop: 0.2, // wie weit die Innenwand unter die Wasserlinie reicht
@@ -70,13 +70,26 @@ export const BALANCE = {
   },
 
   // Jahrmarkt-Stand-Farben (heller Comic-Tag). Früher hart in StallBuilder.
+  // Geometrie/Layout liegt bewusst inline im StallBuilder (Projekt-Konvention seit M1:
+  // Farben zentral, Konstruktions-Koordinaten beim Mesh) — hier nur die Tunables-Farben.
   stall: {
     wood: 0xd99a52, // helles Karamell-Holz
     woodDark: 0xb87836, // gesättigtes dunkleres Holz
     stripeRed: 0xf2564e, // kräftiges Markisen-Rot
     stripeCream: 0xfff3da, // helles Creme
     floor: 0x86c64e, // grüner Jahrmarkt-Rasen (freundlich, hell)
-    back: 0x83bdec, // helle Hintergrundwand (geht in den Himmel über)
+    // Hintergrund-Budenreihe: farbige Rückwand-Paneele je Bude (zyklisch)
+    boothPanels: [0x4fb0c6, 0xf2c14e, 0xef798a] as number[], // Teal · Sonnengelb · Rosa
+    // Fernkulisse — flache, KONTRASTREICHE Silhouetten (kein Sky-Match, sonst
+    // unsichtbar): distinkte Comic-Farben + schwarze Outline lesen klar gegen den Himmel.
+    ferrisColor: 0x6f7bd0, // Indigo-Blau (Riesenrad-Gerüst) — deutlich gegen Himmel
+    ferrisCabin: 0xffd36b, // warme gelbe Gondeln (Pop)
+    tentRoof: 0xe8717a, // sattes Zelt-Rot
+    tentTip: 0xfaf0dd, // helle Zeltspitze/Fähnchen
+    tentBase: 0xf3ece0, // helle Zeltwand
+    // Lichterketten (emissive Glühbirnen, abwechselnd warm/cool)
+    bulbWarm: 0xfff1b0, // warmes Glühbirnen-Gelb
+    bulbCool: 0xfff7e6, // helles Cremeweiß
   },
 
   duck: {

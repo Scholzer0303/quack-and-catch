@@ -9,8 +9,9 @@ dist-ssr/
 *.log
 npm-debug.log*
 
-# Smoke-Test-Artefakt
+# Smoke-/Optik-Test-Artefakte (Screenshots)
 smoke_screenshot.png
+ingame_screenshot.png
 
 # Claude Code (lokale Session-Artefakte)
 .claude/
