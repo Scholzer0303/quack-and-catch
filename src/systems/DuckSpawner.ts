@@ -137,6 +137,9 @@ export class DuckSpawner {
 
   dispose(): void {
     this.geometry.dispose();
+    // Cel-Gradient-Textur des Toon-Materials mit freigeben (kein Leak).
+    const gm = (this.material as THREE.MeshToonMaterial).gradientMap;
+    if (gm) gm.dispose();
     this.material.dispose();
     this.mesh.dispose();
   }

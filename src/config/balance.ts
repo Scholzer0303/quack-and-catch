@@ -87,6 +87,12 @@ export const BALANCE = {
     eyeColor: 0x14202a,
   },
 
+  // Cel-Shading: diskrete Helligkeitsstufen (Comic-Bänder). Kein 0.0, damit die
+  // Raritätsfarbe auch im Schatten sichtbar bleibt.
+  toon: {
+    gradientStops: [0.45, 0.72, 1.0] as number[],
+  },
+
   round: {
     durationSec: 75,
     lowTimeWarnSec: 10,

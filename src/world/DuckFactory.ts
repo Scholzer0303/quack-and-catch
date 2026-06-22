@@ -2,6 +2,25 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { BALANCE } from '../config/balance';
 
+/** Winzige Gradient-Textur für Cel-Shading: diskrete Helligkeitsstufen.
+ *  RGBA (alle Kanäle = Stufe), NearestFilter → harte Bänder statt weicher Verlauf. */
+function buildToonGradient(stops: readonly number[]): THREE.DataTexture {
+  const data = new Uint8Array(stops.length * 4);
+  for (let i = 0; i < stops.length; i++) {
+    const v = Math.round(Math.max(0, Math.min(1, stops[i] ?? 1)) * 255);
+    data[i * 4] = v;
+    data[i * 4 + 1] = v;
+    data[i * 4 + 2] = v;
+    data[i * 4 + 3] = 255;
+  }
+  const tex = new THREE.DataTexture(data, stops.length, 1);
+  tex.minFilter = THREE.NearestFilter;
+  tex.magFilter = THREE.NearestFilter;
+  tex.generateMipmaps = false;
+  tex.needsUpdate = true;
+  return tex;
+}
+
 /** Färbt alle Vertices einer Geometrie einfarbig (für gebackene Vertex-Farben). */
 function paint(geo: THREE.BufferGeometry, hex: number): THREE.BufferGeometry {
   const c = new THREE.Color(hex);
@@ -66,7 +85,13 @@ export const DuckFactory = {
     return merged;
   },
 
-  buildMaterial(): THREE.Material {
-    return new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.55, metalness: 0.05 });
+  /** Cel-shaded Material. `vertexColors:true` lässt die per-Instanz-Raritätsfarbe
+   *  (InstancedMesh.instanceColor) durch denselben color_vertex-Chunk durchschlagen.
+   *  `gradientMap` erzeugt die harten Comic-Bänder. */
+  buildMaterial(): THREE.MeshToonMaterial {
+    return new THREE.MeshToonMaterial({
+      vertexColors: true,
+      gradientMap: buildToonGradient(BALANCE.toon.gradientStops),
+    });
   },
 };
