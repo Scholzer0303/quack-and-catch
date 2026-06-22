@@ -18,14 +18,35 @@ URL = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:5173"
 
 
 def catch_one(page):
-    """Treibt den Fang-Loop bis zum ersten Treffer (analog catch_test.py)."""
+    """Treibt den Fang-Loop bis zum ersten Treffer (analog catch_test.py).
+    M4.6: Direktes Fadenkreuz — lebende Ente auf den Screen projizieren und die
+    Maus dorthin bewegen (Fang-Strahl geht durch die Zeigerposition)."""
     page.evaluate("() => window.__qc.state.start()")
-    cx, cy = 640, 655
     for _ in range(40):
-        page.mouse.move(cx, cy)
+        px = page.evaluate(
+            """() => {
+              const cam = window.__qc.camera;
+              const V3 = cam.position.constructor;
+              const w = window.innerWidth, h = window.innerHeight;
+              let best = null, bestScore = Infinity;
+              for (const d of window.__qc.ducks.ducks) {
+                if (!d.alive) continue;
+                const ndc = new V3(d.worldX, d.worldY, d.worldZ).project(cam);
+                if (ndc.z >= 1 || Math.abs(ndc.x) > 0.95 || Math.abs(ndc.y) > 0.95) continue;
+                const score = Math.abs(ndc.x) + Math.abs(ndc.y);
+                if (score < bestScore) { bestScore = score; best = ndc; }
+              }
+              if (!best) return null;
+              return { x: (best.x * 0.5 + 0.5) * w, y: (0.5 - best.y * 0.5) * h };
+            }"""
+        )
+        if not px:
+            page.wait_for_timeout(120)
+            continue
+        page.mouse.move(px["x"], px["y"])
         try:
             page.wait_for_function(
-                "() => window.__qc.rod.getView().hasTarget === true", timeout=4000
+                "() => window.__qc.rod.getView().hasTarget === true", timeout=2000
             )
         except Exception:
             continue
@@ -50,7 +71,8 @@ with sync_playwright() as p:
 
     page.goto(URL, wait_until="networkidle")
     page.wait_for_function(
-        "() => window.__qc && window.__qc.save && window.__qc.economy && window.__qc.rod",
+        "() => window.__qc && window.__qc.save && window.__qc.economy && window.__qc.rod"
+        " && window.__qc.camera",
         timeout=10000,
     )
 

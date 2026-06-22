@@ -5,24 +5,24 @@ import type { Duck } from '../types/domain';
  * Findet die anvisierte Ente: analytischer Ray-Sphere-Test gegen die pro Tick
  * gecachten `duck.worldX/Y/Z` (kein teures Instanz-Matrix-Raycasting).
  *
- * - Aim-Ray = Kamera-Center-Strahl (Reticle ist zentriert).
+ * - Aim-Ray = Strahl durch die Zeigerposition (`pointerNdc`, direktes Fadenkreuz).
  * - Treffer-Kandidat: senkrechter Abstand Ente↔Strahl < `catchRadius`
  *   UND Distanz Haken-Anker↔Ente ≤ `reach`.
  * - Scratch-Vektoren wiederverwendet → keine Per-Frame-Allocs.
  */
 export class HookRaycaster {
   private readonly raycaster = new THREE.Raycaster();
-  private readonly center = new THREE.Vector2(0, 0);
   private readonly toDuck = new THREE.Vector3();
 
   findTarget(
     camera: THREE.Camera,
+    pointerNdc: THREE.Vector2,
     hookAnchor: THREE.Vector3,
     ducks: readonly Duck[],
     reach: number,
     catchRadius: number,
   ): Duck | null {
-    this.raycaster.setFromCamera(this.center, camera);
+    this.raycaster.setFromCamera(pointerNdc, camera);
     const origin = this.raycaster.ray.origin;
     const dir = this.raycaster.ray.direction; // normalisiert
     const catchR2 = catchRadius * catchRadius;

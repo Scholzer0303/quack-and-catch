@@ -41,9 +41,15 @@ export class CameraRig {
   }
 
   update(dt: number): void {
-    const lambda = BALANCE.camera.aimSmooth;
-    this.yaw = damp(this.yaw, this.targetYaw, lambda, dt);
-    this.pitch = damp(this.pitch, this.targetPitch, lambda, dt);
+    if (BALANCE.camera.aimInstant) {
+      // Blick folgt dem Zeiger 1:1 (kein Nachfaden).
+      this.yaw = this.targetYaw;
+      this.pitch = this.targetPitch;
+    } else {
+      const lambda = BALANCE.camera.aimSmooth;
+      this.yaw = damp(this.yaw, this.targetYaw, lambda, dt);
+      this.pitch = damp(this.pitch, this.targetPitch, lambda, dt);
+    }
     this.camera.rotation.set(this.pitch, this.yaw, 0);
   }
 

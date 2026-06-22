@@ -53,6 +53,7 @@ export class FishingRod {
   /** Flacher Ring um die anvisierte Ente; Game hängt ihn in die Szene. */
   readonly highlight: THREE.Mesh;
 
+  private readonly aimNdc = new THREE.Vector2(0, 0); // Zeigerposition (direktes Fadenkreuz)
   private state: RodState = 'idle';
   private timer = 0; // Sekunden im aktuellen Zustand
   private lockDuck: Duck | null = null;
@@ -94,9 +95,15 @@ export class FishingRod {
     return this.camera.localToWorld(this.hookWorld.copy(HOOK_ANCHOR_LOCAL));
   }
 
+  /** Aktuelle Zeigerposition setzen (normalisiertes NDC, x rechts/+1, y oben/+1). */
+  setAim(ndcX: number, ndcY: number): void {
+    this.aimNdc.set(ndcX, ndcY);
+  }
+
   private aimTarget(): Duck | null {
     return this.raycaster.findTarget(
       this.camera,
+      this.aimNdc,
       this.hookAnchor(),
       this.ducks.ducks,
       this.stats.reach,
@@ -104,10 +111,13 @@ export class FishingRod {
     );
   }
 
-  /** Pointerdown: Ziel locken und Cast starten. Nur aus idle. */
+  /** Pointerdown: nur auf eine fangbare Ente auswerfen. Ohne Ziel kein Cast
+   *  (das Fadenkreuz signalisiert per Farbe, ob eine Ente unter dem Zeiger ist). */
   press(aimX: number, aimY: number): void {
     if (this.state !== 'idle') return;
-    this.lockDuck = this.aimTarget();
+    const target = this.aimTarget();
+    if (!target) return; // kein Ziel → kein Auswerfen (kein Leerlauf-Cooldown)
+    this.lockDuck = target;
     this.bus.emit('hook:cast', { aimX, aimY });
     this.state = 'casting';
     this.timer = 0;

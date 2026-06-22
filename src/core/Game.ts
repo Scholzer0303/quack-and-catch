@@ -92,12 +92,19 @@ export class Game {
       }),
     );
 
-    // Eingabe: Pointer schwenkt Blick/Rute im Aim-Cone; Halten/Loslassen fängt.
+    // Eingabe: Zeiger steuert direktes Fadenkreuz (Reticle + Fang-Strahl) und
+    // einen dezenten Parallax-Schwenk; Halten/Loslassen fängt.
     // Auswerfen nur in 'playing' (Phase-Gate); Loslassen/Abbruch bleiben offen,
     // damit ein laufender Hold sich immer auflösen kann.
     this.input = new InputSystem(canvas, {
-      onAim: (ax, ay) => this.cameraRig.setAimTarget(ax, ay),
+      onAim: (ax, ay) => {
+        this.cameraRig.setAimTarget(ax, ay);
+        this.fishingRod.setAim(ax, ay);
+        this.reticle.setPointer(ax, ay);
+      },
       onPress: (ax, ay) => {
+        this.fishingRod.setAim(ax, ay);
+        this.reticle.setPointer(ax, ay);
         if (this.state.isPlaying()) this.fishingRod.press(ax, ay);
       },
       onRelease: () => this.fishingRod.release(),
@@ -118,6 +125,8 @@ export class Game {
         state: this.state,
         economy: this.economy,
         save: this.save,
+        camera: this.cameraRig.camera,
+        scene: this.sceneManager.scene,
       };
     }
   }

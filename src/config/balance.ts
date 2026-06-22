@@ -25,9 +25,18 @@ export const BALANCE = {
   camera: {
     position: [0, 1.85, 2.7] as [number, number, number],
     lookAt: [0, 0.0, -2.4] as [number, number, number],
-    aimYawRange: 0.32, // max. horizontaler Blick-Offset (rad) durch Zielen
-    aimPitchRange: 0.18, // max. vertikaler Blick-Offset (rad)
-    aimSmooth: 6, // Glättungsfaktor fürs Zielen
+    aimInstant: true, // true → Blick folgt dem Zeiger sofort (kein Nachfaden)
+    aimYawRange: 0.16, // dezenter horizontaler Parallax-Schwenk (rad); 0 = fix
+    aimPitchRange: 0.1, // dezenter vertikaler Parallax-Schwenk (rad)
+    aimSmooth: 6, // Dämpfung nur im Fallback (aimInstant=false)
+  },
+
+  // Direktes Fadenkreuz: zeigt auf den Zeiger, Fang-Strahl geht durch die
+  // Zeigerposition (nicht die Bildmitte). Farben signalisieren Fangbarkeit.
+  aim: {
+    crosshairColorTarget: '#5cf2a0', // grün = Ente fangbar
+    crosshairColorNoTarget: 'rgba(255,255,255,0.55)', // neutral = kein Ziel
+    crosshairColorCooldown: 'rgba(255,255,255,0.22)', // gedämpft = Cooldown
   },
 
   basin: {

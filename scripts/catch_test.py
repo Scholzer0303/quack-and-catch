@@ -27,7 +27,8 @@ with sync_playwright() as p:
 
     page.goto(URL, wait_until="networkidle")
     page.wait_for_function(
-        "() => window.__qc && window.__qc.rod && window.__qc.bus && window.__qc.state",
+        "() => window.__qc && window.__qc.rod && window.__qc.bus && window.__qc.state"
+        " && window.__qc.camera",
         timeout=10000,
     )
     page.evaluate(
@@ -42,16 +43,39 @@ with sync_playwright() as p:
     # M3: Spiel startet im Start-Screen — Runde aktivieren (Phase-Gate fürs Fischen).
     page.evaluate("() => window.__qc.state.start()")
 
-    # Pointer tiefer als Bildmitte -> Kamera pitcht runter auf den Near-Apex der
-    # Entenbahn (worldZ ~ -0.51, in reach). Bei exakt 360 blickt man ueber die Enten.
-    cx, cy = 640, 655
+    # M4.6: Direktes Fadenkreuz — Fang-Strahl geht durch die Zeigerposition.
+    # Eine lebende Ente live auf den Screen projizieren (via __qc.camera) und die
+    # Maus exakt dorthin bewegen (statt fixer Koords).
+    def duck_pixel():
+        return page.evaluate(
+            """() => {
+              const cam = window.__qc.camera;
+              const V3 = cam.position.constructor;  // THREE.Vector3 ohne globalen Import
+              const w = window.innerWidth, h = window.innerHeight;
+              let best = null, bestScore = Infinity;
+              for (const d of window.__qc.ducks.ducks) {
+                if (!d.alive) continue;
+                const ndc = new V3(d.worldX, d.worldY, d.worldZ).project(cam);
+                if (ndc.z >= 1 || Math.abs(ndc.x) > 0.95 || Math.abs(ndc.y) > 0.95) continue;
+                const score = Math.abs(ndc.x) + Math.abs(ndc.y);  // zentralste bevorzugen
+                if (score < bestScore) { bestScore = score; best = ndc; }
+              }
+              if (!best) return null;
+              return { x: (best.x * 0.5 + 0.5) * w, y: (0.5 - best.y * 0.5) * h };
+            }"""
+        )
+
     hits = 0
     for _ in range(40):
-        page.mouse.move(cx, cy)
-        # Warten, bis eine Ente unter dem zentrierten Fadenkreuz lockbar ist.
+        px = duck_pixel()
+        if not px:
+            page.wait_for_timeout(120)
+            continue
+        page.mouse.move(px["x"], px["y"])
+        # Warten, bis eine Ente unter dem Fadenkreuz lockbar ist (Press lockt sie).
         try:
             page.wait_for_function(
-                "() => window.__qc.rod.getView().hasTarget === true", timeout=4000
+                "() => window.__qc.rod.getView().hasTarget === true", timeout=2000
             )
         except Exception:
             continue

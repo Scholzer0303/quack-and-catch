@@ -15,6 +15,8 @@ export class Reticle {
   private readonly canvas: HTMLCanvasElement;
   private readonly ctx: CanvasRenderingContext2D;
   private dpr = 1;
+  private ndcX = 0; // Zeigerposition (NDC, x rechts/+1, y oben/+1)
+  private ndcY = 0;
 
   constructor() {
     this.canvas = document.createElement('canvas');
@@ -42,18 +44,28 @@ export class Reticle {
     this.canvas.height = Math.floor(window.innerHeight * this.dpr);
   };
 
+  /** Zeigerposition setzen (NDC). Fadenkreuz + Timing-Ringe folgen dem Zeiger. */
+  setPointer(ndcX: number, ndcY: number): void {
+    this.ndcX = ndcX;
+    this.ndcY = ndcY;
+  }
+
   render(view: RodView): void {
     const ctx = this.ctx;
     const w = window.innerWidth;
     const h = window.innerHeight;
     ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
-    const cx = w / 2;
-    const cy = h / 2;
+    // NDC → Pixel (direktes Fadenkreuz am Zeiger).
+    const cx = (this.ndcX * 0.5 + 0.5) * w;
+    const cy = (0.5 - this.ndcY * 0.5) * h;
 
-    let color = 'rgba(255,255,255,0.5)';
-    if (view.state === 'idle' && view.hasTarget) color = '#5cf2a0';
-    else if (view.state === 'cooldown') color = 'rgba(255,255,255,0.22)';
+    const a = BALANCE.aim;
+    let color = a.crosshairColorNoTarget;
+    if (view.state === 'cooldown') color = a.crosshairColorCooldown;
+    else if (view.hasTarget || view.state === 'casting' || view.state === 'window') {
+      color = a.crosshairColorTarget;
+    }
     this.drawCrosshair(cx, cy, color);
 
     if (view.state === 'casting') this.drawCastRing(cx, cy, view.castProgress);
