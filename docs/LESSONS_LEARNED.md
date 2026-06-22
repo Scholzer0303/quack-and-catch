@@ -4,6 +4,26 @@ Laufendes Log: Entscheidungen, Stolpersteine, Fixes, Balance-Erkenntnisse. Neues
 
 ---
 
+## 2026-06-22 — M4.6 Step 9: Juice + Bloom/Glow (Splash/Pop/Flash/Shake/Count-up + Postprocessing)
+
+**Produkt-Entscheidungen (vom Nutzer)**
+- Bloom/Glow JETZT mitnehmen (nicht später); Feel „saftig & spürbar"; Screenshake skaliert nach Rarität/Perfect.
+
+**Architektur (rein additiv, Engine/Gameplay unberührt)**
+- Neues `src/fx/`: `reducedMotion` (geteilter Check, gecacht), `SplashFx` (Ring-Pool am Fang-XZ), `DuckGlowFx` (additives Halo-`InstancedMesh`, nutzt endlich `RARITY_DEFS.emissive`). Catch-Pop = Skala-Overshoot in `FishingRod.updateReel` (nur Per-Frame-Skalawert — kein Timing/Emit). Screenshake = additiver, abklingender `CameraRig`-Offset. Perfect-Flash = Reticle-Canvas-Ring (`render(view, dt)`). HUD-Count-up = `lerp` pro Frame (`UIRoot.animateHud`).
+- Bloom: `src/core/postprocessing/Postprocessing.ts` (`EffectComposer→RenderPass→UnrealBloomPass→OutputPass`). **Threshold-Bloom (0.9)** → nur die hellsten Elemente (Lichterketten-Birnen/Splash/Glow) blühen, heller Comic-Tag bleibt klar. Quality-Guard: `coarse-pointer→low` (halbe Auflösung), `'off'`→direkter `renderer.render`-Fallback.
+- FX triggern aus EINEM konsolidierten `hook:result`-Subscriber (in `busUnsub`); Splash liest `FishingRod.getCatchPoint()` (Live-Ref auf W). Kein neuer Event-Typ.
+
+**Stolpersteine / Erkenntnisse**
+- **Bloom drückt headless/swiftshader auf ~10 fps** (Software-Rendering der Blur-Passes). `dt` ist geclamped (0.05) → bei niedriger fps läuft die Spielzeit langsamer; der fixe 240-ms-Halt in `catch_test`/`save_test` erreichte `dip` nur **0.577 < armProgress 0.6** → release nahm den Zu-flach-Pfad → kein Fang. **Fix: Tests ZUSTANDSBASIERT** (`wait_for` `dip≥arm` + Belohnungskette) statt fixer fps-abhängiger Wartezeiten. Echte GPU (60 fps) war nie betroffen. Diagnose nur per **Messung** (fps + dip-Verlauf), nicht per Reasoning — die fps-Halbierung der Spielzeit hätte man sonst übersehen.
+- **OutputPass-Leak (Review):** `EffectComposer.dispose()` gibt NUR die RenderTargets frei, **nicht die Passes**. Bloom UND OutputPass (eigene Materialien) müssen explizit disposed werden.
+- **HUD-Count-up zählt rückwärts (Review):** bei „Nochmal" feuert `reset()` `round:tick{score:0}` **vor** `phase:changed` → Anim `{from: alter Score, to: 0}` → sichtbares Runterzählen auf dem frisch eingeblendeten HUD. Fix: bei Abnahme (`e.value < shown`) sofort snappen statt animieren (nur Hochzählen wird animiert).
+- **Glow & Bloom-Threshold (Review):** Halo-Farbe = `emissive × emissiveIntensity × intensity` **ohne [0,1]-Clamp (HDR)** — sonst überschreiten die mittel-hellen Raritätsfarben die Bloom-Threshold (0.9) nie und es blüht gar nichts. Jetzt: rarer = heller; epic/legendary blühen deutlich, uncommon/rare = sanfter farbiger Schimmer.
+- **DuckGlowFx-Color-Upload:** Halo-Farbe ist rein rarität-abhängig → `instanceColor` nur beim Respawn hochladen (Per-Slot-Rarity-Cache), nicht pro Frame; `instanceMatrix` muss pro Frame hoch (Enten bewegen sich).
+
+**Verifikation**
+- typecheck/lint/build grün; smoke (`canvas:2`, 0 Fehler) + catch + save grün; In-Game-Screenshots: Birnen glühen, seltene Enten leuchten, kein Washout. Diff adversarial reviewt (6 erhoben, **5 bestätigt, alle behoben**).
+
 ## 2026-06-22 — M4.6 Step 8: Jahrmarkt-Welt (Buden, Wimpel/Lichter, Riesenrad/Zelt) + schlanker Plankenrand
 
 **Produkt-Entscheidungen (vom Nutzer)**

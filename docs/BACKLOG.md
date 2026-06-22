@@ -63,7 +63,7 @@ Eingeschoben nach Nutzer-Live-Test (Wettbewerb): Steuerung muss „cool" sein + 
 - [x] **Fang-Engine-Neumodell + Rute/Haken-Optik:** feste Schräg-Sicht aufs ganze Becken; Maus → **Wasserpunkt W** (`HookRaycaster.resolveWaterPoint`); Halten senkt Haken **echt ins Wasser** bei W (Schnur+Haken world-space, von der Spitze); **räumlicher Fang** (Ente ≤ `catchRadius`, Perfect = mittig ≤ `perfectRadius`); Rute schwenkt stark (yaw/pitch); Rute/Haken Toon+Outline + Schwimmer. (Step 6, `3378f59`)
 - [x] **Schwierigkeit je Rarität:** `catchMulByRarity` verkleinert Fang-/Perfect-Zone je seltener (gelb 1.0 → grün 0.62 → blau 0.4 → epic 0.3 → legendary 0.24); Drop-Zone-Ring skaliert sichtbar mit. Basis-Balance: `catchRadius` 0.42, Enten etwas schneller. (Step 7, `7a92a69`)
 - [x] **Jahrmarkt-Welt:** graue Wand weg → Comic-Jahrmarkt (Budenreihe, Wimpel-/Lichterketten, Riesenrad + Zirkuszelt als Fernkulisse); schlanker Holz-Plankenrand (Toon+Outline) statt dickem Reifen. Alles als gemergte Toon-Geo + 1 Outline + instanced Birnen (~6 Draw-Calls). (Step 8)
-- [ ] Juice: Splash/Catch-Pop/Perfect-Flash/Mini-Screenshake/HUD-Count-up (`src/fx/`) + optional Bloom/Glow (`core/postprocessing/`)
+- [x] **Juice + Bloom/Glow:** Splash · Catch-Pop · Perfect-Flash · Mini-Screenshake (skaliert nach Rarität/Perfect) · HUD-Count-up (`src/fx/`) · Bloom-Postprocessing mit Mobile-Quality-Guards (`core/postprocessing/`) · Glow seltener Enten. reduced-motion respektiert. (Step 9)
 - [ ] Tipp-Modal schicker (`CardReveal.ts`/`styles.css`; optional Icon/Visualisierung je Tipp)
 - [ ] Optional: Intro-Sequenz (Ticket → Verkäuferin → Angel → Start; neue Phase `intro`)
 

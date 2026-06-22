@@ -21,6 +21,7 @@ export class Postprocessing {
   private readonly renderer: THREE.WebGLRenderer;
   private readonly composer: EffectComposer;
   private readonly bloom: UnrealBloomPass;
+  private readonly output: OutputPass;
   private readonly resScale: number;
 
   constructor(
@@ -35,7 +36,8 @@ export class Postprocessing {
     this.composer.addPass(new RenderPass(scene, camera));
     this.bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), opts.strength, opts.radius, opts.threshold);
     this.composer.addPass(this.bloom);
-    this.composer.addPass(new OutputPass());
+    this.output = new OutputPass();
+    this.composer.addPass(this.output);
     this.setSize(window.innerWidth, window.innerHeight);
   }
 
@@ -55,7 +57,10 @@ export class Postprocessing {
   }
 
   dispose(): void {
+    // EffectComposer.dispose() gibt nur die RenderTargets frei, NICHT die Passes →
+    // Bloom + OutputPass (eigene Materialien) explizit disposen.
     this.composer.dispose();
     this.bloom.dispose();
+    this.output.dispose();
   }
 }

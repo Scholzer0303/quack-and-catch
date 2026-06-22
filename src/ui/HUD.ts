@@ -84,7 +84,9 @@ export class HUD {
     // Timer zeigt echte Sekunden sofort (kein Count-up); Score zählt hoch.
     this.timerEl.textContent = formatTime(e.timeRemaining);
     this.timerEl.classList.toggle('low-time', e.timeRemaining <= BALANCE.round.lowTimeWarnSec);
-    if (this.reduced) {
+    // Bei Abnahme (Runden-Neustart: round:tick mit score 0) sofort snappen statt
+    // rückwärts zählen; nur Hochzählen wird animiert.
+    if (this.reduced || e.score < this.scoreShown) {
       this.scoreShown = e.score;
       this.scoreEl.textContent = String(e.score);
       this.scoreAnim = null;
@@ -94,7 +96,7 @@ export class HUD {
   }
 
   private onEconomy(e: GameEvents['economy:changed']): void {
-    if (this.reduced) {
+    if (this.reduced || e.tokens < this.tokenShown) {
       this.tokenShown = e.tokens;
       this.tokensEl.textContent = String(e.tokens);
       this.tokenAnim = null;

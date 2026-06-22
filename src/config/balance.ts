@@ -190,9 +190,12 @@ export const BALANCE = {
     },
     glow: {
       // Additives Halo um seltene Enten (füttert Bloom). Nur bei aktivem postFx.
+      // Helligkeit = emissive × emissiveIntensity × intensity (KEIN [0,1]-Clamp → HDR):
+      // seltener = heller, epic/legendary überschreiten die Bloom-Threshold deutlich,
+      // uncommon/rare bleiben ein sanfter farbiger Schimmer.
       minEmissive: 0.1, // ab uncommon (RARITY_DEFS.emissiveIntensity) leuchten
       haloScale: 1.05, // Halo-Durchmesser (Welteinheiten), etwas größer als die Ente
-      intensity: 1.6, // Helligkeitsfaktor × emissiveIntensity (hell genug fürs Bloom)
+      intensity: 3.5, // Helligkeitsfaktor × emissiveIntensity
     },
   },
 

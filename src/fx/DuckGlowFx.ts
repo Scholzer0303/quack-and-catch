@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { BALANCE } from '../config/balance';
 import { RARITY_DEFS } from '../data/ducks';
+import type { DuckRarity } from '../types/domain';
 import type { DuckSpawner } from '../systems/DuckSpawner';
 
 /** Weiches radiales Glow-Sprite (weiß → transparent), eingefärbt per instanceColor. */
@@ -39,6 +40,8 @@ export class DuckGlowFx {
   private readonly faceQuat: THREE.Quaternion;
   private readonly dummy = new THREE.Object3D();
   private readonly color = new THREE.Color();
+  // Zuletzt gesetzte Rarität je Slot → Farb-Upload nur beim Respawn, nicht pro Frame.
+  private readonly lastRarity: (DuckRarity | null)[] = [];
 
   constructor(private readonly ducks: DuckSpawner) {
     this.tex = makeRadialTexture();
@@ -69,28 +72,38 @@ export class DuckGlowFx {
     // Start: alle unsichtbar.
     this.dummy.scale.setScalar(0);
     this.dummy.updateMatrix();
-    for (let i = 0; i < n; i++) this.mesh.setMatrixAt(i, this.dummy.matrix);
+    for (let i = 0; i < n; i++) {
+      this.mesh.setMatrixAt(i, this.dummy.matrix);
+      this.lastRarity.push(null);
+    }
     this.mesh.instanceMatrix.needsUpdate = true;
   }
 
   update(): void {
     const g = BALANCE.juice.glow;
+    let colorDirty = false;
     for (const d of this.ducks.ducks) {
       const def = RARITY_DEFS[d.rarity];
+      // Farbe (nur rarität-abhängig) nur beim Respawn neu hochladen, nicht pro Frame.
+      if (this.lastRarity[d.slot] !== d.rarity) {
+        this.color.setHex(def.emissive).multiplyScalar(def.emissiveIntensity * g.intensity);
+        this.mesh.setColorAt(d.slot, this.color);
+        this.lastRarity[d.slot] = d.rarity;
+        colorDirty = true;
+      }
+      // Position/Skala (bewegt sich) jeden Frame; common bzw. gehakte Enten verstecken.
       if (d.alive && def.emissiveIntensity >= g.minEmissive) {
         this.dummy.position.set(d.worldX, d.worldY, d.worldZ);
         this.dummy.quaternion.copy(this.faceQuat);
         this.dummy.scale.setScalar(g.haloScale);
-        this.color.setHex(def.emissive).multiplyScalar(Math.min(1, def.emissiveIntensity * g.intensity));
-        this.mesh.setColorAt(d.slot, this.color);
       } else {
-        this.dummy.scale.setScalar(0); // verstecken
+        this.dummy.scale.setScalar(0);
       }
       this.dummy.updateMatrix();
       this.mesh.setMatrixAt(d.slot, this.dummy.matrix);
     }
     this.mesh.instanceMatrix.needsUpdate = true;
-    if (this.mesh.instanceColor) this.mesh.instanceColor.needsUpdate = true;
+    if (colorDirty && this.mesh.instanceColor) this.mesh.instanceColor.needsUpdate = true;
   }
 
   dispose(): void {
