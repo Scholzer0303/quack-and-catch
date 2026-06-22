@@ -8,6 +8,7 @@ import { DuckSpawner } from './DuckSpawner';
 import { HookRaycaster } from './HookRaycaster';
 import { buildRod, stretchLine, type RodParts } from '../world/RodBuilder';
 import { RARITY_DEFS } from '../data/ducks';
+import { prefersReducedMotion } from '../fx/reducedMotion';
 
 export type RodState = 'idle' | 'lowering' | 'reel' | 'cooldown';
 
@@ -57,6 +58,7 @@ export class FishingRod {
   private near: Duck | null = null; // Ente in der Drop-Zone (pro Frame)
   private nearPerfect = false;
   private perfect = false;
+  private readonly reduced = prefersReducedMotion();
 
   constructor(
     private readonly camera: THREE.Camera,
@@ -221,9 +223,24 @@ export class FishingRod {
     this.rod.stick.updateWorldMatrix(true, false);
     this.rod.stick.localToWorld(this.tipWorld);
     this.reelPos.copy(this.reelFrom).lerp(this.tipWorld, e);
-    const scale = lerp(1, BALANCE.hook.reelEndScale, e);
-    this.ducks.setReelPose(duck.slot, this.reelPos.x, this.reelPos.y, this.reelPos.z, scale);
+    this.ducks.setReelPose(duck.slot, this.reelPos.x, this.reelPos.y, this.reelPos.z, this.popScale(p));
     if (p >= 1) this.finishLand(duck);
+  }
+
+  /** Catch-Pop: kurzer Overshoot über 1.0, dann Einlauf auf reelEndScale (rein visuell). */
+  private popScale(p: number): number {
+    const end = BALANCE.hook.reelEndScale;
+    if (this.reduced) {
+      const e = p * p * (3 - 2 * p);
+      return lerp(1, end, e);
+    }
+    const cp = BALANCE.juice.catchPop;
+    if (p < cp.peakAt) {
+      const u = p / cp.peakAt;
+      return lerp(1, cp.peakScale, u * u * (3 - 2 * u));
+    }
+    const u = (p - cp.peakAt) / (1 - cp.peakAt);
+    return lerp(cp.peakScale, end, u * u * (3 - 2 * u));
   }
 
   private finishLand(duck: Duck): void {

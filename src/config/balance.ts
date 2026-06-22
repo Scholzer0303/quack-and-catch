@@ -161,6 +161,24 @@ export const BALANCE = {
       startOpacity: 0.8, // fadet auf 0
       color: 0xeaffff, // helle Schaumfarbe auf Türkis (blüht in Bloom)
     },
+    catchPop: {
+      // Gehakte Ente überschwingt kurz über 1.0, bevor sie auf reelEndScale (0.6)
+      // einläuft. Settle-Ziel ist BALANCE.hook.reelEndScale (Single Source).
+      peakScale: 1.18, // Overshoot (saftig & spürbar)
+      peakAt: 0.22, // Anteil des Reel-Progress p am Peak
+    },
+    shake: {
+      // Mini-Screenshake (additiver, abklingender Kamera-Rotations-Offset, rad).
+      catchIntensity: 0.01, // Basis-Impuls bei common
+      byRarity: { common: 1, uncommon: 1.4, rare: 2.0, epic: 2.7, legendary: 3.5 } as Record<
+        string,
+        number
+      >,
+      perfectBonus: 0.008, // Extra-Punch bei Perfect
+      maxIntensity: 0.05, // Deckel (kein Übel-Shake)
+      frequency: 38, // Schwing-Frequenz (rad/s) des abklingenden Shakes
+      dampLambda: 12, // Abklingen zu 0 (höher = schneller)
+    },
   },
 
   rewards: {

@@ -17,6 +17,7 @@ import { Reticle } from '../ui/Reticle';
 import { SplashFx } from '../fx/SplashFx';
 import { UIRoot } from '../ui/UIRoot';
 import { mulberry32 } from '../utils/rng';
+import { BALANCE } from '../config/balance';
 
 /** Top-Orchestrator: besitzt Systeme, verdrahtet den Loop, hält die Welt. */
 export class Game {
@@ -95,6 +96,10 @@ export class Game {
         if (!e.hit) return;
         const p = this.fishingRod.getCatchPoint();
         this.splashFx.spawn(p.x, p.z);
+        // Screenshake skaliert mit Rarität, Perfect gibt Extra-Punch.
+        const sh = BALANCE.juice.shake;
+        const mul = e.duck ? (sh.byRarity[e.duck.rarity] ?? 1) : 1;
+        this.cameraRig.addShake(sh.catchIntensity * mul + (e.perfect ? sh.perfectBonus : 0));
       }),
     );
 
