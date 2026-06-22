@@ -41,28 +41,13 @@ export class SaveSystem {
     document.addEventListener('visibilitychange', this.onVisibility);
   }
 
-  isMuted(): boolean {
-    return this.current.muted;
-  }
-
-  /** Reserviert für M8-Audio: Mute-Zustand persistieren. */
-  setMuted(value: boolean): void {
-    if (this.current.muted === value) return;
-    this.current.muted = value;
-    this.scheduleWrite();
-  }
-
   /** Ausstehenden Write sofort schreiben (idempotent, wenn nichts ansteht). */
   flush(): void {
     if (this.timer !== null) this.writeNow();
   }
 
   dispose(): void {
-    this.flush();
-    if (this.timer !== null) {
-      window.clearTimeout(this.timer);
-      this.timer = null;
-    }
+    this.flush(); // schreibt + nullt einen ausstehenden Timer
     window.removeEventListener('pagehide', this.onPageHide);
     document.removeEventListener('visibilitychange', this.onVisibility);
     for (const off of this.unsub) off();
@@ -132,9 +117,11 @@ export class SaveSystem {
     // Version: bei Abweichung verwerfen (Seam für spätere Migration).
     if (o.schemaVersion !== BALANCE.save.schemaVersion) return def;
 
+    // Tokens sind im Spiel immer ganzzahlig (randInt); Bruchwerte aus manipuliertem
+    // Storage abschneiden statt durchreichen.
     const tokens =
       typeof o.tokens === 'number' && Number.isFinite(o.tokens) && o.tokens >= 0
-        ? o.tokens
+        ? Math.floor(o.tokens)
         : def.tokens;
 
     const unlockedTips = Array.isArray(o.unlockedTips)

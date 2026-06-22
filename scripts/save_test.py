@@ -61,8 +61,9 @@ with sync_playwright() as p:
           unlocked: window.__qc.economy.unlockedCount(),
         })"""
     )
-    # Save explizit flushen (statt auf den Debounce zu warten), dann neu laden.
-    page.evaluate("() => window.__qc.save.flush()")
+    # Den ECHTEN Produktions-Persistenzpfad auslösen: das pagehide-Event feuert
+    # (statt der internen save.flush()-API), genau wie beim Tab-Schließen.
+    page.evaluate("() => window.dispatchEvent(new Event('pagehide'))")
 
     page.reload(wait_until="networkidle")
     page.wait_for_function(
@@ -98,14 +99,37 @@ with sync_playwright() as p:
         page.wait_for_function(
             "() => window.__qc && window.__qc.economy", timeout=10000
         )
-        tok = page.evaluate("() => window.__qc.economy.getTokens()")
-        corrupt_results.append(tok)
-        if tok != 0:
+        st = page.evaluate(
+            """() => ({
+              tokens: window.__qc.economy.getTokens(),
+              unlocked: window.__qc.economy.unlockedCount(),
+            })"""
+        )
+        corrupt_results.append(st)
+        # Sauberer Default: weder Tokens noch Tipps aus korruptem Storage.
+        if st["tokens"] != 0 or st["unlocked"] != 0:
             corruption_ok = False
+
+    # — Teilkorruptions-Test: gueltige Version + gueltige Tokens, aber kaputte
+    #   unlockedTips (String statt Array). Feldweise Reparatur MUSS die Tokens
+    #   behalten und nur die Tipps auf [] zuruecksetzen.
+    page.evaluate(
+        """() => localStorage.setItem('quack-and-catch:v1',
+          JSON.stringify({ schemaVersion: 1, tokens: 9, unlockedTips: 'x', muted: false }))"""
+    )
+    page.reload(wait_until="networkidle")
+    page.wait_for_function("() => window.__qc && window.__qc.economy", timeout=10000)
+    partial = page.evaluate(
+        """() => ({
+          tokens: window.__qc.economy.getTokens(),
+          unlocked: window.__qc.economy.unlockedCount(),
+        })"""
+    )
+    partial_ok = partial["tokens"] == 9 and partial["unlocked"] == 0
 
     browser.close()
 
-ok = persisted and corruption_ok and not errors
+ok = persisted and corruption_ok and partial_ok and not errors
 print(
     json.dumps(
         {
@@ -115,7 +139,8 @@ print(
             "tokens_after_reload": after["tokens"],
             "unlocked_before": before["unlocked"],
             "unlocked_after": after["unlocked"],
-            "corrupt_tokens_each_case": corrupt_results,  # erwartet: [0, 0, 0]
+            "corrupt_each_case": corrupt_results,  # erwartet: [{tokens:0,unlocked:0} ×3]
+            "partial_repair": partial,  # erwartet: {tokens:9, unlocked:0}
             "errors": errors,
         },
         indent=2,
