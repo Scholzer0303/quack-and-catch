@@ -55,8 +55,9 @@ def catch_one(page):
         except Exception:
             continue
         page.mouse.down()
-        # Raeumlicher Fang: halten bis der Haken im Wasser ist (dip>=arm), dann loslassen.
-        page.wait_for_timeout(360)
+        # Raeumlicher Fang: kurz halten bis dip>=arm (~240 ms), dann loslassen
+        # (engere catchRadius + schnellere Enten -> weniger Drift in der Haltezeit).
+        page.wait_for_timeout(240)
         page.mouse.up()
         page.wait_for_timeout(1000)
         if page.evaluate("() => window.__qc.economy.getTokens()") > 0:

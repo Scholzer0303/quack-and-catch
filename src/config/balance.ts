@@ -59,7 +59,7 @@ export const BALANCE = {
     innerWallDrop: 0.2, // wie weit die Innenwand unter die Wasserlinie reicht
     // Progression: Index = Beckenspeed-Tier (= Rod-Tier)
     duckCountByTier: [8, 10, 12, 14],
-    baseRotationSpeed: 0.045, // t/s (≈22 s pro Runde) bei Tier 0
+    baseRotationSpeed: 0.055, // t/s bei Tier 0 — etwas schneller = Enten als Ziel anspruchsvoller
     rotationSpeedMulByTier: [1.0, 1.25, 1.5, 1.8],
     trackInset: 0.72, // Entenbahn-Radius = Beckenradius × Faktor (innerhalb des Rands)
     duckFloatY: 0.08, // Schwimmhöhe über der Wasserlinie
@@ -111,8 +111,8 @@ export const BALANCE = {
     // Loslassen mit Ente nahe W fängt (kein Timing-Fenster).
     lowerDurationMs: 260, // Haken-Senkdauer 0→1 (Dip)
     armProgress: 0.6, // ab diesem Dip zählt ein Fang (Haken „im Wasser")
-    catchRadius: 0.6, // räumliche Fang-Toleranz um W (XZ, Welteinheiten)
-    perfectRadius: 0.22, // Ente so nah an W → Perfect
+    catchRadius: 0.42, // räumliche Fang-Toleranz um W (XZ) — enger = präziser zielen
+    perfectRadius: 0.14, // Ente so nah an W → Perfect (eng = echter Skill)
     basinInset: 0.96, // W aufs Wasser-Oval clampen (knapp innerhalb des Rands)
     perfectTokenBonus: 0.25, // +25 % Tokens bei Perfect
     reelDurationMs: 600, // Einhol-Dauer (Ente → Rutenspitze)

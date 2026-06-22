@@ -82,8 +82,9 @@ with sync_playwright() as p:
             continue
         page.mouse.down()
         # Halten, bis der Haken im Wasser ist (dip >= armProgress; lowerDuration 260 ms),
-        # dann loslassen -> raeumlicher Fang. Kein Timing-Fenster mehr.
-        page.wait_for_timeout(360)
+        # dann loslassen -> raeumlicher Fang. Kurz halten (~240 ms): genug Dip, aber die
+        # (schnelleren) Enten driften kaum aus der engeren catchRadius.
+        page.wait_for_timeout(240)
         page.mouse.up()
         # Reel (600 ms) + Cooldown (250 ms) abklingen lassen.
         page.wait_for_timeout(1000)
