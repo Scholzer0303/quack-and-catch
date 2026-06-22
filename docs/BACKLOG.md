@@ -46,11 +46,12 @@ Legende: `[ ]` offen · `[x]` erledigt · `[~]` in Arbeit
 - [x] `ui/CardReveal` (blockierendes Tipp-Modal, Pause) + `ui/SummaryScreen`
 - Verifiziert: typecheck/lint/build grün; Smoke (0 Konsolenfehler) + `catch_test.py` (Hit→Reward→Pause, Tokens>0, Becken voll); Screenshots Start/HUD/Modal/Summary, Raritätsfarben sichtbar.
 
-## M4 — Save + Deploy-Check
-- [ ] `types/state.ts` final + `systems/SaveSystem` (versioniert, debounced, korruptionssicher)
-- [ ] Persistenz: Tokens/Rod/Tipps/Stats/Settings; Laden beim Boot; Mute persistent
-- [ ] README ausbauen (Pitch, Features, Controls, Design Notes)
-- [ ] Prod-Härtung (pixelRatio-Cap, dispose-Audit, Error-Boundary), `build`+`preview` aus `dist/`
+## M4 — Save + Deploy-Check ✅
+- [x] `types/state.ts` (SaveData + `createDefaultSave`) + `systems/SaveSystem` (versioniert, debounced, korruptionssicher)
+- [x] Persistenz: Tokens + freigeschaltete Tipps; Laden beim Boot (hydrate→HUD); `muted` reserviert für M8 (Rod/Stats folgen additiv mit M6/M7)
+- [x] README ausbauen (Pitch, Features, Controls, Design Notes)
+- [x] Prod-Härtung (pixelRatio-Cap ✓, dispose-Audit, Error-Boundary ✓), `build`+`preview` aus `dist/` (✓ `__qc` getreeshakt)
+- Verifiziert: typecheck/lint/build/preview grün; `scripts/save_test.py` (Fang→Flush→Reload behält Tokens+Tipps; 3 Korruptionsfälle → sauberer Default); Smoke (0 Konsolenfehler) auf Dev + Prod-Build.
 
 ## M4.5 — Vercel-Live-Deploy (nach MVP)
 - [ ] GitHub-Repo mit Vercel verbinden (Auto-Deploy von `main`), Live-URL holen

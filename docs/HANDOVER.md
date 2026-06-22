@@ -3,11 +3,11 @@
 > **Start hier in einer neuen Session.** Diese Datei macht den Wiedereinstieg nahtlos. Danach `docs/STATUS.md` + `docs/BACKLOG.md` lesen.
 
 ## TL;DR
-3D-Entenangel-Lernspiel (Three.js + Vite + TS strict). **M0 + M1 + M2 + M3 fertig & gepusht** — Core-Loop steht (Fang → Tokens + Tipp-Modal → Rundentimer → Summary). Nächster Meilenstein: **M4 — Save + Deploy-Check**. Repo: https://github.com/Scholzer0303/quack-and-catch (öffentlich).
+3D-Entenangel-Lernspiel (Three.js + Vite + TS strict). **M0–M4 fertig & gepusht** — Core-Loop steht (Fang → Tokens + Tipp-Modal → Rundentimer → Summary) und **Fortschritt ist persistent** (Tokens + Tipps in `localStorage`). Nächster Meilenstein: **M5 — Tipp-Codex-Screen** (Becken-Tier `M4.5 Vercel-Deploy` dazwischen optional). Repo: https://github.com/Scholzer0303/quack-and-catch (öffentlich).
 
 ## Session-Start-Routine (Pflicht)
 ```bash
-git log --oneline -15   # zuletzt: 7fe6ba4 = M3-Verifikations-Fixes (M3 abgeschlossen)
+git log --oneline -15   # zuletzt: M4 Save + Deploy-Check (abgeschlossen)
 git status              # sollte clean sein
 npm install             # falls node_modules fehlt
 ```
@@ -48,16 +48,18 @@ src/config/derived.ts   ← (weiterhin NICHT angelegt; bisher kein Bedarf — We
 src/core/               ← Game (Orchestrator, +Dev-Hook __qc), GameLoop, Renderer/Scene, CameraRig,
                            GameStateMachine (M3: Phasen + Rundentimer + Score)
 src/systems/            ← DuckSpawner (+Reel-API, +Rarität-Roll+instanceColor), InputSystem, HookRaycaster,
-                           FishingRod, Economy (M3), RewardSystem (M3). M4+: SaveSystem, AudioManager
+                           FishingRod, Economy (M3 +snapshot/hydrate), RewardSystem (M3),
+                           SaveSystem (M4: localStorage, versioniert/debounced/korruptionssicher). M8: AudioManager
 src/world/              ← StallBuilder, BasinBuilder(+shaders/water), RodBuilder(+HOOK_ANCHOR_LOCAL),
                            DuckFactory (M3: Body/Kopf/Schwanz weiß → instanceColor)
 src/ui/                 ← Reticle, UIRoot (Owner), HUD, StartScreen, CardReveal (Modal), SummaryScreen,
                            styles.css. (Shop/Codex ab M5/M6)
 src/data/               ← ducks.ts (RARITY_DEFS/LOOT_TABLES/rollRarity), tips.ts (12 Karten). rods.ts ab M6
 src/events/EventBus.ts  ← typisiertes Pub/Sub
-src/types/              ← domain.ts, events.ts (state.ts ab M4)
+src/types/              ← domain.ts, events.ts, state.ts (M4: SaveData + createDefaultSave)
 src/utils/              ← math (oval/lerp/clamp/damp), rng (mulberry32/weightedPick/randInt)
-scripts/                ← smoke_test.py (Render, 0 Fehler) + catch_test.py (Fang→Reward→Pause, braucht __qc)
+scripts/                ← smoke_test.py (Render, 0 Fehler) + catch_test.py (Fang→Reward→Pause) +
+                           save_test.py (Reload-Persistenz + Korruptions-Fallback) — brauchen __qc
 ```
 Datenfluss: `main.ts` → `Game` baut Welt + Loop. `Game.update(dt,elapsed)` Reihenfolge:
 `cameraRig.update` → `state.update` (Timer) → [nur wenn ≠ `paused`: `basin.update` → `ducks.update`] →
@@ -66,15 +68,14 @@ Datenfluss: `main.ts` → `Game` baut Welt + Loop. `Game.update(dt,elapsed)` Rei
 **Phasen-Modell:** Boot in `start` (StartScreen, Becken lebt). Start-Button → `playing`. Fang → `reward:granted`
 → Game schaltet `paused` (Tipp-Modal, Becken+Timer eingefroren), „Weiter" → zurück `playing` (kein Reset).
 Timer 0 → `round:ended` → `summary`. `setPhase('playing')` resettet Timer/Score nur, wenn `from ≠ paused`.
-**Dev-Hook:** `window.__qc = { bus, ducks, rod, state, economy }` (nur DEV) — für Konsole/Tests.
+**Dev-Hook:** `window.__qc = { bus, ducks, rod, state, economy, save }` (nur DEV) — für Konsole/Tests.
 
-## Nächster Meilenstein: M4 — Save + Deploy-Check (Aufgaben)
-Reihenfolge (jede ≈ 1 Commit/Push). Economy + GameStateMachine sind aktuell **In-Memory** → M4 persistiert.
-1. `src/types/state.ts` final + `src/systems/SaveSystem` (versioniert via `save.schemaVersion`, debounced, korruptionssicher — try/catch um JSON.parse, Fallback auf Default).
-2. Persistenz: Tokens + freigeschaltete Tipps (Economy-Unlock-Set), später Rod/Stats/Settings. Laden beim Boot, Speichern bei `economy:changed`/`reward:granted` (debounced). Mute persistent (sobald Audio in M8 da).
-3. README ausbauen (Pitch, Features, Controls, Design Notes).
-4. Prod-Härtung: dispose-Audit (Memory-Leaks), Error-Boundary, `build`+`preview` aus `dist/` prüfen.
-Verifikation M4: Tokens/Tipps überleben Reload; korrupter Storage → sauberer Default (kein Crash); Gate grün.
+## Nächster Meilenstein: M5 — Tipp-Codex-Screen (Aufgaben)
+Reihenfolge (jede ≈ 1 Commit/Push). Persistenz steht (M4) — `economy.isUnlocked(id)`/`unlockedCount()` + SaveSystem überstehen Reload.
+1. `data/tips.ts` auf ~50–60 Karten ausbauen (alle Tiers + Kategorien aus DESIGN.md, faktisch geprüft).
+2. `ui/CodexScreen` (Grid locked/unlocked, Tier-Farbe + Kategorie-Filter, Detail-Ansicht, Fortschrittsanzeige).
+3. Codex-Phase in State-Machine + Einstieg (z. B. aus Summary/HUD); `firstTimeCodexBonus` bereits aktiv.
+Hinweis: SaveSystem schneidet geladene Tip-IDs gegen `TIPS` — neue Karten brauchen **stabile IDs**, sonst droppen Altstände sie beim Laden (gewollt bei echtem Rename).
 
 ## Gotchas / gelernt (Details in LESSONS_LEARNED.md)
 - TS strict + `noUncheckedIndexedAccess` + `exactOptionalPropertyTypes` sind AN → Array-Zugriffe absichern (`?? fallback!`), `EventBus`-Map ist `type` (nicht `interface`, sonst Constraint-Fehler).
@@ -89,6 +90,10 @@ Verifikation M4: Tokens/Tipps überleben Reload; korrupter Storage → sauberer 
 - **M3-Reset-Vertrag:** `setPhase('playing')` resettet Timer/Score nur, wenn `from ≠ paused`. Beide Stellen, die das spiegeln müssen: `GameStateMachine.reset` UND `SummaryScreen` (Tipp-Sammlung leeren). Wer das vergisst → Runde resettet beim „Weiter".
 - **M3-HUD-Score:** Score nur via `round:tick` (throttled) ins HUD — Fang pausiert aber sofort → `GameStateMachine` emittiert bei Score-Änderung einen Sofort-Tick (sonst Score-Lag im Modal).
 - **Tier-0-Rod-Stats** kommen weiter aus `BALANCE.hook` bis M6 (`data/rods.ts`). DuckSpawner würfelt Rarität pro Spawn/Respawn aus `LOOT_TABLES[tier]`.
+- **M4-Save-Reihenfolge:** `SaveSystem.load()` läuft **nach** der UIRoot-Konstruktion (in `Game`), denn `economy.hydrate()` feuert `economy:changed` → nur ein bereits gebautes HUD zeigt den geladenen Saldo. Erst hydraten, **dann** `economy:changed` abonnieren (sonst löst der Boot-Emit einen redundanten Write/Loop aus).
+- **M4-Korruptionssicher:** `load()` kapselt `getItem` (Private-Mode wirft), `JSON.parse` (korrupt) und einen feldweisen Validator. Version-Mismatch verwirft komplett (Migrations-Seam), einzelne kaputte Felder werden auf Default repariert. `setItem` ist in try/catch (Quota/Private-Mode schlucken — nie Gameplay crashen).
+- **M4-Flush:** Debounce (`save.debounceMs` 400) coalesct Writes; `flush()` bei `pagehide` + `visibilitychange→hidden` sichert den letzten Fang. **Kein `beforeunload`** (Mobile unzuverlässig, blockt bfcache). `SaveSystem.dispose()` flusht → entfernt Listener/Timer/Sub (einzige neue Leak-Fläche in M4).
+- **M4-Economy-Slice:** `Economy.snapshot()` liefert nur `{tokens, unlockedTips}` (kein Save-Schema-Wissen); `SaveSystem` komponiert das volle `SaveData` (+`schemaVersion`/`muted`). Entkopplung bleibt.
 
 ## Roadmap-Rest
-M3 Belohnung+HUD+Screens ✅ → M4 Save+Deploy-Check → **M4.5 Vercel-Live-Deploy** → M5 Codex → M6 Shop → M7 Progression → M8 Juice+Audio → M9 Stretch. Tipp-Codex: ~50–60 eigene, faktisch geprüfte deutsche Karten (12 in M3), Wissensbasis = Top Claude/Claude-Code-Wissen.
+M4 Save+Deploy-Check ✅ → **M4.5 Vercel-Live-Deploy** → M5 Codex → M6 Shop → M7 Progression → M8 Juice+Audio → M9 Stretch. Tipp-Codex: ~50–60 eigene, faktisch geprüfte deutsche Karten (12 seit M3), Wissensbasis = Top Claude/Claude-Code-Wissen.
