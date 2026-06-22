@@ -3,11 +3,11 @@
 > **Start hier in einer neuen Session.** Diese Datei macht den Wiedereinstieg nahtlos. Danach `docs/STATUS.md` + `docs/BACKLOG.md` lesen.
 
 ## TL;DR
-3D-Entenangel-Lernspiel (Three.js + Vite + TS strict). **M0–M4 fertig & gepusht**; **M4.6 (Game-Feel & Bright-Comic-Overhaul) Steps 1–4 gepusht** (direktes Fadenkreuz/Instant-Aim, heller Comic-Tag, Toon-Cel-Shading + schwarze Outlines auf Enten). **AKTUELL offen nach Nutzer-Live-Test:** Steuerungs-Redesign (Rute folgt Maus, Halten senkt Haken / Loslassen hebt), echtere Rute/Haken-Optik, richtige Jahrmarkt-Welt (graue Wand + Reifen weg), Juice, schickere Tipp-Modals. **Siehe Abschnitt „AKTUELL: M4.6" unten — höchste Priorität.** Repo: https://github.com/Scholzer0303/quack-and-catch (öffentlich).
+3D-Entenangel-Lernspiel (Three.js + Vite + TS strict). **M0–M4 fertig & gepusht**; **M4.6 (Game-Feel & Bright-Comic-Overhaul) Steps 1–5 gepusht** (direktes Fadenkreuz/Instant-Aim, heller Comic-Tag, Toon-Cel-Shading + schwarze Outlines, **Steuerungs-Redesign**: Rute schwenkt sichtbar, Halten senkt Haken / Loslassen hebt, Lock bei Release). **AKTUELL offen:** echtere Rute/Haken-Optik (nächster Schritt), richtige Jahrmarkt-Welt (graue Wand + Reifen weg), Juice, schickere Tipp-Modals. **Siehe Abschnitt „AKTUELL: M4.6" unten — höchste Priorität.** Repo: https://github.com/Scholzer0303/quack-and-catch (öffentlich).
 
 ## Session-Start-Routine (Pflicht)
 ```bash
-git log --oneline -15   # zuletzt: M4.6 Steps 1–4 (4d1a834 = Enten-Outlines)
+git log --oneline -15   # zuletzt: M4.6 Step 5 = Steuerungs-Redesign (Rute lebt, Lock bei Release)
 git status              # sollte clean sein
 npm install             # falls node_modules fehlt
 ```
@@ -51,7 +51,7 @@ src/core/               ← Game (Orchestrator, +Dev-Hook __qc[+camera/scene]), 
 src/systems/            ← DuckSpawner (Reel-API, instanceColor, +Toon-Gradient, +outlineMesh), InputSystem,
                            HookRaycaster (M4.6: Strahl durch pointerNdc), FishingRod (+setAim),
                            Economy (+snapshot/hydrate), RewardSystem, SaveSystem (M4). M8: AudioManager
-src/world/              ← StallBuilder, BasinBuilder(+shaders/water), RodBuilder(+HOOK_ANCHOR_LOCAL; STATISCH!),
+src/world/              ← StallBuilder, BasinBuilder(+shaders/water), RodBuilder(adressierbar: buildRod→{group,hookGroup,line,tip}+stretchLine; FishingRod animiert),
                            DuckFactory (M4.6: MeshToonMaterial+Gradient), materials/OutlineMaterial (Inverted-Hull)
 src/ui/                 ← Reticle (M4.6: folgt Zeiger + Farb-Feedback), UIRoot, HUD, StartScreen,
                            CardReveal (Modal), SummaryScreen, styles.css. (Shop/Codex ab M5/M6)
@@ -72,7 +72,7 @@ Timer 0 → `round:ended` → `summary`. `setPhase('playing')` resettet Timer/Sc
 **Dev-Hook:** `window.__qc = { bus, ducks, rod, state, economy, save, camera, scene }` (nur DEV) — für Konsole/Tests. Tests projizieren Entenposition via `__qc.camera` auf den Screen.
 
 ## AKTUELL: M4.6 — Game-Feel & Bright-Comic-Overhaul (HÖCHSTE PRIORITÄT)
-**Stand:** Steps 1–4 gepusht (siehe TL;DR). Danach hat der Nutzer live getestet und klares Feedback gegeben — das treibt die nächsten Schritte.
+**Stand:** Steps 1–5 gepusht (siehe TL;DR). Step 5 = **Steuerungs-Redesign** ✅ (Rute lebt, Lock bei Release). Restliches Nutzer-Feedback unten treibt die nächsten Schritte.
 
 ### Nutzer-Feedback (wörtlich sinngemäß, Pflicht)
 1. **Steuerung schlecht / „bewegt sich gar nicht":** Beim Gedrückt-Halten auf eine Ente animiert sichtbar nichts (nur der 2D-Ring; die 3D-Rute/Haken steht still). Fühlt sich tot an.
@@ -84,10 +84,10 @@ Timer 0 → `round:ended` → `summary`. `setPhase('playing')` resettet Timer/Sc
 7. **Optionale Intro-Sequenz:** Ticket übergeben → Verkäuferin gibt Angel → Start. Nice-to-have.
 
 ### Nächste Reihenfolge (Vorschlag)
-1. **Steuerungs-Redesign (zuerst, Pflicht):** Rute-Referenz halten (aktuell `Game` verwirft `buildRod()`!); Maus schwenkt Rute sichtbar; Halten senkt Haken (getrieben von `FishingRod.getView().castProgress/windowProgress`, zurück via `damp`), Loslassen hebt; Fang bei Release im grün/gold-Ring über einer Ente (Lock evtl. erst beim Release statt Press). `catch_test.py`/`save_test.py` ggf. ans neue Modell anpassen.
-2. **Rute/Haken-Optik** neu (`RodBuilder.ts`, stilkonsistent Toon+Outline, `fog=false` behalten).
-3. **Jahrmarkt-Welt** (`StallBuilder.ts`: Buden/Wimpel/Kulisse statt grauer Wand; `BasinBuilder.ts`: Rand statt Reifen). Optional Bloom/Glow (Steps 5/6, Design unten).
-4. **Juice** (Step 7, Design unten): Splash, Catch-Pop, Perfect-Flash, Mini-Screenshake, HUD-Count-up.
+1. ~~**Steuerungs-Redesign**~~ ✅ — FishingRod besitzt + animiert die Rute (Kind der Kamera), schwenkt sichtbar Richtung Zeiger (`balance.hook.swingAmount`), senkt den Haken beim Halten / hebt beim Loslassen (`dipDepth`, getrieben von State + `damp`), Schnur dehnt sich (`stretchLine`). **Lock bei Release**: `press()` senkt immer, `resolveAtRelease()` evaluiert das Ziel frisch. Animation rein visuell — Reach/Reel-Ziel (`hookAnchor`) unverändert.
+2. **Rute/Haken-Optik (NÄCHSTER SCHRITT):** stilkonsistent Toon+Outline in `RodBuilder.ts`, `fog=false` behalten. Haken ist aktuell nur leicht aufgeräumt (schlanker Ring/Barb).
+3. **Jahrmarkt-Welt** (`StallBuilder.ts`: Buden/Wimpel/Kulisse statt grauer Wand; `BasinBuilder.ts`: Rand statt Reifen). Optional Bloom/Glow (Design unten).
+4. **Juice** (Design unten): Splash, Catch-Pop, Perfect-Flash, Mini-Screenshake, HUD-Count-up.
 5. **Tipp-Modal** schicker (`CardReveal.ts` + `styles.css` `.qc-card*`); optional `icon`-Feld in `data/tips.ts`.
 6. **Optional:** Intro-Sequenz (neuer Screen + Phase `intro` in `GameStateMachine`).
 7. Danach: Doku + `/code-review` über M4.6-Diff + Abnahme → zurück zur Roadmap (M5).
@@ -121,8 +121,9 @@ Timer 0 → `round:ended` → `summary`. `setPhase('playing')` resettet Timer/Sc
 - **M4-Economy-Slice:** `Economy.snapshot()` liefert nur `{tokens, unlockedTips}` (kein Save-Schema-Wissen); `SaveSystem` komponiert das volle `SaveData` (+`schemaVersion`/`muted`). Entkopplung bleibt.
 - **M4.6-Direkt-Aim:** `HookRaycaster.findTarget` castet jetzt durch `pointerNdc` (Zeigerposition), NICHT mehr Bildmitte — der frühere „nach unten zielen"-Trick (M2-Gotcha) ist damit OBSOLET. `aimX/aimY` aus `InputSystem` sind bereits gültiges NDC (x rechts/+1, y oben/+1). `FishingRod.press()` castet nur noch, wenn eine Ente unter dem Zeiger ist. `CameraRig.aimInstant` → kein Nachfaden.
 - **M4.6-Toon+Outline:** Enten = `MeshToonMaterial({vertexColors, gradientMap})` (instanceColor trägt durch `<color_vertex>`, in three 0.184 verifiziert). Outline = 2. `InstancedMesh` mit `OutlineMaterial` (BackSide, bläht entlang **`normal`** auf — `objectNormal` existiert im MeshBasic-Shader NICHT!), teilt `geometry`+`instanceMatrix` mit dem Enten-Mesh → Bewegung/Reel gratis gespiegelt. Beide Dispose in `DuckSpawner`.
-- **M4.6-Rute STATISCH (offen):** `Game` ruft `this.cameraRig.camera.add(buildRod())` und **verwirft die Referenz** → keine Animation. Für das gewünschte „Halten senkt Haken"-Modell muss die Rute-Group gehalten + animiert werden (Feld in Game / neue Klasse). Siehe Abschnitt „AKTUELL: M4.6".
-- **Tests an Direkt-Aim angepasst:** `catch_test.py`/`save_test.py` projizieren eine lebende Ente via `__qc.camera` auf den Screen und bewegen die Maus dorthin (statt fixer Koords). Bei weiterem Steuerungs-Umbau ggf. erneut anpassen.
+- **M4.6-Rute lebt (gelöst):** `FishingRod` besitzt die Rute (baut sie via `buildRod()`, hängt sie als Kind der Kamera ein) und animiert sie in `update(dt)` → `animateRod`. `buildRod()` liefert `{group, hookGroup, line, tip}`; `stretchLine(line, tip, hookPos)` dehnt die Schnur pro Frame. Senken/Heben + Schwenk sind gedämpft (`balance.hook.dipDepth/dipDampLambda/swingAmount/swingDampLambda`). Wichtig: **rein visuell** — `hookAnchor()` (Reel-Ziel + `reach`) bleibt der Ruhe-Anker `HOOK_ANCHOR_LOCAL`; die Fang-Logik ist unberührt. `Game` baut die Rute NICHT mehr selbst.
+- **M4.6-Lock bei Release:** `press()` startet immer (kein Target-Gate), `release()` im Window → `resolveAtRelease()` evaluiert das Ziel **jetzt** (`aimTarget()`), nicht beim Press. Gefangen wird, was beim Loslassen unter dem Fadenkreuz im Window liegt.
+- **M4.6-Release-Timing-Falle (Tests):** `release()` ist event-getrieben und läuft **synchron vor** dem nächsten `cameraRig.update()`. Springt der Cursor unmittelbar vor dem Release auf eine neue Position, nutzt der Fang-Strahl noch die **alte** Kamera-Orientierung (aimInstant wendet das neue Aim erst im nächsten Frame an) → Fehlgriff. Im echten Spiel irrelevant (Cursor folgt der Ente flüssig, Kamera ist konsistent). In `catch_test.py`/`save_test.py` deshalb **kein** Re-Aim/`evaluate` zwischen `down` und `up` (das würde zusätzlich das 280-ms-Window verstreichen lassen) — stattdessen ruhig halten ~320 ms; die Ente driftet < `catchRadius`. Pick ist reach-aware (nur Enten in Reichweite ab Haken-Anker).
 
 ## Roadmap-Rest
-**M4.6 Game-Feel & Comic-Overhaul (IN ARBEIT, Steps 1–4 ✅, Rest = Steuerung/Welt/Juice)** → M4.5 Vercel-Live-Deploy → M5 Codex → M6 Shop → M7 Progression → M8 Audio (+ Rest-Juice) → M9 Stretch. Tipp-Codex: ~50–60 eigene, faktisch geprüfte deutsche Karten (12 seit M3).
+**M4.6 Game-Feel & Comic-Overhaul (IN ARBEIT, Steps 1–5 ✅, Rest = Optik/Welt/Juice)** → M4.5 Vercel-Live-Deploy → M5 Codex → M6 Shop → M7 Progression → M8 Audio (+ Rest-Juice) → M9 Stretch. Tipp-Codex: ~50–60 eigene, faktisch geprüfte deutsche Karten (12 seit M3).

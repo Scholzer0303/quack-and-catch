@@ -4,6 +4,25 @@ Laufendes Log: Entscheidungen, Stolpersteine, Fixes, Balance-Erkenntnisse. Neues
 
 ---
 
+## 2026-06-22 — M4.6 Step 5: Steuerungs-Redesign (lebendige Rute + Lock bei Release)
+
+**Produkt-Entscheidungen (vom Nutzer)**
+- **Lock bei Release statt Press:** Drücken senkt den Haken immer (auch ohne Ziel); gefangen wird, was beim Loslassen unter dem Fadenkreuz im Window liegt. Physischer als „nur über Ente drückbar".
+- **Umfang bewusst eng:** nur Steuerung + leichtes Haken-Cleanup; volle Rute/Haken-Optik (Toon+Outline) ist der nächste Schritt. Pause-Rhythmus pro Schritt eingehalten.
+
+**Architektur**
+- **Rute-Besitz in `FishingRod`** (nicht neue Klasse): besitzt schon `highlight`-Mesh, `camera` und State (`getView()`), läuft pro Frame. `buildRod()` liefert jetzt `{group, hookGroup, line, tip}`; `stretchLine()` dehnt die Schnur (Einheits-Zylinder, `scale.y`). Senken/Heben + Schwenk gedämpft über `damp` (`balance.hook.dipDepth/dipDampLambda/swingAmount/swingDampLambda`).
+- **Animation rein visuell:** `hookAnchor()` (Reel-Ziel + `reach`) bleibt der Ruhe-Anker `HOOK_ANCHOR_LOCAL` → die verifizierte Fang-Logik ist unberührt, nur die Darstellung lebt. De-risk by design.
+
+**Stolperstein / Fix (Test-Falle, nicht Spiel-Bug)**
+- **Release läuft synchron vor dem nächsten `cameraRig.update()`.** Springt der Cursor unmittelbar vor `mouse.up` auf eine neue Position, castet der Fang-Strahl noch mit der **alten** Kamera-Orientierung (aimInstant wendet das neue Aim erst im Folgeframe an) → systematischer Fehlgriff. Im echten Spiel irrelevant (Cursor folgt der Ente flüssig). **Diagnose nur per Instrumentierung:** ein temporäres `peekTarget()` zeigte, dass das Ziel zwar gefunden, der State beim Release aber schon `cooldown` war — die langsamen `evaluate`-Roundtrips (+GPU-Stalls) zwischen `down` und `up` ließen das 280-ms-Window ablaufen. Reasoning allein hätte „re-aim driftet" vermutet.
+- **Fix in den Tests:** kein Re-Aim/`evaluate` zwischen `down` und `up`; ruhig ~320 ms halten (Ente driftet < `catchRadius` 0.45). Pick ist reach-aware (nur Enten in Reichweite ab Haken-Anker), sonst wählt der Test ferne, unfangbare Enten und `hasTarget` wird nie wahr.
+
+**Verifikation**
+- `typecheck`/`lint`/`build` grün. `smoke_test`/`catch_test`/`save_test` grün (Hit beim ersten Versuch). Screenshots idle vs. Hold bestätigen: Rute schwenkt, Schnur dehnt sich beim Halten (Haken senkt), Timing-Ring aktiv.
+
+---
+
 ## 2026-06-22 — M4: Save + Deploy-Check
 
 **Design-Entscheidungen (Plan-Agent-Empfehlung, vom Nutzer freigegeben)**

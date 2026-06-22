@@ -116,6 +116,11 @@ export const BALANCE = {
     catchRadius: 0.45, // räuml. Ziel-Toleranz (Enten-Body ~0.21 + Puffer)
     baseLineStrength: 3, // Tier-0-Linienstärke (Bambus), bis M6 echte Rods kommen
     reelEndScale: 0.6, // Ente schrumpft beim Einholen (Juice)
+    // Steuerungs-Feel: Rute lebt sichtbar (rein visuell, getrieben von getView()+Aim).
+    dipDepth: 0.55, // wie weit der Haken beim Halten absinkt (Kamera-lokale Einheiten)
+    dipDampLambda: 9, // Dämpfung Senken/Heben (höher = strammer)
+    swingAmount: 0.12, // sichtbare Rute-Neigung Richtung Zeiger (rad)
+    swingDampLambda: 8, // Dämpfung des Schwenks
   },
 
   rewards: {

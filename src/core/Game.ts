@@ -5,7 +5,6 @@ import { GameLoop } from './GameLoop';
 import { EventBus } from '../events/EventBus';
 import type { GameEvents } from '../types/events';
 import { buildStall } from '../world/StallBuilder';
-import { buildRod } from '../world/RodBuilder';
 import { BasinBuilder } from '../world/BasinBuilder';
 import { DuckSpawner } from '../systems/DuckSpawner';
 import { InputSystem } from '../systems/InputSystem';
@@ -54,9 +53,8 @@ export class Game {
     this.sceneManager.add(this.ducks.mesh);
     if (this.ducks.outlineMesh) this.sceneManager.add(this.ducks.outlineMesh);
 
-    // Angel als Kind der Kamera (Hand-Feel); Kamera in die Szene, sonst
-    // werden ihre Kinder nicht gerendert.
-    this.cameraRig.camera.add(buildRod());
+    // Kamera in die Szene, sonst werden ihre Kinder nicht gerendert. Die Rute
+    // hängt FishingRod selbst als Kind der Kamera ein (Hand-Feel + Animation).
     this.sceneManager.add(this.cameraRig.camera);
 
     this.loop = new GameLoop((dt, elapsed) => this.update(dt, elapsed));
