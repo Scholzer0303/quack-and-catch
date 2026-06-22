@@ -100,6 +100,7 @@ export class Game {
         const sh = BALANCE.juice.shake;
         const mul = e.duck ? (sh.byRarity[e.duck.rarity] ?? 1) : 1;
         this.cameraRig.addShake(sh.catchIntensity * mul + (e.perfect ? sh.perfectBonus : 0));
+        if (e.perfect) this.reticle.flash();
       }),
     );
 
@@ -166,7 +167,8 @@ export class Game {
     }
     this.fishingRod.update(dt);
     this.splashFx.update(dt);
-    this.reticle.render(this.fishingRod.getView());
+    this.ui.animateHud(dt);
+    this.reticle.render(this.fishingRod.getView(), dt);
     this.renderer.render(this.sceneManager.scene, this.cameraRig.camera);
   }
 

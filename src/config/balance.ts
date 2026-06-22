@@ -179,6 +179,15 @@ export const BALANCE = {
       frequency: 38, // Schwing-Frequenz (rad/s) des abklingenden Shakes
       dampLambda: 12, // Abklingen zu 0 (höher = schneller)
     },
+    perfectFlash: {
+      // Reticle-Puls bei Perfect (Canvas-2D, goldener Expand-Ring).
+      durationMs: 260,
+      maxRadiusPx: 46, // dehnt sich über den Dip-Ring (RING_R=30) hinaus
+      color: '#ffcf3f', // gleiches Gold wie das Perfect-Fadenkreuz
+    },
+    hud: {
+      countUpMs: 360, // Score + Tokens zählen hoch statt zu springen
+    },
   },
 
   rewards: {

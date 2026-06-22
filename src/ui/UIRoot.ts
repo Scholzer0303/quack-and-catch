@@ -43,6 +43,11 @@ export class UIRoot {
     this.unsub.push(bus.on('phase:changed', (e) => this.onPhase(e.to)));
   }
 
+  /** Pro Frame aus Game: HUD-Count-up vorantreiben. */
+  animateHud(dt: number): void {
+    this.hud.animate(dt);
+  }
+
   private onPhase(to: GamePhase): void {
     this.startScreen.setVisible(to === 'start');
     this.summaryScreen.setVisible(to === 'summary');

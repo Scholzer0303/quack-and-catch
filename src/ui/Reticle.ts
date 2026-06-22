@@ -1,5 +1,6 @@
 import { BALANCE } from '../config/balance';
 import type { RodView } from '../systems/FishingRod';
+import { prefersReducedMotion } from '../fx/reducedMotion';
 
 /**
  * 2D-Overlay über dem Three-Canvas: Fadenkreuz am Zeiger (= Wasser-Zielpunkt).
@@ -15,6 +16,8 @@ export class Reticle {
   private dpr = 1;
   private ndcX = 0; // Zeigerposition (NDC, x rechts/+1, y oben/+1)
   private ndcY = 0;
+  private flashTimer = 0; // Perfect-Flash-Restzeit (s)
+  private readonly reduced = prefersReducedMotion();
 
   constructor() {
     this.canvas = document.createElement('canvas');
@@ -48,7 +51,12 @@ export class Reticle {
     this.ndcY = ndcY;
   }
 
-  render(view: RodView): void {
+  /** Perfect-Flash auslösen (goldener Expand-Ring). No-op bei reduced-motion. */
+  flash(): void {
+    if (!this.reduced) this.flashTimer = BALANCE.juice.perfectFlash.durationMs / 1000;
+  }
+
+  render(view: RodView, dt: number): void {
     const ctx = this.ctx;
     const w = window.innerWidth;
     const h = window.innerHeight;
@@ -65,6 +73,25 @@ export class Reticle {
 
     if (view.state === 'lowering') this.drawDipRing(cx, cy, view.dip, color);
     this.drawCrosshair(cx, cy, color);
+    if (this.flashTimer > 0) this.drawFlash(cx, cy, dt);
+  }
+
+  /** Goldener Ring, der über den Crosshair hinaus expandiert und ausblendet. */
+  private drawFlash(cx: number, cy: number, dt: number): void {
+    const f = BALANCE.juice.perfectFlash;
+    const dur = f.durationMs / 1000;
+    const remain = this.flashTimer / dur; // 1 → 0
+    const t = 1 - remain; // 0 → 1 (Fortschritt)
+    const r = RING_R + (f.maxRadiusPx - RING_R) * t;
+    const ctx = this.ctx;
+    ctx.globalAlpha = remain;
+    ctx.strokeStyle = f.color;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    this.flashTimer = Math.max(0, this.flashTimer - dt);
   }
 
   private drawCrosshair(cx: number, cy: number, color: string): void {
