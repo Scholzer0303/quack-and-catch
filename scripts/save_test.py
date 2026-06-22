@@ -29,16 +29,19 @@ def catch_one(page):
               const cam = window.__qc.camera;
               const V3 = cam.position.constructor;
               const w = window.innerWidth, h = window.innerHeight;
-              let best = null, bestScore = Infinity;
+              let best = null, bestScore = Infinity;        // common bevorzugt (groesste Zone)
+              let anyBest = null, anyScore = Infinity;      // Fallback
               for (const d of window.__qc.ducks.ducks) {
                 if (!d.alive) continue;
                 const ndc = new V3(d.worldX, d.worldY, d.worldZ).project(cam);
                 if (ndc.z >= 1 || Math.abs(ndc.x) > 0.95 || Math.abs(ndc.y) > 0.95) continue;
                 const score = Math.abs(ndc.x) + Math.abs(ndc.y);
-                if (score < bestScore) { bestScore = score; best = ndc; }
+                if (score < anyScore) { anyScore = score; anyBest = ndc; }
+                if (d.rarity === 'common' && score < bestScore) { bestScore = score; best = ndc; }
               }
-              if (!best) return null;
-              return { x: (best.x * 0.5 + 0.5) * w, y: (0.5 - best.y * 0.5) * h };
+              const p = best || anyBest;
+              if (!p) return null;
+              return { x: (p.x * 0.5 + 0.5) * w, y: (0.5 - p.y * 0.5) * h };
             }"""
         )
 

@@ -134,9 +134,11 @@ export class FishingRod {
     this.near = this.wValid ? this.raycaster.nearestDuck(this.target, this.ducks.ducks, BALANCE.hook.catchRadius) : null;
     this.nearPerfect = false;
     if (this.near) {
+      const mul = BALANCE.hook.catchMulByRarity[this.near.rarity] ?? 1;
+      const pr = BALANCE.hook.perfectRadius * mul;
       const dx = this.near.worldX - this.target.x;
       const dz = this.near.worldZ - this.target.z;
-      this.nearPerfect = dx * dx + dz * dz <= BALANCE.hook.perfectRadius * BALANCE.hook.perfectRadius;
+      this.nearPerfect = dx * dx + dz * dz <= pr * pr;
     }
 
     switch (this.state) {
@@ -189,6 +191,9 @@ export class FishingRod {
     this.highlight.visible = show;
     if (!show) return;
     this.highlight.position.set(this.target.x, BALANCE.basin.waterY + 0.04, this.target.z);
+    // Ring zeigt die effektive Fang-Zone: bei seltenen Enten sichtbar kleiner.
+    const s = this.near ? (BALANCE.hook.catchMulByRarity[this.near.rarity] ?? 1) : 1;
+    this.highlight.scale.set(s, s, s);
     const mat = this.highlight.material as THREE.MeshBasicMaterial;
     mat.color.set(this.nearPerfect ? 0xffcf3f : this.near ? 0x5cf2a0 : 0xbfead8);
     mat.opacity = this.near ? 0.9 : 0.45;

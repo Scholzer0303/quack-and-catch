@@ -46,23 +46,28 @@ with sync_playwright() as p:
     # M4.6: Direktes Fadenkreuz — Fang-Strahl geht durch die Zeigerposition.
     # Eine lebende Ente live auf den Screen projizieren (via __qc.camera) und die
     # Maus exakt dorthin bewegen (statt fixer Koords).
-    # Zentralste lebende Ente auf Pixel projizieren (ganzes Becken erreichbar).
+    # Zentralste lebende COMMON-Ente (gelb) projizieren — sie hat die groesste
+    # Fang-Zone (catchMulByRarity), bleibt also mit ruhendem Cursor zuverlaessig
+    # fangbar. Fallback: beliebige Ente.
     def duck_pixel():
         return page.evaluate(
             """() => {
               const cam = window.__qc.camera;
               const V3 = cam.position.constructor;  // THREE.Vector3 ohne globalen Import
               const w = window.innerWidth, h = window.innerHeight;
-              let best = null, bestScore = Infinity;
+              let best = null, bestScore = Infinity;        // common bevorzugt
+              let anyBest = null, anyScore = Infinity;      // Fallback
               for (const d of window.__qc.ducks.ducks) {
                 if (!d.alive) continue;
                 const ndc = new V3(d.worldX, d.worldY, d.worldZ).project(cam);
                 if (ndc.z >= 1 || Math.abs(ndc.x) > 0.95 || Math.abs(ndc.y) > 0.95) continue;
                 const score = Math.abs(ndc.x) + Math.abs(ndc.y);  // zentralste bevorzugen
-                if (score < bestScore) { bestScore = score; best = ndc; }
+                if (score < anyScore) { anyScore = score; anyBest = ndc; }
+                if (d.rarity === 'common' && score < bestScore) { bestScore = score; best = ndc; }
               }
-              if (!best) return null;
-              return { x: (best.x * 0.5 + 0.5) * w, y: (0.5 - best.y * 0.5) * h };
+              const pick = best || anyBest;
+              if (!pick) return null;
+              return { x: (pick.x * 0.5 + 0.5) * w, y: (0.5 - pick.y * 0.5) * h };
             }"""
         )
 

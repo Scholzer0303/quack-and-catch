@@ -38,17 +38,19 @@ export class HookRaycaster {
     return this.point;
   }
 
-  /** Nächste lebende Ente innerhalb catchRadius (XZ-Abstand) zum Zielpunkt W. */
+  /** Nächste lebende Ente in ihrer rarität-abhängigen Fang-Zone (XZ-Abstand) zu W.
+   *  Effektiver Radius = catchRadius × catchMulByRarity[rarity] (seltener = kleiner). */
   nearestDuck(w: THREE.Vector3, ducks: readonly Duck[], catchRadius: number): Duck | null {
-    const r2 = catchRadius * catchRadius;
+    const muls = BALANCE.hook.catchMulByRarity;
     let best: Duck | null = null;
     let bestD2 = Infinity;
     for (const duck of ducks) {
       if (!duck.alive) continue;
+      const r = catchRadius * (muls[duck.rarity] ?? 1);
       const dx = duck.worldX - w.x;
       const dz = duck.worldZ - w.z;
       const d2 = dx * dx + dz * dz;
-      if (d2 <= r2 && d2 < bestD2) {
+      if (d2 <= r * r && d2 < bestD2) {
         bestD2 = d2;
         best = duck;
       }

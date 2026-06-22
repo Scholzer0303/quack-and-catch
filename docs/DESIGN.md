@@ -14,7 +14,8 @@ angeln → Belohnung (Tipp-Karte + Tokens) → Shop (bessere Angel/Upgrade) → 
 ## Hak-Mechanik (Skill) — räumlich (ab M4.6 Step 6)
 - **Maus → Wasserpunkt W** (Strahl ∩ Wasser-Ebene, aufs Becken-Oval geclamped). **Halten senkt den Haken** von der Spitze zu W ins Wasser; **Loslassen** mit Ente ≤ `catchRadius` um W → Fang.
 - **Kein Timing-Window** mehr: Skill = die Rute/den Haken über die richtige Ente bringen + im richtigen Moment loslassen (Enten driften). `armProgress` — Haken muss „im Wasser" sein, damit ein Fang zählt.
-- **Perfect** = Ente mittig (≤ `perfectRadius` um W) → +25 % Tokens, Extra-Juice.
+- **Schwierigkeit je Rarität:** `catchMulByRarity` verkleinert Fang- + Perfect-Zone für seltenere Enten (gelb/common 1.0, grün/uncommon 0.62, blau/rare 0.4, epic 0.3, legendary 0.24) — der Drop-Zone-Ring schrumpft sichtbar.
+- **Perfect** = Ente mittig (≤ `perfectRadius × catchMulByRarity` um W) → +25 % Tokens, Extra-Juice.
 - Fehlversuch / leeres Wasser: kurzer Cooldown `cooldownMs` 250 (fair, kein Spam).
 - `lineStrength`-Gate: zu schwere Enten reißen ab (Feedback) — nie Softlock.
 

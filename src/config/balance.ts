@@ -111,8 +111,17 @@ export const BALANCE = {
     // Loslassen mit Ente nahe W fängt (kein Timing-Fenster).
     lowerDurationMs: 260, // Haken-Senkdauer 0→1 (Dip)
     armProgress: 0.6, // ab diesem Dip zählt ein Fang (Haken „im Wasser")
-    catchRadius: 0.42, // räumliche Fang-Toleranz um W (XZ) — enger = präziser zielen
-    perfectRadius: 0.14, // Ente so nah an W → Perfect (eng = echter Skill)
+    catchRadius: 0.42, // räumliche Fang-Toleranz um W (XZ) — Basis (× catchMulByRarity)
+    perfectRadius: 0.14, // Ente so nah an W → Perfect (Basis, × catchMulByRarity)
+    // Schwierigkeit je Rarität: multipliziert catchRadius UND perfectRadius.
+    // Seltener = kleinere Fang-Zone = präziser zielen. (gelb=common, grün=uncommon, blau=rare)
+    catchMulByRarity: {
+      common: 1.0,
+      uncommon: 0.62,
+      rare: 0.4,
+      epic: 0.3,
+      legendary: 0.24,
+    } as Record<string, number>,
     basinInset: 0.96, // W aufs Wasser-Oval clampen (knapp innerhalb des Rands)
     perfectTokenBonus: 0.25, // +25 % Tokens bei Perfect
     reelDurationMs: 600, // Einhol-Dauer (Ente → Rutenspitze)
