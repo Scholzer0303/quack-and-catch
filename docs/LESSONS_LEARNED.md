@@ -4,6 +4,13 @@ Laufendes Log: Entscheidungen, Stolpersteine, Fixes, Balance-Erkenntnisse. Neues
 
 ---
 
+## 2026-06-22 — M4.6 Step 7: Schwierigkeit je Rarität (kleinere Fang-Zone)
+
+- **Nutzer-Wunsch:** gelb (common) so lassen, grün (uncommon) schwerer, blau (rare) sehr schwer — „kleinere Ring oder Timing". Umgesetzt rein räumlich (passt zum Engine-Modell): `balance.hook.catchMulByRarity` multipliziert `catchRadius` UND `perfectRadius` je Rarität (gelb 1.0 → grün 0.62 → blau 0.4 → epic 0.3 → legendary 0.24).
+- **Single Source:** `HookRaycaster.nearestDuck` rechnet den effektiven Radius pro Ente; `FishingRod` skaliert Perfect-Prüfung + Drop-Zone-Ring (`highlight.scale`) gleich mit → sichtbares Feedback ohne Geometrie-Rebuild.
+- **Test-Robustheit:** mit kleinerer Zone für nicht-common würde der feste Cursor-Hold danebengreifen → `catch_test`/`save_test` picken bevorzugt eine **common** Ente (größte Zone). Haltezeit auf ~240 ms gekürzt (genug Dip, weniger Drift in der engeren Zone).
+- **Vorher (gleiche Session):** globales Schwerer-Machen — `catchRadius` 0.6→0.42, `perfectRadius` 0.22→0.14, `baseRotationSpeed` 0.045→0.055.
+
 ## 2026-06-22 — M4.6 Step 6: Fang-Engine-Neumodell (räumlich, „ins Wasser") + Rute/Haken-Optik
 
 **Produkt-Entscheidungen (vom Nutzer, 2. Live-Test)**
