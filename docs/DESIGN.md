@@ -7,15 +7,15 @@ Ein als Jahrmarkt-Fahrgeschäft getarntes Lernspiel. First-Person an einem Stand
 angeln → Belohnung (Tipp-Karte + Tokens) → Shop (bessere Angel/Upgrade) → seltenere Enten → wiederholen. Runde mit Timer; Score = Summe der Entenwerte (+ Codex-Fortschritt).
 
 ## Steuerung
-- First-Person, **fixe** Standpose. Maus/Touch bewegt Blick + Angel.
-- Angel/Haken im Vordergrund (Hand-Feel). Zielen über Pointer-Position; Auslösen per Klick/Tap.
+- First-Person, **fixe Schräg-runter-Sicht** aufs ganze Becken (nur dezenter Parallax). Maus/Touch bewegt das **Ziel auf dem Wasser** (Wasserpunkt W) + lässt die Rute sichtbar dorthin schwenken.
+- Angel im Vordergrund (Hand-Feel); Schnur+Haken+Schwimmer reichen bis auf die Wasserlinie bei W. Auslösen per Halten/Loslassen.
 - Vereinheitlicht über **Pointer Events** (Maus + Touch + Pen). Pointer-Lock **nie** zwingend.
 
-## Hak-Mechanik (Skill)
-- Haken über eine vorbeitreibende Ente bringen, im **Timing-Window** auslösen, einholen.
-- `baseWindowMs` 280 — Zeitfenster, in dem eine Ente „fangbar" am Aim-Ray vorbeizieht.
-- `perfectWindowMs` 90 — zentrales Sub-Window → „Perfect": +25 % Tokens, Extra-Juice.
-- Fehlversuch: kurzer Cooldown `hookCooldownMs` 250 (fair, kein Spam).
+## Hak-Mechanik (Skill) — räumlich (ab M4.6 Step 6)
+- **Maus → Wasserpunkt W** (Strahl ∩ Wasser-Ebene, aufs Becken-Oval geclamped). **Halten senkt den Haken** von der Spitze zu W ins Wasser; **Loslassen** mit Ente ≤ `catchRadius` um W → Fang.
+- **Kein Timing-Window** mehr: Skill = die Rute/den Haken über die richtige Ente bringen + im richtigen Moment loslassen (Enten driften). `armProgress` — Haken muss „im Wasser" sein, damit ein Fang zählt.
+- **Perfect** = Ente mittig (≤ `perfectRadius` um W) → +25 % Tokens, Extra-Juice.
+- Fehlversuch / leeres Wasser: kurzer Cooldown `cooldownMs` 250 (fair, kein Spam).
 - `lineStrength`-Gate: zu schwere Enten reißen ab (Feedback) — nie Softlock.
 
 ## Raritäten

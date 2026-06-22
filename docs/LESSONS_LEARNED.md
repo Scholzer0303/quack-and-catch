@@ -4,6 +4,23 @@ Laufendes Log: Entscheidungen, Stolpersteine, Fixes, Balance-Erkenntnisse. Neues
 
 ---
 
+## 2026-06-22 — M4.6 Step 6: Fang-Engine-Neumodell (räumlich, „ins Wasser") + Rute/Haken-Optik
+
+**Produkt-Entscheidungen (vom Nutzer, 2. Live-Test)**
+- **Feste Schräg-runter-Sicht** aufs ganze Becken (nur dezenter Parallax); Maus bewegt Fadenkreuz + Haken-Ziel + Rute stark, nicht den Blick.
+- **Räumliches Fang-Modell statt Timing:** Haken einfach dort runterlassen, wo eine Ente ist → Fang (man muss „im Bereich" sein). Kein „Ente anvisieren + Window perfekt treffen" mehr. Perfect = Ente mittig (Bonus bleibt).
+- **Haken muss echt ins Wasser** (vorher landete er vor dem Becken; Schnur hing neben der Rute).
+
+**Engine-Kern**
+- **Maus → Wasserpunkt W:** `HookRaycaster.resolveWaterPoint` = Strahl ∩ Wasser-Ebene (y=0), auf das Becken-Oval geclamped (`basinInset`). W ist Fadenkreuz-Ziel, Haken-3D-Ziel und Fang-Mittelpunkt zugleich. Fang = `nearestDuck(W, catchRadius)` (XZ-Abstand). Ersetzt Ray-Sphere + `reach`-ab-Anker komplett.
+- **Schnur/Haken world-space:** `buildRod()` trennt `stick` (Kamera-Kind, schwenkt) von `rig` (world: Schnur+Haken+Schwimmer). `hookWorld = lerp(tipWorld, W, dip)`, `stretchLine(tipWorld, hookWorld)` → die Schnur geht sichtbar von der Spitze ins Wasser bei W (nie „neben" der Rute, nie vor dem Becken). Reel zieht die Ente zur Rutenspitze hoch.
+- **Sichtbarer Schwenk:** Rute per **yaw/pitch** aus `aimNdc` (großer `swingAmount` ~0.5), nicht nur Roll — so sweept die Rute deutlich übers Becken (vorher „bewegt sich kaum"). Die präzise Zielposition kommt ohnehin aus W; der Schwenk ist das Feel.
+- **Kamera-Framing per Screenshot getunt:** `position [0,2.75,3.5]`, `lookAt [0,-0.15,-2.2]`, Aim-Cone fast aus (Parallax 0.05/0.03) → ganzes Becken im Blick, alle Enten per Maus erreichbar.
+
+**Verifikation**
+- `typecheck`/`lint`/`build` grün; `smoke`/`catch`/`save` grün (Fang beim 1. Versuch). Screenshots: ganzes Becken sichtbar, Rute schwenkt stark links/rechts, Haken senkt bei Halten auf die anvisierte Ente ins Wasser.
+- Tests vereinfacht: zentralste Ente projizieren → Maus drauf → halten bis `dip ≥ armProgress` (~360 ms) → loslassen. Kein Timing-Fenster mehr (robuster); Release-Timing-Falle aus Step 5 bleibt relevant (kein evaluate zwischen down/up).
+
 ## 2026-06-22 — M4.6 Step 5: Steuerungs-Redesign (lebendige Rute + Lock bei Release)
 
 **Produkt-Entscheidungen (vom Nutzer)**

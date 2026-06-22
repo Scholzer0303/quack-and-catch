@@ -63,8 +63,9 @@ export class Game {
 
     // Fang-Mechanik: zielt über die Kamera, fängt aus dem Entenpool.
     this.fishingRod = new FishingRod(this.cameraRig.camera, this.ducks, this.bus);
-    this.sceneManager.add(this.fishingRod.highlight); // Hover-Ring um die Zielente
-    this.reticle = new Reticle(); // Fadenkreuz + Timing-Feedback (Halten-Modell)
+    this.sceneManager.add(this.fishingRod.highlight); // Drop-Zone-Ring auf dem Wasser
+    this.sceneManager.add(this.fishingRod.rig); // Schnur + Haken (world-space, reicht ins Wasser)
+    this.reticle = new Reticle(); // Fadenkreuz am Wasser-Zielpunkt
 
     // Belohnung/Ökonomie/Phasen (entkoppelt über den EventBus). Economy zuerst
     // (RewardSystem hält die Referenz für isNewTip); eigener RNG-Seed.

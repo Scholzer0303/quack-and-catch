@@ -59,8 +59,8 @@ Eingeschoben nach Nutzer-Live-Test (Wettbewerb): Steuerung muss „cool" sein + 
 - [x] Step 2: Heller Comic-Tag (Himmel/Rasen/Wasser/Stand; `f6c716a`)
 - [x] Step 3: Toon/Cel-Shading auf Enten (`a9ff24b`)
 - [x] Step 4: Schwarze Comic-Outlines auf Enten (Inverted-Hull; `4d1a834`)
-- [x] **Steuerungs-Redesign:** Rute schwenkt sichtbar; **Halten senkt Haken / Loslassen hebt**; **Lock bei Release** im grün/gold-Ring über einer Ente. FishingRod besitzt + animiert die Rute (Kind der Kamera); Animation rein visuell (`getView()`+Aim), Fang-Logik unverändert.
-- [ ] Rute/Haken-Optik echter + sichtbare Auf-/Ab-Bewegung (`RodBuilder.ts`)
+- [x] **Steuerungs-Redesign:** Rute schwenkt sichtbar; **Halten senkt Haken / Loslassen hebt**; **Lock bei Release** im grün/gold-Ring über einer Ente. (Step 5, `c0900e3`)
+- [x] **Fang-Engine-Neumodell + Rute/Haken-Optik:** feste Schräg-Sicht aufs ganze Becken; Maus → **Wasserpunkt W** (`HookRaycaster.resolveWaterPoint`); Halten senkt Haken **echt ins Wasser** bei W (Schnur+Haken world-space, von der Spitze); **räumlicher Fang** (Ente ≤ `catchRadius`, Perfect = mittig ≤ `perfectRadius`); Rute schwenkt stark (yaw/pitch); Rute/Haken Toon+Outline + Schwimmer. (Step 6)
 - [ ] Jahrmarkt-Welt: graue Wand weg → Buden/Wimpel/Kulisse; Becken-Rand statt dickem Reifen (`StallBuilder.ts`/`BasinBuilder.ts`)
 - [ ] Juice: Splash/Catch-Pop/Perfect-Flash/Mini-Screenshake/HUD-Count-up (`src/fx/`) + optional Bloom/Glow (`core/postprocessing/`)
 - [ ] Tipp-Modal schicker (`CardReveal.ts`/`styles.css`; optional Icon/Visualisierung je Tipp)

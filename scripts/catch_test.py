@@ -46,21 +46,16 @@ with sync_playwright() as p:
     # M4.6: Direktes Fadenkreuz — Fang-Strahl geht durch die Zeigerposition.
     # Eine lebende Ente live auf den Screen projizieren (via __qc.camera) und die
     # Maus exakt dorthin bewegen (statt fixer Koords).
-    # Zentralste, fangbare Ente (in Reichweite ab Haken-Anker) auf Pixel projizieren.
+    # Zentralste lebende Ente auf Pixel projizieren (ganzes Becken erreichbar).
     def duck_pixel():
         return page.evaluate(
             """() => {
               const cam = window.__qc.camera;
               const V3 = cam.position.constructor;  // THREE.Vector3 ohne globalen Import
               const w = window.innerWidth, h = window.innerHeight;
-              // Reichweite ab Haken-Anker (wie HookRaycaster) — nur fangbare Enten waehlen.
-              const anchor = cam.localToWorld(new V3(0.04, -0.3, -1.73));
-              const reach2 = 3.2 * 3.2;
               let best = null, bestScore = Infinity;
               for (const d of window.__qc.ducks.ducks) {
                 if (!d.alive) continue;
-                const dx = d.worldX - anchor.x, dy = d.worldY - anchor.y, dz = d.worldZ - anchor.z;
-                if (dx * dx + dy * dy + dz * dz > reach2) continue;
                 const ndc = new V3(d.worldX, d.worldY, d.worldZ).project(cam);
                 if (ndc.z >= 1 || Math.abs(ndc.x) > 0.95 || Math.abs(ndc.y) > 0.95) continue;
                 const score = Math.abs(ndc.x) + Math.abs(ndc.y);  // zentralste bevorzugen
@@ -78,7 +73,7 @@ with sync_playwright() as p:
             page.wait_for_timeout(120)
             continue
         page.mouse.move(px["x"], px["y"])
-        # Warten, bis eine Ente unter dem Fadenkreuz fangbar ist (gruenes Fadenkreuz).
+        # Warten, bis die Ente in der Drop-Zone liegt (gruenes Fadenkreuz / hasTarget).
         try:
             page.wait_for_function(
                 "() => window.__qc.rod.getView().hasTarget === true", timeout=2000
@@ -86,11 +81,9 @@ with sync_playwright() as p:
         except Exception:
             continue
         page.mouse.down()
-        # Cast (220 ms) + ~100 ms ins Window -> Loslassen im Fenster (Hit). Zwischen
-        # down und up KEINE evaluate-Roundtrips: das Window (280 ms) wuerde sonst
-        # ablaufen. Die Ente driftet in ~320 ms nur ~0.26 u (< catchRadius 0.45),
-        # bleibt also unter dem ruhenden Fadenkreuz fangbar (Lock-bei-Release).
-        page.wait_for_timeout(320)
+        # Halten, bis der Haken im Wasser ist (dip >= armProgress; lowerDuration 260 ms),
+        # dann loslassen -> raeumlicher Fang. Kein Timing-Fenster mehr.
+        page.wait_for_timeout(360)
         page.mouse.up()
         # Reel (600 ms) + Cooldown (250 ms) abklingen lassen.
         page.wait_for_timeout(1000)

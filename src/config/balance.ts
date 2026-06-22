@@ -24,11 +24,12 @@ export const BALANCE = {
   },
 
   camera: {
-    position: [0, 1.85, 2.7] as [number, number, number],
-    lookAt: [0, 0.0, -2.4] as [number, number, number],
+    // Feste Schräg-runter-Sicht ins ganze Becken (Maus bewegt Ziel/Rute, nicht den Blick).
+    position: [0, 2.75, 3.5] as [number, number, number],
+    lookAt: [0, -0.15, -2.2] as [number, number, number],
     aimInstant: true, // true → Blick folgt dem Zeiger sofort (kein Nachfaden)
-    aimYawRange: 0.16, // dezenter horizontaler Parallax-Schwenk (rad); 0 = fix
-    aimPitchRange: 0.1, // dezenter vertikaler Parallax-Schwenk (rad)
+    aimYawRange: 0.05, // nur dezenter Parallax-Schwenk (rad); Zielen läuft über den Wasserpunkt
+    aimPitchRange: 0.03, // nur dezenter vertikaler Parallax
     aimSmooth: 6, // Dämpfung nur im Fallback (aimInstant=false)
   },
 
@@ -106,20 +107,21 @@ export const BALANCE = {
   },
 
   hook: {
-    baseReach: 3.2, // Welteinheiten (Tier 0)
-    baseWindowMs: 280, // Zeitfenster, in dem eine Ente fangbar ist
-    perfectWindowMs: 90, // zentrales Sub-Window -> „Perfect"
+    // Räumliches Fang-Modell: Maus → Wasserpunkt W; Halten senkt den Haken zu W,
+    // Loslassen mit Ente nahe W fängt (kein Timing-Fenster).
+    lowerDurationMs: 260, // Haken-Senkdauer 0→1 (Dip)
+    armProgress: 0.6, // ab diesem Dip zählt ein Fang (Haken „im Wasser")
+    catchRadius: 0.6, // räumliche Fang-Toleranz um W (XZ, Welteinheiten)
+    perfectRadius: 0.22, // Ente so nah an W → Perfect
+    basinInset: 0.96, // W aufs Wasser-Oval clampen (knapp innerhalb des Rands)
     perfectTokenBonus: 0.25, // +25 % Tokens bei Perfect
-    castDurationMs: 220, // Tier 0 (geteilt durch castSpeed)
-    reelDurationMs: 600, // Tier 0 (geteilt durch reelSpeed)
-    cooldownMs: 250, // nach einem Fehlversuch
-    catchRadius: 0.45, // räuml. Ziel-Toleranz (Enten-Body ~0.21 + Puffer)
-    baseLineStrength: 3, // Tier-0-Linienstärke (Bambus), bis M6 echte Rods kommen
+    reelDurationMs: 600, // Einhol-Dauer (Ente → Rutenspitze)
+    cooldownMs: 250, // kurze Sperre nach einem Versuch
+    baseLineStrength: 3, // Tier-0-Linienstärke (zu schwere Ente reißt ab), bis M6 echte Rods
     reelEndScale: 0.6, // Ente schrumpft beim Einholen (Juice)
-    // Steuerungs-Feel: Rute lebt sichtbar (rein visuell, getrieben von getView()+Aim).
-    dipDepth: 0.55, // wie weit der Haken beim Halten absinkt (Kamera-lokale Einheiten)
+    // Rute-Feel: schwenkt deutlich Richtung Zeiger; Haken senkt/hebt gedämpft.
     dipDampLambda: 9, // Dämpfung Senken/Heben (höher = strammer)
-    swingAmount: 0.12, // sichtbare Rute-Neigung Richtung Zeiger (rad)
+    swingAmount: 0.5, // Rute-Neigung Richtung Zeiger (rad) — deutlich sichtbar
     swingDampLambda: 8, // Dämpfung des Schwenks
   },
 

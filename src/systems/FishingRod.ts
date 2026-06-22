@@ -6,66 +6,56 @@ import type { GameEvents } from '../types/events';
 import type { Duck } from '../types/domain';
 import { DuckSpawner } from './DuckSpawner';
 import { HookRaycaster } from './HookRaycaster';
-import { buildRod, stretchLine, HOOK_ANCHOR_LOCAL, type RodParts } from '../world/RodBuilder';
+import { buildRod, stretchLine, type RodParts } from '../world/RodBuilder';
 import { RARITY_DEFS } from '../data/ducks';
 
-export type RodState = 'idle' | 'casting' | 'window' | 'reel' | 'cooldown';
+export type RodState = 'idle' | 'lowering' | 'reel' | 'cooldown';
 
-/** Stat-Block der aktiven Angel (Tier 0 bis M6 echte Rods verdrahtet). */
-interface RodStats {
-  reach: number;
-  castSpeed: number;
-  reelSpeed: number;
-  timingWindowMul: number;
-  lineStrength: number;
-}
-
-const TIER0_STATS: RodStats = {
-  reach: BALANCE.hook.baseReach,
-  castSpeed: 1,
-  reelSpeed: 1,
-  timingWindowMul: 1,
-  lineStrength: BALANCE.hook.baseLineStrength,
-};
-
-/** Schnappschuss für das Reticle (kein neuer Event-Typ nötig). */
+/** Schnappschuss für das Reticle. */
 export interface RodView {
   state: RodState;
-  castProgress: number; // 0..1 während casting
-  windowProgress: number; // 0..1 während window
-  inPerfect: boolean; // gerade im Perfect-Band
-  hasTarget: boolean; // anvisierte Ente vorhanden
+  dip: number; // 0 = oben, 1 = Haken im Wasser
+  hasTarget: boolean; // Ente in der Drop-Zone
+  inPerfect: boolean; // Ente mittig (≤ perfectRadius)
   cooldownProgress: number; // 0..1 während cooldown
 }
 
 /**
- * Fang-State-Machine (Halten-Laden & Loslassen):
- * idle → casting → window → (Treffer | Fehlversuch) → cooldown → idle.
- * Jeder Hold wird zwangsaufgelöst (Window-Timeout / cancel) — kein Softlock.
+ * Räumliches Fang-Modell (kein Timing-Fenster):
+ * idle → (Press) lowering → (Release) Fang/Heben → cooldown → idle.
+ * Maus → Wasserpunkt W (HookRaycaster). Halten senkt den Haken von der
+ * Rutenspitze zu W ins Wasser; Loslassen mit Ente ≤ catchRadius um W → Fang
+ * (mittig ≤ perfectRadius → Perfect). Rute (stick) schwenkt sichtbar Richtung
+ * Zeiger; Schnur+Haken (rig) sind world-space und reichen bis auf die Wasserlinie.
  */
 export class FishingRod {
   private readonly raycaster = new HookRaycaster();
-  private readonly stats = TIER0_STATS;
-  private readonly hookWorld = new THREE.Vector3();
-  private readonly reelFrom = new THREE.Vector3(); // Fangposition beim Hit
-  private readonly reelPos = new THREE.Vector3(); // Scratch für die Lerp-Pose
+  private readonly lineStrength = BALANCE.hook.baseLineStrength;
 
-  /** Flacher Ring um die anvisierte Ente; Game hängt ihn in die Szene. */
+  private readonly rod: RodParts;
+  /** Schnur + Haken (world-space); Game hängt das in die Szene. */
+  readonly rig: THREE.Group;
+  /** Drop-Zone-Ring auf dem Wasser an W; Game hängt ihn in die Szene. */
   readonly highlight: THREE.Mesh;
 
-  // Sichtbare Rute (Kind der Kamera) + animierte Pose. Rein visuell, getrieben
-  // von State/getView() + Aim — die Fang-Logik bleibt unberührt.
-  private readonly rod: RodParts;
-  private readonly hookLocal = new THREE.Vector3().copy(HOOK_ANCHOR_LOCAL); // Scratch für die Schnur
-  private dip = 0; // 0 = Ruhe/oben, 1 = ganz abgesenkt (gedämpft)
-  private swingX = 0; // gedämpfte Rute-Neigung Richtung Zeiger
-  private swingY = 0;
+  private readonly aimNdc = new THREE.Vector2(0, 0);
+  private readonly target = new THREE.Vector3(0, BALANCE.basin.waterY, BALANCE.basin.centerZ); // letzter Wasserpunkt W
+  private wValid = false;
 
-  private readonly aimNdc = new THREE.Vector2(0, 0); // Zeigerposition (direktes Fadenkreuz)
+  // Scratch (keine Per-Frame-Allocs)
+  private readonly tipWorld = new THREE.Vector3();
+  private readonly hookWorld = new THREE.Vector3();
+  private readonly reelFrom = new THREE.Vector3();
+  private readonly reelPos = new THREE.Vector3();
+
   private state: RodState = 'idle';
-  private timer = 0; // Sekunden im aktuellen Zustand
+  private timer = 0;
+  private dip = 0;
+  private swingX = 0;
+  private swingY = 0;
   private lockDuck: Duck | null = null;
-  private hovered: Duck | null = null;
+  private near: Duck | null = null; // Ente in der Drop-Zone (pro Frame)
+  private nearPerfect = false;
   private perfect = false;
 
   constructor(
@@ -73,175 +63,137 @@ export class FishingRod {
     private readonly ducks: DuckSpawner,
     private readonly bus: EventBus<GameEvents>,
   ) {
-    const geo = new THREE.TorusGeometry(BALANCE.hook.catchRadius * 0.8, 0.03, 8, 24);
+    this.rod = buildRod();
+    this.rig = this.rod.rig;
+    this.camera.add(this.rod.stick); // Rute = Kind der Kamera (Hand-Feel)
+
+    const geo = new THREE.TorusGeometry(BALANCE.hook.catchRadius, 0.03, 8, 32);
     const mat = new THREE.MeshBasicMaterial({ color: 0x5cf2a0, transparent: true, opacity: 0.85 });
     mat.fog = false;
     this.highlight = new THREE.Mesh(geo, mat);
-    this.highlight.rotation.x = Math.PI / 2; // flach auf die Wasserfläche
+    this.highlight.rotation.x = Math.PI / 2; // flach aufs Wasser
     this.highlight.visible = false;
-
-    // Rute als Kind der Kamera (Hand-Feel); FishingRod hält die Referenz und animiert sie.
-    this.rod = buildRod();
-    this.camera.add(this.rod.group);
   }
 
-  // ---- Dauern (Sekunden), aus BALANCE.hook + Rod-Stats abgeleitet ----
-  private get castDur(): number {
-    return BALANCE.hook.castDurationMs / 1000 / this.stats.castSpeed;
+  private get lowerDur(): number {
+    return BALANCE.hook.lowerDurationMs / 1000;
   }
-  private get windowDur(): number {
-    return (BALANCE.hook.baseWindowMs / 1000) * this.stats.timingWindowMul;
-  }
-  private get perfectDur(): number {
-    return (BALANCE.hook.perfectWindowMs / 1000) * this.stats.timingWindowMul;
+  private get reelDur(): number {
+    return BALANCE.hook.reelDurationMs / 1000;
   }
   private get cooldownDur(): number {
     return BALANCE.hook.cooldownMs / 1000;
   }
-  private get reelDur(): number {
-    return BALANCE.hook.reelDurationMs / 1000 / this.stats.reelSpeed;
-  }
 
-  /** Haken-Weltposition (Kamera schwenkt → pro Aufruf frisch). */
-  private hookAnchor(): THREE.Vector3 {
-    return this.camera.localToWorld(this.hookWorld.copy(HOOK_ANCHOR_LOCAL));
-  }
-
-  /** Aktuelle Zeigerposition setzen (normalisiertes NDC, x rechts/+1, y oben/+1). */
   setAim(ndcX: number, ndcY: number): void {
     this.aimNdc.set(ndcX, ndcY);
   }
 
-  private aimTarget(): Duck | null {
-    return this.raycaster.findTarget(
-      this.camera,
-      this.aimNdc,
-      this.hookAnchor(),
-      this.ducks.ducks,
-      this.stats.reach,
-      BALANCE.hook.catchRadius,
-    );
-  }
-
-  /** Pointerdown: Haken absenken (physisches Modell) — auch ohne Ziel. Das Ziel
-   *  wird erst beim Loslassen festgelegt (Lock-bei-Release). Das Fadenkreuz
-   *  signalisiert per Farbe, ob eine Ente unter dem Zeiger ist. */
+  /** Pointerdown: Haken senken (immer; Ziel zählt erst beim Loslassen). */
   press(aimX: number, aimY: number): void {
     if (this.state !== 'idle') return;
-    this.lockDuck = null; // Lock erst beim Release
     this.bus.emit('hook:cast', { aimX, aimY });
-    this.state = 'casting';
+    this.state = 'lowering';
     this.timer = 0;
     this.perfect = false;
+    this.lockDuck = null;
   }
 
-  /** Pointerup: Hold auflösen. */
+  /** Pointerup: räumlich auflösen. */
   release(): void {
-    if (this.state === 'casting') {
-      this.resolveMiss(); // zu früh losgelassen
-    } else if (this.state === 'window') {
-      this.resolveAtRelease();
+    if (this.state !== 'lowering') return;
+    const armed = this.dip >= BALANCE.hook.armProgress;
+    if (armed && this.wValid && this.near && this.near.alive) {
+      const duck = this.near;
+      if (RARITY_DEFS[duck.rarity].weight > this.lineStrength) {
+        this.resolveSnap(duck); // zu schwer → reißt ab
+        return;
+      }
+      this.perfect = this.nearPerfect;
+      this.lockDuck = duck;
+      this.land(duck);
+      return;
     }
+    if (armed) {
+      this.resolveMiss(); // im Wasser, aber keine Ente
+      return;
+    }
+    this.toCooldown(); // zu flach → nur heben, kein Event
   }
 
-  /** Verlorener Pointer/Fokus: laufenden Hold als Fehlversuch beenden (Softlock-Schutz). */
+  /** Verlorener Pointer/Fokus: Haken heben, kein Fang (Softlock-Schutz). */
   cancel(): void {
-    if (this.state === 'casting' || this.state === 'window') {
-      this.resolveMiss();
-    }
+    if (this.state === 'lowering') this.toCooldown();
   }
 
   update(dt: number): void {
+    // Maus → Wasserpunkt W; nächste Ente in der Drop-Zone bestimmen.
+    const w = this.raycaster.resolveWaterPoint(this.camera, this.aimNdc, BALANCE.basin.waterY);
+    this.wValid = w !== null;
+    if (w) this.target.copy(w);
+    this.near = this.wValid ? this.raycaster.nearestDuck(this.target, this.ducks.ducks, BALANCE.hook.catchRadius) : null;
+    this.nearPerfect = false;
+    if (this.near) {
+      const dx = this.near.worldX - this.target.x;
+      const dz = this.near.worldZ - this.target.z;
+      this.nearPerfect = dx * dx + dz * dz <= BALANCE.hook.perfectRadius * BALANCE.hook.perfectRadius;
+    }
+
     switch (this.state) {
-      case 'idle':
-        this.hovered = this.aimTarget();
-        break;
-      case 'casting':
+      case 'lowering':
         this.timer += dt;
-        if (this.timer >= this.castDur) {
-          this.state = 'window';
-          this.timer = 0;
-        }
-        break;
-      case 'window':
-        this.timer += dt;
-        // Nicht im Fenster losgelassen → Fehlversuch (Halten allein fängt nicht;
-        // zugleich Softlock-Schutz: nie hängender Hold).
-        if (this.timer >= this.windowDur) this.resolveMiss();
+        this.dip = Math.min(1, this.dip + dt / this.lowerDur);
         break;
       case 'reel':
         this.updateReel(dt);
+        this.dip = damp(this.dip, 0, BALANCE.hook.dipDampLambda, dt);
         break;
       case 'cooldown':
         this.timer += dt;
+        this.dip = damp(this.dip, 0, BALANCE.hook.dipDampLambda, dt);
         if (this.timer >= this.cooldownDur) {
           this.state = 'idle';
           this.timer = 0;
         }
         break;
+      default: // idle
+        this.dip = damp(this.dip, 0, BALANCE.hook.dipDampLambda, dt);
     }
-    this.updateHighlight();
+
     this.animateRod(dt);
+    this.updateHighlight();
   }
 
-  /** Sichtbare Rute beleben: Schwenk Richtung Zeiger + Haken senken/heben.
-   *  Rein visuell (getrieben von State + Aim), greift nicht in die Fang-Logik ein. */
+  /** Rute schwenkt Richtung Zeiger; Schnur+Haken (world) von der Spitze ins Wasser. */
   private animateRod(dt: number): void {
     const h = BALANCE.hook;
-
-    // Haken-Tiefe aus dem State: Halten senkt, Loslassen/Reel hebt (gedämpft).
-    let targetDip = 0;
-    if (this.state === 'casting') targetDip = clamp(this.timer / this.castDur, 0, 1);
-    else if (this.state === 'window') targetDip = 1;
-    // reel/cooldown/idle → 0 (Haken hebt; beim Reel hebt er die Ente mit).
-    this.dip = damp(this.dip, targetDip, h.dipDampLambda, dt);
-    this.hookLocal.copy(HOOK_ANCHOR_LOCAL);
-    this.hookLocal.y = HOOK_ANCHOR_LOCAL.y - this.dip * h.dipDepth;
-    this.rod.hookGroup.position.copy(this.hookLocal);
-    stretchLine(this.rod.line, this.rod.tip, this.hookLocal);
-
-    // Rute neigt sich sichtbar Richtung Zeiger (kleiner Lean, gedämpft).
+    // Rute schwenkt sichtbar dem Zeiger nach: yaw über Maus-X, pitch über Maus-Y.
     this.swingX = damp(this.swingX, this.aimNdc.x * h.swingAmount, h.swingDampLambda, dt);
     this.swingY = damp(this.swingY, this.aimNdc.y * h.swingAmount, h.swingDampLambda, dt);
-    this.rod.group.rotation.z = -this.swingX;
-    this.rod.group.rotation.x = this.swingY;
+    this.rod.stick.rotation.set(-this.swingY, -this.swingX, 0);
+    this.rod.stick.updateWorldMatrix(true, false);
+
+    this.tipWorld.copy(this.rod.tip);
+    this.rod.stick.localToWorld(this.tipWorld);
+    if (this.state === 'reel') {
+      this.hookWorld.copy(this.reelPos); // Haken hält die Ente beim Einholen
+    } else {
+      this.hookWorld.copy(this.tipWorld).lerp(this.target, this.dip);
+    }
+    stretchLine(this.rod.line, this.tipWorld, this.hookWorld);
+    this.rod.hookGroup.position.copy(this.hookWorld);
   }
 
   private updateHighlight(): void {
-    const show = this.state === 'idle' && this.hovered !== null;
+    const show = this.wValid && (this.state === 'idle' || this.state === 'lowering');
     this.highlight.visible = show;
-    if (show && this.hovered) {
-      this.highlight.position.set(
-        this.hovered.worldX,
-        BALANCE.basin.waterY + 0.05,
-        this.hovered.worldZ,
-      );
-    }
+    if (!show) return;
+    this.highlight.position.set(this.target.x, BALANCE.basin.waterY + 0.04, this.target.z);
+    const mat = this.highlight.material as THREE.MeshBasicMaterial;
+    mat.color.set(this.nearPerfect ? 0xffcf3f : this.near ? 0x5cf2a0 : 0xbfead8);
+    mat.opacity = this.near ? 0.9 : 0.45;
   }
 
-  /** Auflösung beim Loslassen im Window (oder beim Timeout). Lock-bei-Release:
-   *  Ziel wird genau jetzt evaluiert (was unter dem Haken liegt). */
-  private resolveAtRelease(): void {
-    const target = this.aimTarget();
-    // Treffer nur mit gültigem, noch lebendem Ziel.
-    if (!target || !target.alive) {
-      this.resolveMiss();
-      return;
-    }
-    // lineStrength-Gate: zu schwere Ente reißt ab (Feedback, kein Softlock).
-    if (RARITY_DEFS[target.rarity].weight > this.stats.lineStrength) {
-      this.resolveSnap(target);
-      return;
-    }
-    // Perfect = Loslassen im zentralen Band des Fensters.
-    const half = this.perfectDur / 2;
-    const center = this.windowDur / 2;
-    this.perfect = Math.abs(this.timer - center) <= half;
-    this.lockDuck = target; // ab hier für die Reel-Phase gehalten
-    this.land(target);
-  }
-
-  /** Treffer steht: Reel-Animation starten (Ente lerpt zum Haken). */
   private land(duck: Duck): void {
     this.bus.emit('hook:result', { hit: true, perfect: this.perfect, duck });
     this.ducks.beginReel(duck.slot);
@@ -259,8 +211,11 @@ export class FishingRod {
     }
     const p = clamp(this.timer / this.reelDur, 0, 1);
     const e = p * p * (3 - 2 * p); // smoothstep
-    const to = this.hookAnchor();
-    this.reelPos.copy(this.reelFrom).lerp(to, e);
+    // Ziel = aktuelle Rutenspitze (world): die Ente wird zur Rute hochgezogen.
+    this.tipWorld.copy(this.rod.tip);
+    this.rod.stick.updateWorldMatrix(true, false);
+    this.rod.stick.localToWorld(this.tipWorld);
+    this.reelPos.copy(this.reelFrom).lerp(this.tipWorld, e);
     const scale = lerp(1, BALANCE.hook.reelEndScale, e);
     this.ducks.setReelPose(duck.slot, this.reelPos.x, this.reelPos.y, this.reelPos.z, scale);
     if (p >= 1) this.finishLand(duck);
@@ -281,7 +236,7 @@ export class FishingRod {
     this.toCooldown();
   }
 
-  /** Linien-Abriss: Ente bleibt auf der Bahn (nie gehakt), nur Feedback + Cooldown. */
+  /** Linien-Abriss: Ente bleibt auf der Bahn, nur Feedback + Cooldown. */
   private resolveSnap(duck: Duck): void {
     this.bus.emit('hook:result', { hit: false, perfect: false, duck });
     this.lockDuck = null;
@@ -295,13 +250,12 @@ export class FishingRod {
   }
 
   getView(): RodView {
+    const active = this.state === 'idle' || this.state === 'lowering';
     return {
       state: this.state,
-      castProgress: this.state === 'casting' ? clamp(this.timer / this.castDur, 0, 1) : 0,
-      windowProgress: this.state === 'window' ? clamp(this.timer / this.windowDur, 0, 1) : 0,
-      inPerfect:
-        this.state === 'window' && Math.abs(this.timer - this.windowDur / 2) <= this.perfectDur / 2,
-      hasTarget: this.state === 'idle' && this.hovered !== null,
+      dip: this.dip,
+      hasTarget: active && this.near !== null,
+      inPerfect: active && this.nearPerfect,
       cooldownProgress: this.state === 'cooldown' ? clamp(this.timer / this.cooldownDur, 0, 1) : 0,
     };
   }
@@ -310,16 +264,8 @@ export class FishingRod {
     this.highlight.geometry.dispose();
     (this.highlight.material as THREE.Material).dispose();
     this.highlight.removeFromParent();
-
-    // Rute von der Kamera lösen und alle Geometrien/Materialien freigeben.
-    this.rod.group.removeFromParent();
-    this.rod.group.traverse((obj) => {
-      if (obj instanceof THREE.Mesh) {
-        obj.geometry.dispose();
-        const mat = obj.material;
-        if (Array.isArray(mat)) mat.forEach((m) => m.dispose());
-        else mat.dispose();
-      }
-    });
+    this.rod.stick.removeFromParent();
+    this.rod.rig.removeFromParent();
+    this.rod.dispose();
   }
 }

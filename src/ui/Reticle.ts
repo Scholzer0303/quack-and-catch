@@ -2,14 +2,12 @@ import { BALANCE } from '../config/balance';
 import type { RodView } from '../systems/FishingRod';
 
 /**
- * 2D-Overlay über dem Three-Canvas: zentriertes Fadenkreuz + Timing-Feedback
- * fürs Halten-Modell (Cast-Ring → Window-Bogen mit Perfect-Band + Marker).
- * Erstes ui/-File; M3 (UIRoot) faltet es ein. Wird pro Frame aus RodView gespeist.
+ * 2D-Overlay über dem Three-Canvas: Fadenkreuz am Zeiger (= Wasser-Zielpunkt).
+ * Farbe signalisiert Fangbarkeit (neutral/grün/gold/cooldown); beim Halten zeigt
+ * ein Ring den Haken-Senkfortschritt (dip). Wird pro Frame aus RodView gespeist.
+ * Die eigentliche Drop-Zone liegt als 3D-Ring auf dem Wasser (FishingRod.highlight).
  */
-const PERFECT_FRAC = BALANCE.hook.perfectWindowMs / BALANCE.hook.baseWindowMs;
-const RING_R = 34; // px
-const ARC_START = -Math.PI * 0.7;
-const ARC_SPAN = Math.PI * 1.4;
+const RING_R = 30; // px
 
 export class Reticle {
   private readonly canvas: HTMLCanvasElement;
@@ -44,7 +42,7 @@ export class Reticle {
     this.canvas.height = Math.floor(window.innerHeight * this.dpr);
   };
 
-  /** Zeigerposition setzen (NDC). Fadenkreuz + Timing-Ringe folgen dem Zeiger. */
+  /** Zeigerposition setzen (NDC). Fadenkreuz folgt dem Zeiger. */
   setPointer(ndcX: number, ndcY: number): void {
     this.ndcX = ndcX;
     this.ndcY = ndcY;
@@ -56,20 +54,17 @@ export class Reticle {
     const h = window.innerHeight;
     ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
-    // NDC → Pixel (direktes Fadenkreuz am Zeiger).
     const cx = (this.ndcX * 0.5 + 0.5) * w;
     const cy = (0.5 - this.ndcY * 0.5) * h;
 
     const a = BALANCE.aim;
     let color = a.crosshairColorNoTarget;
     if (view.state === 'cooldown') color = a.crosshairColorCooldown;
-    else if (view.hasTarget || view.state === 'casting' || view.state === 'window') {
-      color = a.crosshairColorTarget;
-    }
-    this.drawCrosshair(cx, cy, color);
+    else if (view.inPerfect) color = '#ffcf3f';
+    else if (view.hasTarget) color = a.crosshairColorTarget;
 
-    if (view.state === 'casting') this.drawCastRing(cx, cy, view.castProgress);
-    else if (view.state === 'window') this.drawWindow(cx, cy, view.windowProgress, view.inPerfect);
+    if (view.state === 'lowering') this.drawDipRing(cx, cy, view.dip, color);
+    this.drawCrosshair(cx, cy, color);
   }
 
   private drawCrosshair(cx: number, cy: number, color: string): void {
@@ -94,39 +89,21 @@ export class Reticle {
     ctx.fill();
   }
 
-  private drawCastRing(cx: number, cy: number, p: number): void {
+  /** Ring füllt sich mit dem Senkfortschritt (0→1) während des Haltens. */
+  private drawDipRing(cx: number, cy: number, dip: number, color: string): void {
     const ctx = this.ctx;
-    ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
     ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.arc(cx, cy, RING_R, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * p);
+    ctx.arc(cx, cy, RING_R, 0, Math.PI * 2);
     ctx.stroke();
-  }
 
-  private drawWindow(cx: number, cy: number, p: number, inPerfect: boolean): void {
-    const ctx = this.ctx;
+    ctx.strokeStyle = color;
     ctx.lineCap = 'round';
-    ctx.lineWidth = 4;
-
-    // Window-Bogen (grün) = fangbar.
-    ctx.strokeStyle = 'rgba(92,242,160,0.7)';
     ctx.beginPath();
-    ctx.arc(cx, cy, RING_R, ARC_START, ARC_START + ARC_SPAN);
+    ctx.arc(cx, cy, RING_R, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * dip);
     ctx.stroke();
-
-    // Perfect-Band (gold), zentriert.
-    const pStart = ARC_START + ARC_SPAN * (0.5 - PERFECT_FRAC / 2);
-    ctx.strokeStyle = '#ffcf3f';
-    ctx.beginPath();
-    ctx.arc(cx, cy, RING_R, pStart, pStart + ARC_SPAN * PERFECT_FRAC);
-    ctx.stroke();
-
-    // Marker an aktueller Window-Position → im Gold loslassen = Perfect.
-    const a = ARC_START + ARC_SPAN * p;
-    ctx.fillStyle = inPerfect ? '#ffcf3f' : '#ffffff';
-    ctx.beginPath();
-    ctx.arc(cx + Math.cos(a) * RING_R, cy + Math.sin(a) * RING_R, 5, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.lineCap = 'butt';
   }
 
   dispose(): void {

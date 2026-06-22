@@ -1,17 +1,25 @@
 import * as THREE from 'three';
+import { BALANCE } from '../config/balance';
+import { buildToonGradient } from './DuckFactory';
+import { buildOutlineMaterial } from './materials/OutlineMaterial';
 
-/** Haken-Anker in Kamera-lokalen Koordinaten — Single Source für Reel-Ziel (FishingRod). */
-export const HOOK_ANCHOR_LOCAL = new THREE.Vector3(0.04, -0.3, -1.73);
+/** Rute-Spitze in Kamera-lokalen Koordinaten — Schnur-Oberkante (Single Source). */
+export const ROD_TIP_LOCAL = new THREE.Vector3(0.06, 0.06, -1.62);
 
-/** Rute-Spitze (lokal) — Schnur-Oberkante; Single Source für die Schnur-Streckung. */
-export const ROD_TIP_LOCAL = new THREE.Vector3(0.04, 0.12, -1.75);
-
-/** Adressierbare Rute: Teile, die FishingRod pro Frame animiert. */
+/**
+ * Adressierbare Rute, aufgeteilt in:
+ * - `stick`: Griff + Rute (Kind der Kamera, schwenkt Richtung Zeiger).
+ * - `rig`:   Schnur + Haken/Schwimmer (world-space, Game hängt sie in die Szene;
+ *            so kann der Haken bis auf die Wasseroberfläche reichen).
+ * `tip` ist die Schnur-Oberkante (lokal zum `stick`).
+ */
 export interface RodParts {
-  group: THREE.Group; // ganze Rute (wird Kind der Kamera)
-  hookGroup: THREE.Group; // Ring+Barb; absenken via position.y
-  line: THREE.Mesh; // Schnur (Einheits-Zylinder, pro Frame gestreckt)
-  tip: THREE.Vector3; // Schnur-Oberkante (lokal)
+  stick: THREE.Group;
+  rig: THREE.Group;
+  line: THREE.Mesh;
+  hookGroup: THREE.Group;
+  tip: THREE.Vector3;
+  dispose(): void;
 }
 
 /** Einheits-Zylinder (Höhe 1) zwischen a und b einpassen: Position=Mitte, Länge=scale.y. */
@@ -19,80 +27,105 @@ function orientSegment(mesh: THREE.Mesh, a: THREE.Vector3, b: THREE.Vector3): vo
   const dir = new THREE.Vector3().subVectors(b, a);
   const len = dir.length();
   mesh.position.copy(a).add(b).multiplyScalar(0.5);
-  mesh.scale.set(1, len, 1);
+  mesh.scale.set(1, Math.max(len, 1e-5), 1);
   if (len > 1e-6) mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.divideScalar(len));
 }
 
-/**
- * Angel + Schnur + Haken im Vordergrund (Hand-Feel). Als Kind der Kamera
- * gedacht, daher in Kamera-lokalen Koordinaten (Blickrichtung = -Z).
- * Liefert die animierbaren Teile zurück — FishingRod schwenkt die Rute und
- * senkt/hebt den Haken (Schnur dehnt sich mit).
- */
-export function buildRod(): RodParts {
-  const group = new THREE.Group();
-
-  const rodMat = new THREE.MeshStandardMaterial({ color: 0x8a2e22, roughness: 0.5, metalness: 0.1 });
-  const lineMat = new THREE.MeshStandardMaterial({ color: 0xdfe6ea, roughness: 0.6 });
-  const hookMat = new THREE.MeshStandardMaterial({ color: 0xc7ccd1, roughness: 0.3, metalness: 0.8 });
-  const gripMat = new THREE.MeshStandardMaterial({ color: 0x2b2b2b, roughness: 0.9 });
-  // Vordergrund-Objekt (Hand-Feel): nicht vom Welt-Fog einfärben lassen.
-  for (const m of [rodMat, lineMat, hookMat, gripMat]) m.fog = false;
-
-  // Starres Segment (Rute/Griff): fixe Länge zur Bauzeit.
-  const fixedSegment = (a: THREE.Vector3, b: THREE.Vector3, radius: number, mat: THREE.Material): void => {
-    const dir = new THREE.Vector3().subVectors(b, a);
-    const len = dir.length();
-    const geo = new THREE.CylinderGeometry(radius, radius, len, 8);
-    const mesh = new THREE.Mesh(geo, mat);
-    mesh.position.copy(a).add(b).multiplyScalar(0.5);
-    mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
-    group.add(mesh);
-  };
-
-  // Angelrute: vom Griff (unten rechts) zur Spitze (vorne mittig).
-  const handle = new THREE.Vector3(0.62, -0.62, -0.45);
-  const tip = ROD_TIP_LOCAL.clone();
-  fixedSegment(handle, tip, 0.022, rodMat);
-
-  // Griff-Verdickung
-  const gripGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.22, 10);
-  const grip = new THREE.Mesh(gripGeo, gripMat);
-  grip.position.copy(handle);
-  grip.quaternion.setFromUnitVectors(
-    new THREE.Vector3(0, 1, 0),
-    new THREE.Vector3().subVectors(tip, handle).normalize(),
-  );
-  group.add(grip);
-
-  // Schnur: Einheits-Zylinder (Höhe 1), pro Frame zwischen Spitze und Haken gestreckt.
-  const lineGeo = new THREE.CylinderGeometry(0.004, 0.004, 1, 8);
-  const line = new THREE.Mesh(lineGeo, lineMat);
-  orientSegment(line, tip, HOOK_ANCHOR_LOCAL);
-  group.add(line);
-
-  // Haken als eigene Group (wird zum Senken/Heben verschoben): schlanker Ring + feine Spitze.
-  const hookGroup = new THREE.Group();
-  hookGroup.position.copy(HOOK_ANCHOR_LOCAL);
-
-  const ringGeo = new THREE.TorusGeometry(0.045, 0.009, 8, 20, Math.PI * 1.5);
-  const ring = new THREE.Mesh(ringGeo, hookMat);
-  ring.rotation.set(Math.PI / 2, 0, 0);
-  hookGroup.add(ring);
-
-  // Widerhaken: feiner Kegel, leicht nach außen gekippt.
-  const barbGeo = new THREE.ConeGeometry(0.013, 0.05, 8);
-  const barb = new THREE.Mesh(barbGeo, hookMat);
-  barb.position.set(0.045, 0.028, 0);
-  barb.rotation.z = Math.PI / 3;
-  hookGroup.add(barb);
-
-  group.add(hookGroup);
-
-  return { group, hookGroup, line, tip };
-}
-
-/** Schnur zwischen Spitze und aktuellem Haken neu strecken (FishingRod ruft pro Frame). */
+/** Schnur zwischen Spitze und aktuellem Haken neu strecken (FishingRod ruft pro Frame, world-space). */
 export function stretchLine(line: THREE.Mesh, from: THREE.Vector3, to: THREE.Vector3): void {
   orientSegment(line, from, to);
+}
+
+export function buildRod(): RodParts {
+  const grad = buildToonGradient(BALANCE.toon.gradientStops);
+  const toon = (color: number): THREE.MeshToonMaterial => {
+    const m = new THREE.MeshToonMaterial({ color, gradientMap: grad });
+    m.fog = false; // Vordergrund-/Hand-Objekt: nicht vom Welt-Fog einfärben
+    return m;
+  };
+  const outlineMat = buildOutlineMaterial(BALANCE.outline.color, BALANCE.outline.thickness);
+  outlineMat.fog = false;
+
+  const woodMat = toon(0x9a5a2c); // helles Comic-Holz
+  const gripMat = toon(0x2c2c30); // dunkler Griff
+  const hookMat = toon(0xcfd4d9); // helles Metall
+  const bobberMat = toon(0xf2564e); // roter Schwimmer
+  const lineMat = new THREE.MeshBasicMaterial({ color: 0xf3f5f7 });
+  lineMat.fog = false;
+  const mats: THREE.Material[] = [woodMat, gripMat, hookMat, bobberMat, lineMat, outlineMat];
+  const geos: THREE.BufferGeometry[] = [];
+
+  /** Toon-Mesh an Pose setzen + (optional) Inverted-Hull-Outline mit identischer Pose dahinter. */
+  const place = (
+    parent: THREE.Object3D,
+    geo: THREE.BufferGeometry,
+    mat: THREE.Material,
+    pos: THREE.Vector3,
+    quat: THREE.Quaternion | null,
+    outline: boolean,
+  ): void => {
+    geos.push(geo);
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.copy(pos);
+    if (quat) mesh.quaternion.copy(quat);
+    parent.add(mesh);
+    if (outline && BALANCE.outline.enabled) {
+      const o = new THREE.Mesh(geo, outlineMat);
+      o.position.copy(pos);
+      if (quat) o.quaternion.copy(quat);
+      parent.add(o);
+    }
+  };
+
+  // ---- stick (Kamera-Kind) ----
+  const stick = new THREE.Group();
+  const handle = new THREE.Vector3(0.6, -0.66, -0.42);
+  const tip = ROD_TIP_LOCAL.clone();
+
+  const rodDir = new THREE.Vector3().subVectors(tip, handle);
+  const rodQuat = new THREE.Quaternion().setFromUnitVectors(
+    new THREE.Vector3(0, 1, 0),
+    rodDir.clone().normalize(),
+  );
+  const rodMid = handle.clone().add(tip).multiplyScalar(0.5);
+  place(stick, new THREE.CylinderGeometry(0.016, 0.03, rodDir.length(), 10), woodMat, rodMid, rodQuat, true);
+  place(stick, new THREE.CylinderGeometry(0.052, 0.052, 0.24, 12), gripMat, handle, rodQuat, true);
+
+  // ---- rig (world-space): Schnur + Haken/Schwimmer ----
+  const rig = new THREE.Group();
+
+  const lineGeo = new THREE.CylinderGeometry(0.006, 0.006, 1, 6);
+  geos.push(lineGeo);
+  const line = new THREE.Mesh(lineGeo, lineMat);
+  rig.add(line);
+
+  // Schwimmer sitzt auf der Wasserlinie (= hookWorld), Haken darunter.
+  const hookGroup = new THREE.Group();
+  const Z = new THREE.Vector3();
+  place(hookGroup, new THREE.SphereGeometry(0.06, 12, 10), bobberMat, Z, null, true);
+  place(
+    hookGroup,
+    new THREE.TorusGeometry(0.045, 0.01, 8, 18, Math.PI * 1.5),
+    hookMat,
+    new THREE.Vector3(0, -0.09, 0),
+    new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0)),
+    true,
+  );
+  place(
+    hookGroup,
+    new THREE.ConeGeometry(0.018, 0.07, 8),
+    hookMat,
+    new THREE.Vector3(0.04, -0.14, 0),
+    new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, Math.PI / 3)),
+    true,
+  );
+  rig.add(hookGroup);
+
+  const dispose = (): void => {
+    for (const g of geos) g.dispose();
+    for (const m of mats) m.dispose();
+    grad.dispose();
+  };
+
+  return { stick, rig, line, hookGroup, tip, dispose };
 }

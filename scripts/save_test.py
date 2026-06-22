@@ -29,13 +29,9 @@ def catch_one(page):
               const cam = window.__qc.camera;
               const V3 = cam.position.constructor;
               const w = window.innerWidth, h = window.innerHeight;
-              const anchor = cam.localToWorld(new V3(0.04, -0.3, -1.73));
-              const reach2 = 3.2 * 3.2;
               let best = null, bestScore = Infinity;
               for (const d of window.__qc.ducks.ducks) {
                 if (!d.alive) continue;
-                const dx = d.worldX - anchor.x, dy = d.worldY - anchor.y, dz = d.worldZ - anchor.z;
-                if (dx * dx + dy * dy + dz * dz > reach2) continue;
                 const ndc = new V3(d.worldX, d.worldY, d.worldZ).project(cam);
                 if (ndc.z >= 1 || Math.abs(ndc.x) > 0.95 || Math.abs(ndc.y) > 0.95) continue;
                 const score = Math.abs(ndc.x) + Math.abs(ndc.y);
@@ -59,9 +55,8 @@ def catch_one(page):
         except Exception:
             continue
         page.mouse.down()
-        # Lock-bei-Release: zwischen down und up KEINE evaluate-Roundtrips (Window
-        # 280 ms wuerde sonst ablaufen). Ente driftet in ~320 ms < catchRadius.
-        page.wait_for_timeout(320)
+        # Raeumlicher Fang: halten bis der Haken im Wasser ist (dip>=arm), dann loslassen.
+        page.wait_for_timeout(360)
         page.mouse.up()
         page.wait_for_timeout(1000)
         if page.evaluate("() => window.__qc.economy.getTokens()") > 0:

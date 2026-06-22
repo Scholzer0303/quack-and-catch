@@ -3,8 +3,9 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { BALANCE } from '../config/balance';
 
 /** Winzige Gradient-Textur für Cel-Shading: diskrete Helligkeitsstufen.
- *  RGBA (alle Kanäle = Stufe), NearestFilter → harte Bänder statt weicher Verlauf. */
-function buildToonGradient(stops: readonly number[]): THREE.DataTexture {
+ *  RGBA (alle Kanäle = Stufe), NearestFilter → harte Bänder statt weicher Verlauf.
+ *  Exportiert, damit auch die Rute (RodBuilder) denselben Comic-Look nutzt. */
+export function buildToonGradient(stops: readonly number[]): THREE.DataTexture {
   const data = new Uint8Array(stops.length * 4);
   for (let i = 0; i < stops.length; i++) {
     const v = Math.round(Math.max(0, Math.min(1, stops[i] ?? 1)) * 255);
