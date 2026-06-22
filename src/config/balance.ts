@@ -147,6 +147,22 @@ export const BALANCE = {
     swingDampLambda: 8, // Dämpfung des Schwenks
   },
 
+  // Game-Feel-FX (rein additiv, keine Gameplay-Wirkung). Durations in ms.
+  juice: {
+    splash: {
+      poolSize: 4, // gleichzeitige Ringe (Draw-Call-Budget)
+      durationMs: 520, // Lebensdauer eines Rings (ausdehnen + ausblenden)
+      startRadius: 0.12, // Welteinheiten, nah am Haken
+      endRadius: 0.95, // dehnt sich ~auf die Fang-Zone aus
+      tubeRadius: 0.02, // Ring-Dicke (Highlight nutzt 0.03)
+      radialSegments: 6, // low-poly, mobil-günstig
+      tubularSegments: 28,
+      yOffset: 0.045, // knapp über waterY (Highlight nutzt +0.04)
+      startOpacity: 0.8, // fadet auf 0
+      color: 0xeaffff, // helle Schaumfarbe auf Türkis (blüht in Bloom)
+    },
+  },
+
   rewards: {
     // Token-Spanne [min, max] je Rarität
     tokensByRarity: {

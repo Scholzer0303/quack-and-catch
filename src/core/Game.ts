@@ -14,6 +14,7 @@ import { RewardSystem } from '../systems/RewardSystem';
 import { SaveSystem } from '../systems/SaveSystem';
 import { GameStateMachine } from './GameStateMachine';
 import { Reticle } from '../ui/Reticle';
+import { SplashFx } from '../fx/SplashFx';
 import { UIRoot } from '../ui/UIRoot';
 import { mulberry32 } from '../utils/rng';
 
@@ -30,6 +31,7 @@ export class Game {
   private readonly input: InputSystem;
   private readonly fishingRod: FishingRod;
   private readonly reticle: Reticle;
+  private readonly splashFx: SplashFx;
   private readonly state: GameStateMachine;
   private readonly economy: Economy;
   private readonly reward: RewardSystem;
@@ -68,6 +70,8 @@ export class Game {
     this.sceneManager.add(this.fishingRod.highlight); // Drop-Zone-Ring auf dem Wasser
     this.sceneManager.add(this.fishingRod.rig); // Schnur + Haken (world-space, reicht ins Wasser)
     this.reticle = new Reticle(); // Fadenkreuz am Wasser-Zielpunkt
+    this.splashFx = new SplashFx(); // Wasser-Splash beim Fang
+    this.sceneManager.add(this.splashFx.group);
 
     // Belohnung/Ökonomie/Phasen (entkoppelt über den EventBus). Economy zuerst
     // (RewardSystem hält die Referenz für isNewTip); eigener RNG-Seed.
@@ -84,6 +88,15 @@ export class Game {
     // das bereits gebaute HUD erreicht und der geladene Token-Saldo erscheint.
     this.save = new SaveSystem(this.bus, this.economy);
     this.save.load();
+
+    // Juice: Fang-Feedback. Splash am Wasserpunkt W (Shake/Flash folgen additiv).
+    this.busUnsub.push(
+      this.bus.on('hook:result', (e) => {
+        if (!e.hit) return;
+        const p = this.fishingRod.getCatchPoint();
+        this.splashFx.spawn(p.x, p.z);
+      }),
+    );
 
     // Fang löst die Tipp-Karte aus → Runde pausieren bis „Weiter".
     this.busUnsub.push(this.bus.on('reward:granted', () => this.state.setPhase('paused')));
@@ -147,6 +160,7 @@ export class Game {
       this.ducks.update(dt, elapsed); // schreibt frische worldX/Y/Z vor dem Raycast
     }
     this.fishingRod.update(dt);
+    this.splashFx.update(dt);
     this.reticle.render(this.fishingRod.getView());
     this.renderer.render(this.sceneManager.scene, this.cameraRig.camera);
   }
@@ -190,6 +204,7 @@ export class Game {
     this.state.dispose();
     this.reticle.dispose();
     this.fishingRod.dispose();
+    this.splashFx.dispose();
     this.ducks.dispose();
     this.basin.dispose();
     this.stall.dispose();

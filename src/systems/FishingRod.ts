@@ -265,6 +265,11 @@ export class FishingRod {
     };
   }
 
+  /** Letzter Wasserpunkt W (world) — Fang-XZ für FX. Live-Referenz (keine Alloc). */
+  getCatchPoint(): THREE.Vector3 {
+    return this.target;
+  }
+
   dispose(): void {
     this.highlight.geometry.dispose();
     (this.highlight.material as THREE.Material).dispose();
