@@ -1,5 +1,6 @@
 import { BALANCE } from '../config/balance';
 import type { EventBus } from '../events/EventBus';
+import { isPauseState } from '../types/events';
 import type { GameEvents } from '../types/events';
 
 /**
@@ -9,9 +10,10 @@ import type { GameEvents } from '../types/events';
  * `getMultiplier()` beim Landen — `duck:landed` folgt stets NACH dem `hook:result`
  * dieses Fangs, der Multiplikator ist also schon aktuell).
  *
- * Reset-Vertrag wie GameStateMachine: eine FRISCHE Runde (`playing` aus ≠ `paused`)
- * setzt die Serie zurück; das Tipp-Modal (`paused`) zwischen zwei Fängen NICHT —
- * sonst risse jede Belohnung die eigene Serie ab.
+ * Reset-Vertrag wie GameStateMachine: eine FRISCHE Runde (`playing` aus einer
+ * Nicht-Pause) setzt die Serie zurück; eine Pause (`paused` Tipp-Modal ODER
+ * `pausemenu` Spieler-Pause) zwischen zwei Fängen NICHT — sonst risse jede
+ * Belohnung bzw. jede Pause die eigene Serie ab.
  */
 export class ComboSystem {
   private count = 0;
@@ -26,7 +28,7 @@ export class ComboSystem {
     );
     this.unsub.push(
       bus.on('phase:changed', (e) => {
-        if (e.to === 'playing' && e.from !== 'paused') this.reset();
+        if (e.to === 'playing' && !isPauseState(e.from)) this.reset();
       }),
     );
   }

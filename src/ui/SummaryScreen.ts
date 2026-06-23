@@ -1,4 +1,5 @@
 import type { EventBus } from '../events/EventBus';
+import { isPauseState } from '../types/events';
 import type { GameEvents } from '../types/events';
 import type { Tip } from '../types/domain';
 
@@ -36,8 +37,9 @@ export class SummaryScreen {
     );
     this.unsub.push(
       bus.on('phase:changed', (e) => {
-        // Nur eine FRISCHE Runde leert die Liste — Resume aus der Pause behält sie.
-        if (e.to === 'playing' && e.from !== 'paused') this.collected.length = 0;
+        // Nur eine FRISCHE Runde leert die Liste — Resume aus einer Pause
+        // (Tipp-Modal ODER Pause-Menü) behält die gesammelten Tipps.
+        if (e.to === 'playing' && !isPauseState(e.from)) this.collected.length = 0;
       }),
     );
     // Rendert aus `highscore:changed` (folgt unmittelbar auf `round:ended`): trägt

@@ -1,13 +1,9 @@
 import { BALANCE } from '../config/balance';
 import type { EventBus } from '../events/EventBus';
+import { isPauseState } from '../types/events';
 import type { GameEvents, GamePhase } from '../types/events';
 
 const TICK_INTERVAL = BALANCE.ui.hudThrottleMs / 1000; // s zwischen round:tick-Emits
-
-/** Beide Pausen behalten Timer/Score beim Zurück nach `playing` (kein Reset). */
-function isPauseState(phase: GamePhase): boolean {
-  return phase === 'paused' || phase === 'pausemenu';
-}
 
 /**
  * Phasen + Rundenlebenszyklus (Timer + Score) — bewusst eine gekoppelte Einheit:

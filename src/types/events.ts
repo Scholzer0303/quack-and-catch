@@ -13,6 +13,16 @@ export type GamePhase =
   | 'paused'
   | 'pausemenu';
 
+/**
+ * Beide Pausen (Belohnungs-Modal `paused` + Spieler-Pause `pausemenu`) behalten
+ * Timer/Score/Combo/gesammelte Tipps beim Zurück nach `playing` (kein Reset).
+ * EINE Quelle dieses Prädikats — GameStateMachine, SummaryScreen und ComboSystem
+ * müssen denselben Reset-Vertrag spiegeln (sonst resettet das Resume die Runde).
+ */
+export function isPauseState(phase: GamePhase): boolean {
+  return phase === 'paused' || phase === 'pausemenu';
+}
+
 export type GameEvents = {
   'phase:changed': { from: GamePhase; to: GamePhase };
   'hook:cast': { aimX: number; aimY: number };
