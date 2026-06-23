@@ -76,6 +76,22 @@ export const RODS: readonly Rod[] = [
       lineStrength: 5, // fängt selbst legendäre Enten
     },
   },
+  {
+    id: 'rod-heilig',
+    name: 'Heilige Kirmesrute',
+    description:
+      'Das End-Game-Heiligtum: hält selbst die heilige Ente, zieht stark an und rollt blitzschnell ein. Wer hier landet, ist Meister vom Stand.',
+    price: 1200,
+    tier: 4,
+    stats: {
+      reach: 1.35,
+      castSpeed: 1.5,
+      reelSpeed: 1.6,
+      luck: 0.5,
+      magnetRadius: 1.0,
+      lineStrength: 6, // einzige Rute, die die heilige Ente direkt hält
+    },
+  },
 ];
 
 export const UPGRADES: readonly Upgrade[] = [
