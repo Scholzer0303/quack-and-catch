@@ -65,8 +65,9 @@ export const BALANCE = {
     innerWallColor: 0x2f9fce, // helle Innenwand (kein dunkles Loch mehr)
     innerWallHeight: 0.5,
     innerWallDrop: 0.2, // wie weit die Innenwand unter die Wasserlinie reicht
-    // Progression: Index = Beckenspeed-Tier (= Rod-Tier)
-    duckCountByTier: [8, 10, 12, 14],
+    // Progression: Index = Beckenspeed-Tier (= Rod-Tier). Mehr Enten im Becken
+    // (Nutzer-Wunsch „mehr Enten"), gelb dominiert über die Loot-Table.
+    duckCountByTier: [10, 12, 14, 16],
     baseRotationSpeed: 0.055, // t/s bei Tier 0 — etwas schneller = Enten als Ziel anspruchsvoller
     rotationSpeedMulByTier: [1.0, 1.25, 1.5, 1.8],
     trackInset: 0.72, // Entenbahn-Radius = Beckenradius × Faktor (innerhalb des Rands)
@@ -163,6 +164,16 @@ export const BALANCE = {
     headOffset: [0.0, 0.42, 0.34] as [number, number, number],
     beakColor: 0xff8c1a,
     eyeColor: 0x14202a,
+    // Schwierigkeit je Rarität: seltenere Enten driften schneller (schwerer zu
+    // verfolgen) — zusätzlich zur kleineren Fang-Zone (hook.catchMulByRarity).
+    // Bewusst moderat, damit Legendary fordernd, aber fair fangbar bleibt.
+    speedMulByRarity: {
+      common: 1.0,
+      uncommon: 1.08,
+      rare: 1.16,
+      epic: 1.24,
+      legendary: 1.32,
+    } as Record<string, number>,
   },
 
   // Cel-Shading: diskrete Helligkeitsstufen (Comic-Bänder). Kein 0.0, damit die

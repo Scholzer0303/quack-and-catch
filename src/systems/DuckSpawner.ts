@@ -148,9 +148,11 @@ export class DuckSpawner {
   }
 
   update(dt: number, elapsed: number): void {
+    const speedMul = BALANCE.duck.speedMulByRarity;
     for (const duck of this.ducks) {
       if (!duck.alive) continue;
-      duck.trackT = wrap01(duck.trackT + duck.speed * dt);
+      // Seltenere Enten driften schneller (live mit der Rarität — gilt auch nach Reroll).
+      duck.trackT = wrap01(duck.trackT + duck.speed * (speedMul[duck.rarity] ?? 1) * dt);
     }
     this.writeMatrices(elapsed);
     this.mesh.instanceMatrix.needsUpdate = true;

@@ -2,7 +2,7 @@
 
 Braucht einen laufenden DEV-Server (window.__qc exponiert bus/rod/ducks).
 Treibt echte Pointer-Events und prueft: mind. 1 Treffer, Becken bleibt voll
-(8 Enten), keine Konsolen-/Page-Errors. Zielt das Loslassen ins Window-Zentrum
+(10 Enten bei Tier 0), keine Konsolen-/Page-Errors. Zielt das Loslassen ins Window-Zentrum
 (~Perfect) -> meist perfect=true.
 
 Nutzung (DEV-Server muss laufen):
@@ -126,9 +126,9 @@ rewards = ev["rewards"]
 # M3: ein Treffer -> Belohnung (Tokens) + Pause (Tipp-Modal).
 ok = (
     hits >= 1
-    # M7: Pool hat feste Kapazitaet (14, max ueber alle Tiers); bei Tier 0 sind
-    # 8 aktiv. "Becken bleibt voll" = 8 lebende Enten (Respawn nach Fang).
-    and state["aliveCount"] == 8
+    # M7: Pool hat feste Kapazitaet (16, max ueber alle Tiers); bei Tier 0 sind
+    # 10 aktiv. "Becken bleibt voll" = 10 lebende Enten (Respawn nach Fang).
+    and state["aliveCount"] == 10
     and len(rewards) >= 1
     and state["tokens"] > 0
     and state["phase"] == "paused"
