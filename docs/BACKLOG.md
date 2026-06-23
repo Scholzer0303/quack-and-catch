@@ -78,11 +78,12 @@ Eingeschoben nach Nutzer-Live-Test (Wettbewerb): Steuerung muss „cool" sein + 
 - [x] Codex in State-Machine (Phase `codex`, Einstieg aus Intro/Summary) + `firstTimeCodexBonus` (lag bereits in `Economy`)
 - Verifiziert: typecheck/lint/build grün; Smoke (0 Konsolenfehler bis auf swiftshader-Rauschen) + `save_test.py` (`ok:true`, neue IDs in `KNOWN_TIP_IDS`); Codex-Screenshots (Grid locked/unlocked + Detail) gesichtet.
 
-## M6 — Upgrade-Shop
-- [ ] `data/rods.ts` Katalog (Rods + Upgrades)
-- [ ] `Economy` Kaufvalidierung/Equip/Upgrade-Stacking
-- [ ] `ui/ShopScreen` (Preise, owned/equipped, Affordability, Buy/Equip)
-- [ ] Rod-Stats wirken in `FishingRod`/`HookRaycaster` (reach/speed/timing/magnet/luck/line)
+## M6 — Upgrade-Shop ✅
+- [x] `data/rods.ts` Katalog: 4 Ruten (Tier-0-Starter gratis+equipped, spiegelt `BALANCE.hook`-Basiswerte) + 4 stapelbare Upgrades; `STARTER_ROD_ID`/`findRod`/`findUpgrade`
+- [x] `Economy` Kaufvalidierung/Equip/Upgrade-Stacking (`buyRod`/`equipRod`/`buyUpgrade`/`getActiveRodStats`); SaveData additiv (`ownedRodIds`/`equippedRodId`/`upgradeStacks`, kein Schema-Bump, feldweise validiert)
+- [x] `ui/ShopScreen` (Phase `shop`): Ruten Kaufen/Ausrüsten/Ausgerüstet + Affordability-Dimming, Upgrades Stufe x/max, Stat-Chips, Token-Saldo; Einstieg aus Intro/Summary (reset-frei via `shopReturn`)
+- [x] Rod-Stats wirken: `reach`→catchRadius×, `castSpeed`/`reelSpeed`→Tempo, `lineStrength`→Snap-Gate, `magnetRadius`→`HookRaycaster` zieht W, `luck`→`rollRarity`-Shift (`timingWindowMul` entfernt — kein Konsument im räumlichen Engine). HUD-Rod-Chip folgt der Rute.
+- Verifiziert: typecheck/lint/build grün; Smoke (0 Konsolenfehler bis auf swiftshader-Outline-Rauschen); Funktions-/Persistenz-/Korruptions-Test via `__qc.economy` (Kauf/Equip/Stacking, maxStacks/Affordability blocken, Reload überlebt, unbekannte IDs/Over-Max → Default); ShopScreen-Screenshot gesichtet. Review (3 Finder-Angles): 2 Fixes (Glück wirkt sofort auf Pool, HUD-Rod-Name dynamisch).
 
 ## M7 — Progression koppeln
 - [ ] Rod-Tier → Becken-Speed (Entenzahl + Rotation)

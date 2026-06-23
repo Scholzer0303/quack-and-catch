@@ -4,6 +4,31 @@ Laufendes Log: Entscheidungen, Stolpersteine, Fixes, Balance-Erkenntnisse. Neues
 
 ---
 
+## 2026-06-23 — M6: Upgrade-Shop (Ruten + Upgrades + Stats wirken)
+
+**Produkt-Entscheidungen (mit Nutzer abgestimmt)**
+- Katalog: **4 Ruten** (Tier-0-Starter gratis+equipped + 3 kaufbar) + **4 stapelbare Upgrades**, Kirmes-Thema. Einstieg in den Shop aus **Intro + Summary** (wie Codex, nicht während der Runde).
+- **`timingWindowMul` ersatzlos entfernt:** Die M4.6-Engine ist räumlich (catchRadius/dip, kein Timing-Fenster) → der Stat hatte keinen Konsumenten mehr. „Kein toter Code" (CLAUDE.md) → raus statt „reserviert".
+
+**Architektur (additiv, minimal-invasiv)**
+- **Domain-Typen lagen bereit:** `Rod`/`RodStats`/`Upgrade` existierten seit M0 in `domain.ts`, ungenutzt → nur Verdrahten. Phase `shop` lag bereits im `GamePhase`-Union (wie `codex`).
+- **Daten-of-Record vs. Tunables:** Ruten/Upgrade-Stats+Preise leben als Inhalt in `data/rods.ts` (Präzedenz: `RARITY_DEFS` in `data/ducks.ts`); nur die **Engine-Mapping-Konstanten** (`magnetPullFraction`, `luckWeightFactor`) in `balance.shop`. So bleibt „keine Magic Numbers in der Logik" gewahrt, ohne den Katalog künstlich zu zerlegen.
+- **Starter-Rute spiegelt die `BALANCE.hook`-Basiswerte** (`lineStrength: baseLineStrength`, Rest 1/0) → Default-Spiel vor jedem Kauf **regressionsfrei** identisch.
+- **Ein Event statt zwei:** unbenutztes `rod:equipped` durch **`rod:statsChanged: { stats }`** ersetzt — einziges Stat-Apply-Signal, feuert bei Equip/Upgrade/Laden. `Game` abonniert **vor** `save.load` → `FishingRod.setStats` + `DuckSpawner.setLuck` übernehmen den geladenen Stand sofort.
+- **Economy ist Single Source der Kaufregeln:** `buyRod`/`equipRod`/`buyUpgrade` validieren (Affordability/Ownership/maxStacks), `getActiveRodStats` = equipped Rute + Summe gestapelter Upgrade-Deltas. `snapshot/hydrate` um 3 Felder erweitert; **SaveData additiv, kein `schemaVersion`-Bump** (feldweise Validierung wie bei `unlockedTips`: unbekannte IDs filtern, `equippedRodId` muss owned sein, Stacks auf `maxStacks` clampen).
+
+**Stat→Engine-Mapping (räumliche Engine)**
+- `reach`→`catchRadius ×` (Highlight-Ring skaliert mit), `castSpeed`/`reelSpeed`→`lowerDur`/`reelDur` geteilt, `lineStrength`→Snap-Gate, `magnetRadius`→`HookRaycaster.nearestDuck` zieht W anteilig zur nächsten Ente (mutiert bewusst den geteilten W-Vektor = Fang-/Highlight-Punkt, einmal pro Frame aus frischem W → stabil), `luck`→`rollRarity(rng,tier,luck)` skaliert Gewichte selten-wärts (`(1+luck·f)^rang`).
+
+**Review-Findings (3 Finder-Angles → behoben)**
+- **Event-Ordering (Glück):** `DuckSpawner` würfelte den Boot-Pool mit `luck=0`, bevor `save.load` das geladene Glück setzte → geladenes Glück traf nur Respawns. Fix: `setLuck` würfelt bei **Änderung** den lebenden Pool neu (Guard `luck===this.luck` hält den `luck=0`-Boot deterministisch, kein Churn bei Nicht-Glück-Equips). `DuckGlowFx` zieht die neue Rarität pro Frame über seinen `lastRarity`-Cache nach → kein Glow-Desync.
+- **Stale UI:** HUD zeigte hartkodiert „Bambusrute" (M3-Platzhalter, passte nicht mal zum Starter) → HUD bekommt `economy` + abonniert `rod:statsChanged`, Rod-Chip folgt der ausgerüsteten Rute.
+- Cleanup-Nits (doppelter `findRod`-Fallback, pct-Helper-Dupe in ShopScreen) bewusst nicht gefixt — vernachlässigbar.
+
+**Verifikation:** typecheck/lint/build grün; Smoke (0 Konsolenfehler bis auf swiftshader-Outline-Rauschen, headless-only); `__qc.economy`-Funktionstest (Kauf/Equip/Stacking, maxStacks→false, Affordability, Reload überlebt Ownership/Equip/Stacks, Korruption `equippedRodId`/Over-Max-Stacks/unbekannte IDs → sauberer Default); HUD-Rod-Name + Pool-Re-Roll verifiziert; ShopScreen-Screenshot gesichtet.
+
+---
+
 ## 2026-06-23 — M5: Tipp-Codex-Screen (54 Karten + CodexScreen)
 
 **Produkt-Entscheidungen**

@@ -3,8 +3,8 @@
 > Schnellüberblick für den Session-Start. Wird nach jedem Meilenstein aktualisiert.
 
 **Stand:** 2026-06-23
-**Aktueller Meilenstein:** **M5 (Tipp-Codex) ✅ + M4.5 (Vercel-Live-Deploy) ✅ — beide fertig & gepusht.** M5: `data/tips.ts` 54 Karten + `ui/CodexScreen` (Phase `codex`, Grid locked/unlocked, Filter, Detail, Fortschritt; Einstieg aus Intro/Summary, reset-freie Rückkehr via `codexReturn`); reviewt (1 Cleanup-Fix `hex()`→`utils/color`). M4.5: **live auf https://quack-and-catch.vercel.app**, Git-Auto-Deploy von `main` aktiv. **Nächster Schritt: M6 — Upgrade-Shop.**
-**Letzter Build:** grün (typecheck/lint/build ✓); Smoke (0 Konsolenfehler bis auf swiftshader-Outline-Shader-Rauschen), Save-Regression `ok:true` (neue Tip-IDs automatisch in `KNOWN_TIP_IDS`), Codex-Screenshots (Grid + Detail) gesichtet. Hinweis: Bloom drückt headless/swiftshader auf ~10 fps → Tests zustandsbasiert (echte GPU unbetroffen).
+**Aktueller Meilenstein:** **M6 (Upgrade-Shop) ✅ — fertig, reviewt & gepusht.** Katalog `data/rods.ts` (4 Ruten + 4 stapelbare Upgrades, Starter spiegelt `BALANCE.hook`); `Economy` Kauf/Equip/Upgrade-Stacking + `getActiveRodStats`; `ui/ShopScreen` (Phase `shop`, Kaufen/Ausrüsten/Affordability, Einstieg Intro+Summary reset-frei via `shopReturn`); Rod-Stats wirken in `FishingRod`/`HookRaycaster`/`DuckSpawner` (reach/cast/reel/line/magnet/luck; `timingWindowMul` entfernt). SaveData additiv (kein Schema-Bump). Review-Fixes: Glück wirkt sofort auf den sichtbaren Pool + HUD-Rod-Chip dynamisch. **Davor: M5 (Tipp-Codex) ✅ + M4.5 (Vercel-Live-Deploy live) ✅. Nächster Schritt: M7 — Progression koppeln (Rod-Tier → Becken-Speed + Loot-Table-Auswahl).**
+**Letzter Build:** grün (typecheck/lint/build ✓); Smoke (0 Konsolenfehler bis auf swiftshader-Outline-Shader-Rauschen); Shop-Funktions-/Persistenz-/Korruptionstest via `__qc.economy` `ok` (Kauf/Equip/Stacking, maxStacks/Affordability blocken, Reload überlebt, Korruption → Default); ShopScreen-Screenshot gesichtet. Hinweis: Bloom drückt headless/swiftshader auf ~10 fps → Tests zustandsbasiert (echte GPU unbetroffen).
 **Live-URL:** **https://quack-and-catch.vercel.app** (Vercel, Prod-Deploy ✓ — lädt sauber, 0 Konsolenfehler, `canvas:2`; **Git-Auto-Deploy von `main` aktiv**)
 **Repo:** https://github.com/Scholzer0303/quack-and-catch
 
@@ -19,15 +19,13 @@
 
 - **M5 (inhaltlich ✅ gepusht):** Tipp-Codex — `data/tips.ts` 12 → **54 geprüfte Karten** (9 Kategorien, alle Tiers; bestehende 12 IDs stabil); neuer `ui/CodexScreen` (Phase `codex`): Tier-gefärbtes Grid, freigeschaltet → Icon + Titel + Klick-Detail, gesperrt → nur 🔒 + Tier-Farbe, Kategorie-Filter, Fortschritt; Einstieg aus Intro/Summary via `onOpenCodex`/`onCloseCodex` (Game `codexReturn` → reset-frei zurück). SaveSystem schneidet Unlock-IDs automatisch gegen die größere `TIPS`-Liste (kein Schema-Bump).
 
-## 🔧 In Arbeit — M4.6 Rest (höchste Priorität)
-1. ~~Steuerungs-Redesign + Fang-Engine + Rute/Haken-Optik + Schwierigkeit je Rarität~~ ✅ — räumliches Modell (W = Strahl ∩ Wasser), Rute schwenkt sichtbar, Haken geht echt ins Wasser, Toon+Outline, kleinere Fang-Zone je seltener.
-2. ~~Jahrmarkt-Welt~~ ✅ — Budenreihe + Wimpel-/Lichterketten + Riesenrad/Zelt-Fernkulisse; schlanker Holz-Plankenrand (Toon+Outline) statt dickem Reifen.
-3. ~~Juice + Bloom/Glow~~ ✅ — Splash/Pop/Perfect-Flash/Mini-Screenshake/HUD-Count-up + Bloom (Mobile-Guards) + Glow seltener Enten.
-4. ~~Tipp-Modal schicker~~ ✅ (Step 10) — Emoji-Medaillon je Tipp (`Tip.icon`), Rarität-Glow/Theming (`data-rarity`+`--qc-accent`), Token-Count-up, Rarität-/Kategorie-Chips; Summary-Liste mit Emoji.
-5. ~~Intro-Sequenz~~ ✅ (Step 11) — 3-Schritt-CSS-Storyboard (Bude → Ticket → Angel → los) + „Überspringen"; `IntroScreen` ersetzt `StartScreen`, keine neue Phase, kein Save-Eingriff. **M4.6 fertig + reviewt (11 Findings, kritische behoben).**
+- **M6 (✅ gepusht, reviewt):** Upgrade-Shop — `data/rods.ts` (4 Ruten + 4 stapelbare Upgrades; Starter spiegelt `BALANCE.hook`-Basiswerte → regressionsfrei); `Economy` Kauf/Equip/Upgrade-Stacking (`buyRod`/`equipRod`/`buyUpgrade`/`getActiveRodStats`); neuer `ui/ShopScreen` (Phase `shop`): Ruten Kaufen/Ausrüsten/Ausgerüstet + Affordability-Dimming, Upgrades Stufe x/max, Stat-Chips; Einstieg Intro+Summary reset-frei via `shopReturn`. Rod-Stats wirken (`reach`/`castSpeed`/`reelSpeed`/`lineStrength`/`magnetRadius`/`luck`; `timingWindowMul` entfernt). SaveData additiv (`ownedRodIds`/`equippedRodId`/`upgradeStacks`, kein Schema-Bump). Review-Fixes: Glück re-rollt den sichtbaren Pool sofort + HUD-Rod-Chip folgt der Rute.
 
-## ⏭️ Nächster Meilenstein — M6 (Upgrade-Shop)
-- `data/rods.ts` (Rods + Upgrades) · `Economy` Kaufvalidierung/Equip/Upgrade-Stacking · `ui/ShopScreen` (Preise, owned/equipped, Affordability, Buy/Equip) · Rod-Stats wirken in `FishingRod`/`HookRaycaster` (reach/speed/timing/magnet/luck/line).
+## ✅ M4.6 abgeschlossen (Steps 1–11)
+Direktes Fadenkreuz · heller Comic-Tag · Toon+Outline-Enten · Steuerungs-Redesign · räumliche Fang-Engine · Schwierigkeit je Rarität · Jahrmarkt-Welt · Juice+Bloom/Glow · Tipp-Modal-Politur · Intro-Sequenz. Reviewt (11 Findings, kritische behoben).
+
+## ⏭️ Nächster Meilenstein — M7 (Progression koppeln)
+- Rod-Tier → Becken-Speed (Entenzahl + Rotation, `duckCountByTier`/`rotationSpeedMulByTier` liegen bereit) · Rod-Tier → Loot-Table-**Auswahl** (`LOOT_TABLES[tier]`) + `luck`-Shift kombiniert · Magnet/Legendary-Gating-Feinschliff. (M6 hat nur die 6 Stats verdrahtet; Tier-Kopplung bewusst nach M7 verschoben.)
 - **Neuer Kontext?** Zuerst [`docs/HANDOVER.md`](HANDOVER.md) lesen.
 
 ## 📌 Offene Punkte / Entscheidungen
