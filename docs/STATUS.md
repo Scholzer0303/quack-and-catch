@@ -3,7 +3,7 @@
 > Schnellüberblick für den Session-Start. Wird nach jedem Meilenstein aktualisiert.
 
 **Stand:** 2026-06-23
-**Aktueller Meilenstein:** **M5 — Tipp-Codex-Screen (inhaltlich fertig)** — `data/tips.ts` auf **54 Karten** ausgebaut (9 Kategorien, alle Tiers, faktisch geprüft); neuer **`ui/CodexScreen`** (Phase `codex`): Grid mit Tier-Farbe, **freigeschaltet → Icon + Titel (Klick → Detail)**, **gesperrt → nur 🔒 + Tier-Farbe** (kein Spoiler), Kategorie-Filter-Chips, Fortschritt „X / 54". Einstieg aus **Intro (letzter Step)** + **Summary** über neue Callbacks `onOpenCodex`/`onCloseCodex`; Game merkt Quelle (`codexReturn`) → reset-freie Rückkehr. `firstTimeCodexBonus` lag schon in `Economy`. **Nächster Schritt: `/code-review` über M5-Diff → Abnahme → M4.5 Vercel-Deploy.** (M4.6 davor: Steps 1–11 + Review, kritische Findings behoben.)
+**Aktueller Meilenstein:** **M5 (Tipp-Codex) ✅ + M4.5 (Vercel-Live-Deploy) ✅ — beide fertig & gepusht.** M5: `data/tips.ts` 54 Karten + `ui/CodexScreen` (Phase `codex`, Grid locked/unlocked, Filter, Detail, Fortschritt; Einstieg aus Intro/Summary, reset-freie Rückkehr via `codexReturn`); reviewt (1 Cleanup-Fix `hex()`→`utils/color`). M4.5: **live auf https://quack-and-catch.vercel.app**, Git-Auto-Deploy von `main` aktiv. **Nächster Schritt: M6 — Upgrade-Shop.**
 **Letzter Build:** grün (typecheck/lint/build ✓); Smoke (0 Konsolenfehler bis auf swiftshader-Outline-Shader-Rauschen), Save-Regression `ok:true` (neue Tip-IDs automatisch in `KNOWN_TIP_IDS`), Codex-Screenshots (Grid + Detail) gesichtet. Hinweis: Bloom drückt headless/swiftshader auf ~10 fps → Tests zustandsbasiert (echte GPU unbetroffen).
 **Live-URL:** **https://quack-and-catch.vercel.app** (Vercel, Prod-Deploy ✓ — lädt sauber, 0 Konsolenfehler, `canvas:2`; **Git-Auto-Deploy von `main` aktiv**)
 **Repo:** https://github.com/Scholzer0303/quack-and-catch
@@ -26,14 +26,9 @@
 4. ~~Tipp-Modal schicker~~ ✅ (Step 10) — Emoji-Medaillon je Tipp (`Tip.icon`), Rarität-Glow/Theming (`data-rarity`+`--qc-accent`), Token-Count-up, Rarität-/Kategorie-Chips; Summary-Liste mit Emoji.
 5. ~~Intro-Sequenz~~ ✅ (Step 11) — 3-Schritt-CSS-Storyboard (Bude → Ticket → Angel → los) + „Überspringen"; `IntroScreen` ersetzt `StartScreen`, keine neue Phase, kein Save-Eingriff. **M4.6 fertig + reviewt (11 Findings, kritische behoben).**
 
-## 🔧 In Arbeit — M5 (Tipp-Codex)
-- ~~`data/tips.ts` auf ~50–60 Karten~~ ✅ (54 Karten, 9 Kategorien, alle Tiers).
-- ~~`ui/CodexScreen` (Grid locked/unlocked, Tier-Farbe, Kategorie-Filter, Detail, Fortschritt)~~ ✅; Phase `codex` (war schon im Typ), Einstieg aus Intro + Summary.
-- Offen: `/code-review` über M5-Diff + Abnahme.
-
-## ⏭️ Danach
-- M4.5 — Vercel-Live-Deploy (braucht Vercel-Konto/Login des Nutzers).
-- M6 — Upgrade-Shop. **Neuer Kontext?** Zuerst [`docs/HANDOVER.md`](HANDOVER.md) lesen.
+## ⏭️ Nächster Meilenstein — M6 (Upgrade-Shop)
+- `data/rods.ts` (Rods + Upgrades) · `Economy` Kaufvalidierung/Equip/Upgrade-Stacking · `ui/ShopScreen` (Preise, owned/equipped, Affordability, Buy/Equip) · Rod-Stats wirken in `FishingRod`/`HookRaycaster` (reach/speed/timing/magnet/luck/line).
+- **Neuer Kontext?** Zuerst [`docs/HANDOVER.md`](HANDOVER.md) lesen.
 
 ## 📌 Offene Punkte / Entscheidungen
 - Keine offenen Blocker. Codex-Inhalt: eigene, geprüfte Karten (~50–60 in M5; 12 seit M3), siehe DESIGN.md.
