@@ -12,7 +12,8 @@ export type GameEvents = {
   'reward:granted': { tokens: number; tip: Tip | null; isNewTip: boolean };
   'economy:changed': { tokens: number };
   // Aktive Rod-Stats haben sich geändert (Equip/Upgrade/Laden) → Engine übernimmt sie.
-  'rod:statsChanged': { stats: RodStats };
+  // `tier` = Tier der ausgerüsteten Rute → steuert Becken-Speed/-Anzahl + Loot-Table (M7).
+  'rod:statsChanged': { stats: RodStats; tier: number };
   'round:tick': { timeRemaining: number; score: number };
   'round:ended': { score: number };
   'audio:unlocked': Record<string, never>;

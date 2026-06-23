@@ -24,19 +24,27 @@ export class DuckSpawner {
   private readonly geometry: THREE.BufferGeometry;
   private readonly material: THREE.Material;
   private readonly outlineMaterial: THREE.MeshBasicMaterial | null;
-  private readonly count: number;
+  /** Feste InstancedMesh-Kapazität = max. Entenzahl über alle Tiers (M7). */
+  private readonly capacity: number;
+  /** Aktuell aktive (sichtbare/fangbare) Enten = duckCountByTier[tier]. */
+  private activeCount: number;
+  /** Null-Skala-Matrix zum Verstecken geparkter Slots (Tier < max). */
+  private readonly parkMatrix = new THREE.Matrix4().makeScale(0, 0, 0);
   private readonly rng: Rng;
-  private readonly tier: number;
+  private tier: number; // M7: per setTier wechselbar (Rod-Tier)
   private luck = 0; // M6: Rod-Glück verschiebt die Respawn-Loot-Table (setLuck)
 
   constructor(rng: Rng, tier = 0) {
     this.rng = rng;
     this.tier = tier;
     const b = BALANCE.basin;
-    this.count = b.duckCountByTier[tier] ?? b.duckCountByTier[0]!;
+    // Auf max. Kapazität allozieren (InstancedMesh-Größe ist fix); per Tier sind
+    // nur activeCount Slots aktiv, der Rest ist geparkt (M7).
+    this.capacity = Math.max(...b.duckCountByTier);
+    this.activeCount = b.duckCountByTier[tier] ?? b.duckCountByTier[0]!;
     this.geometry = DuckFactory.buildGeometry();
     this.material = DuckFactory.buildMaterial();
-    this.mesh = new THREE.InstancedMesh(this.geometry, this.material, this.count);
+    this.mesh = new THREE.InstancedMesh(this.geometry, this.material, this.capacity);
     this.mesh.position.set(0, 0, b.centerZ);
     // Bounding-Sphere des InstancedMesh wird nur einmal berechnet und mit den
     // bewegten Enten stale -> Culling abschalten (max. 14 Instanzen, kein Gewinn).
@@ -46,7 +54,7 @@ export class DuckSpawner {
     // instanceMatrix (by reference) → Bewegung/Reel/Respawn spiegeln gratis.
     if (BALANCE.outline.enabled) {
       this.outlineMaterial = buildOutlineMaterial(BALANCE.outline.color, BALANCE.outline.thickness);
-      this.outlineMesh = new THREE.InstancedMesh(this.geometry, this.outlineMaterial, this.count);
+      this.outlineMesh = new THREE.InstancedMesh(this.geometry, this.outlineMaterial, this.capacity);
       this.outlineMesh.instanceMatrix = this.mesh.instanceMatrix; // geteilt
       this.outlineMesh.position.copy(this.mesh.position);
       this.outlineMesh.frustumCulled = false;
@@ -55,26 +63,67 @@ export class DuckSpawner {
       this.outlineMesh = null;
     }
 
-    const speedMul = b.rotationSpeedMulByTier[tier] ?? b.rotationSpeedMulByTier[0]!;
-    const baseSpeed = b.baseRotationSpeed * speedMul;
-
-    for (let i = 0; i < this.count; i++) {
+    const baseSpeed = this.tierBaseSpeed(tier);
+    for (let i = 0; i < this.capacity; i++) {
+      const active = i < this.activeCount;
       const rarity = rollRarity(rng, tier);
       this.ducks.push({
         slot: i,
         rarity,
-        trackT: i / this.count,
+        trackT: active ? i / this.activeCount : rng(),
         speed: baseSpeed * (1 + randRange(rng, -b.speedVariance, b.speedVariance)),
         laneOffset: randRange(rng, -b.laneJitter, b.laneJitter),
         bobPhase: rng() * TWO_PI,
-        alive: true,
+        alive: active,
         worldX: 0,
         worldY: 0,
         worldZ: 0,
       });
       this.setInstanceColor(i, rarity);
+      if (!active) this.mesh.setMatrixAt(i, this.parkMatrix); // geparkt: unsichtbar
     }
     this.writeMatrices(0);
+  }
+
+  /** Basis-Rotationsgeschwindigkeit eines Tiers (baseRotationSpeed × Tier-Multiplikator). */
+  private tierBaseSpeed(tier: number): number {
+    const b = BALANCE.basin;
+    const speedMul = b.rotationSpeedMulByTier[tier] ?? b.rotationSpeedMulByTier[0]!;
+    return b.baseRotationSpeed * speedMul;
+  }
+
+  /**
+   * Rod-Tier setzen (M7): wählt Becken-Speed/-Anzahl + Loot-Table. Mehr aktive
+   * Enten + schnellere Rotation bei besseren Ruten; geparkte Slots werden bei
+   * höherem Tier reaktiviert, überzählige bei niedrigerem geparkt. Der lebende
+   * Pool würfelt mit der neuen Loot-Table neu (wie setLuck). Guard hält das
+   * Tier-0-Boot deterministisch. Laufende Reels werden nicht angefasst.
+   */
+  setTier(tier: number): void {
+    if (tier === this.tier) return;
+    this.tier = tier;
+    const b = BALANCE.basin;
+    this.activeCount = b.duckCountByTier[tier] ?? b.duckCountByTier[0]!;
+    const baseSpeed = this.tierBaseSpeed(tier);
+    for (const duck of this.ducks) {
+      if (this.reeling.has(duck.slot)) continue; // laufenden Reel nicht stören
+      if (duck.slot < this.activeCount) {
+        if (!duck.alive) {
+          // war geparkt → mit frischer Bahnposition reaktivieren
+          duck.trackT = this.rng();
+          duck.laneOffset = randRange(this.rng, -b.laneJitter, b.laneJitter);
+          duck.bobPhase = this.rng() * TWO_PI;
+          duck.alive = true;
+        }
+        duck.speed = baseSpeed * (1 + randRange(this.rng, -b.speedVariance, b.speedVariance));
+        duck.rarity = rollRarity(this.rng, this.tier, this.luck);
+        this.setInstanceColor(duck.slot, duck.rarity);
+      } else {
+        duck.alive = false;
+        this.mesh.setMatrixAt(duck.slot, this.parkMatrix); // parken: unsichtbar
+      }
+    }
+    this.mesh.instanceMatrix.needsUpdate = true;
   }
 
   /** Rod-Glück setzen (M6): Loot-Table-Shift für Respawns. Ändert sich das Glück
@@ -110,6 +159,7 @@ export class DuckSpawner {
   private writeMatrices(elapsed: number): void {
     const b = BALANCE.basin;
     for (const duck of this.ducks) {
+      if (duck.slot >= this.activeCount) continue; // geparkt (Tier < max) — bleibt unsichtbar
       // Gehakte Enten: Pose kommt von FishingRod (setReelPose) — hier nicht überschreiben.
       if (this.reeling.has(duck.slot)) continue;
       const rx = b.radiusX * b.trackInset + duck.laneOffset;

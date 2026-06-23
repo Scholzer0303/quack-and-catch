@@ -126,7 +126,9 @@ rewards = ev["rewards"]
 # M3: ein Treffer -> Belohnung (Tokens) + Pause (Tipp-Modal).
 ok = (
     hits >= 1
-    and state["duckCount"] == 8
+    # M7: Pool hat feste Kapazitaet (14, max ueber alle Tiers); bei Tier 0 sind
+    # 8 aktiv. "Becken bleibt voll" = 8 lebende Enten (Respawn nach Fang).
+    and state["aliveCount"] == 8
     and len(rewards) >= 1
     and state["tokens"] > 0
     and state["phase"] == "paused"

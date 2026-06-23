@@ -116,7 +116,8 @@ export class Economy {
   }
 
   private emitStatsChanged(): void {
-    this.bus.emit('rod:statsChanged', { stats: this.getActiveRodStats() });
+    const tier = findRod(this.equippedRodId)?.tier ?? 0;
+    this.bus.emit('rod:statsChanged', { stats: this.getActiveRodStats(), tier });
   }
 
   /** Serialisierbarer Economy-Slice fürs SaveSystem (ohne Save-Schema-Wissen). */

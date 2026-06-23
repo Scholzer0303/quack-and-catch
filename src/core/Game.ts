@@ -127,6 +127,7 @@ export class Game {
       this.bus.on('rod:statsChanged', (e) => {
         this.fishingRod.setStats(e.stats);
         this.ducks.setLuck(e.stats.luck);
+        this.ducks.setTier(e.tier); // M7: Rod-Tier → Becken-Speed/-Anzahl + Loot-Table
       }),
     );
 
