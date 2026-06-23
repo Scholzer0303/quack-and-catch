@@ -109,7 +109,25 @@ Nutzer-Wunsch nach Live-Test: mehr Leben/Atmosphäre + „süchtiger". Alle Tuna
 - Verifiziert: typecheck/lint/build grün; `npm test` 13/13; Smoke `ok:true` (0 Konsolenfehler); Playwright-Proben für Combo (Serie/Reset/Token-Skalierung) + Highscore (Rekord überlebt Reload) + In-Game-Shots (Crowd/Deko/Abend/Combo-Badge).
 - Review (8 Angles, high effort): **0 Korrektheits-Defekte**; 3 Cleanup/Kosmetik behoben (Bloom-Flicker `bulbMat`-Puls ≥1.0, `paint`→shared `bakeVertexColor`, toter `rotation.set`).
 
+## M10 — Pause-Menü + Shop-Eskalation + Fang-Tuning ✅
+Teil 1/3 des Nutzer-Feedback-Pakets nach Live-Test (Plan `~/.claude/plans/pipeline-soweit-erstmal-fertig-calm-kay.md`). Kein Schema-Bump.
+- [x] **Step 1 Pause-Menü:** neue Phase `pausemenu` (getrennt vom Belohnungs-`paused`); `ui/PauseScreen` (Weiter/Runde beenden + Shop/Codex); Pause-Button oben links im HUD (touch-tauglich) + ESC (`Game`-Keydown, playing↔pausemenu); Becken/Enten frieren in beiden Pausen ein; `GameStateMachine.endRound()`; Reset-Vertrag (`isPauseState`) behält die Runde beim Resume (Spiegelstelle SummaryScreen mit-angepasst).
+- [x] **Step 2 Shop-Preis-Eskalation:** `Economy.getUpgradePrice` = Basispreis × `shop.upgradePriceGrowth`^Stacks (z. B. Schnellrolle 35→60→101); `buyUpgrade` + ShopScreen-Button + Affordability nutzen ihn; +Vitest-Test.
+- [x] **Step 3 Fang-Tuning:** `duck.speedMulByRarity` (seltenere Enten schneller, live in `DuckSpawner.update`); `duckCountByTier` 8/10/12/14 → 10/12/14/16 („mehr Enten"); `catch_test` auf 10 aktive Enten angepasst.
+- Verifiziert: typecheck/lint grün; `npm test` 14/14; `build` grün; Smoke `ok:true` (0 Konsolenfehler); `catch_test` `ok:true` (10 aktiv, Fang→Reward→Pause); Pause-Flow per Playwright (Button-Klick + ESC beidseitig, Timer friert, Resume erhält Runde, „Ende"→Summary).
+
+## M11 — Heilige Ente + Wissens-Kopplung + 100 Karten (geplant)
+- [ ] 6. Rarität `'heilig'` (über Legendary): `DuckRarity` + alle `Record<…rarity…>`-Maps (RARITY_DEFS, LOOT_TABLES, catchMulByRarity, perfectMul, tokensByRarity, speedMulByRarity, RARITY_ORDER); weiß+goldener Halo, engste Fang-Zone, Token-Range über Legendary.
+- [ ] Equipment-Chase: Tier-4-Rute „Heilige Kirmesrute" (lineStrength 6) + `…ByTier`-Arrays auf Länge 5; Alternativweg über gestapelte `up-schnur`.
+- [ ] Wissens-Crossover: `rewards.crossoverChance` in `RewardSystem.pickTip` (auch gelbe Ente → selten Top-Wissen; Tokens bleiben rarität-gebunden).
+- [ ] `data/tips.ts` 54 → 100 anspruchsvolle Karten (IDs stabil; neues `heilig`-Tier = Geheimwissen; faktisch korrekt + adversarisch geprüft).
+
+## M12 — Optik-Overhaul (geplant)
+- [ ] Enten: rundere Geo + echte Augen (Sklera+Pupille) + roter Schnabel; Gummi-Gloss via `onBeforeCompile` (Specular-Hotspot + Fresnel) auf der Toon-Basis (kein envMap).
+- [ ] Wasser: Fresnel-Himmel-Reflexion + Crest-Glitzer + sattere Tiefe (`shaders/water.ts`).
+- [ ] Grading: ACESFilmic + Sättigungs-Boost Richtung Subway Surfers; Quality-Guards/reduced-motion respektieren.
+
 ## Offene Reste (optional, nie auf Kosten der Stabilität)
 - [ ] Mehrere Becken/Themes
 - [ ] DE/EN-Sprachtoggle
-- [ ] Mehr Enten/Tipps; optional `lil-gui` (dev-only, aus Prod getreeshakt)
+- [ ] `lil-gui` (dev-only, aus Prod getreeshakt)
