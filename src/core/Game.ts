@@ -20,6 +20,7 @@ import { Reticle } from '../ui/Reticle';
 import { SplashFx } from '../fx/SplashFx';
 import { SparkleFx } from '../fx/SparkleFx';
 import { DuckGlowFx } from '../fx/DuckGlowFx';
+import { SkyDecoFx } from '../fx/SkyDecoFx';
 import { vibrate } from '../fx/haptics';
 import { UIRoot } from '../ui/UIRoot';
 import { mulberry32 } from '../utils/rng';
@@ -36,6 +37,7 @@ export class Game {
   private readonly stall: StallParts;
   private readonly basin: BasinBuilder;
   private readonly crowd: CrowdBuilder;
+  private readonly skyDeco: SkyDecoFx;
   private readonly ducks: DuckSpawner;
   private readonly input: InputSystem;
   private readonly fishingRod: FishingRod;
@@ -71,6 +73,10 @@ export class Game {
     this.crowd = new CrowdBuilder(mulberry32(0xc0cac0));
     this.sceneManager.add(this.crowd.mesh);
     if (this.crowd.outlineMesh) this.sceneManager.add(this.crowd.outlineMesh);
+
+    // Himmel-Deko: aufsteigende Ballons + ziehende Vögel hinter der Welt.
+    this.skyDeco = new SkyDecoFx();
+    this.sceneManager.add(this.skyDeco.group);
 
     // Enten (deterministischer Seed für reproduzierbare Startverteilung)
     this.ducks = new DuckSpawner(mulberry32(0xc0ffee), 0);
@@ -249,6 +255,8 @@ export class Game {
     }
     this.stall.update(dt, elapsed); // Riesenrad dreht, Lichterketten pulsieren (alle Phasen)
     this.crowd.update(dt, elapsed); // Zuschauer leben in allen Phasen (Deko)
+    this.skyDeco.update(elapsed); // Ballons steigen, Vögel ziehen
+
     this.fishingRod.update(dt);
     this.splashFx.update(dt);
     this.sparkleFx.update(dt);
@@ -304,6 +312,7 @@ export class Game {
     this.duckGlow?.dispose();
     this.ducks.dispose();
     this.crowd.dispose();
+    this.skyDeco.dispose();
     this.basin.dispose();
     this.stall.dispose();
     this.post?.dispose();

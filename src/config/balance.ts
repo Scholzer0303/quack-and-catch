@@ -122,6 +122,32 @@ export const BALANCE = {
     cheerDecaySec: 1.1, // Jubel klingt über diese Zeit ab
   },
 
+  // Himmel-Deko (M9): aufsteigende Ballons + ziehende Vögel hinter der Welt.
+  // Zwei InstancedMeshes (1 Draw-Call je). Bewegung rein aus `elapsed` abgeleitet
+  // (deterministisch, kein Aufintegrieren). Reduced-motion → statisch.
+  skyDeco: {
+    balloonCount: 7,
+    balloonScale: 0.62,
+    balloonColors: [0xf2564e, 0x4fb0c6, 0xf2c14e, 0xef798a, 0x8e6fd0, 0x5ec56a] as number[],
+    balloonZ: -3.5, // über der hinteren Beckenhälfte (einzige sichtbare Deko-Zone)
+    balloonSpreadX: 7, // x-Streuung: zu den Rändern hin, hält die Beckenmitte freier
+    balloonYMin: 0.9, // sichtbares Band (NDC ≤ ~0.46; darüber verdeckt die Markise)
+    balloonYMax: 1.8, // oben driften sie hinter die Markise und wrappen unten neu („losgelassen")
+    balloonRiseSpeed: 0.35, // Welteinheiten/s nach oben (wrappt am oberen Rand)
+    balloonSwayAmp: 0.3, // seitliches Pendeln
+    balloonSwaySpeed: 0.7,
+    birdCount: 6,
+    birdColor: 0x2a3340, // dunkle Silhouette (liest klar gegen den hellen Himmel)
+    birdScale: 0.5,
+    birdY: 1.35, // über der hinteren Beckenhälfte, skimmt durchs Bild (unter der Markise)
+    birdZ: -3.8,
+    birdRowGap: 0.22, // vertikaler Versatz zwischen den Vögeln
+    birdSpeed: 1.5, // Welteinheiten/s seitlich (wrappt über die Breite)
+    birdSpreadX: 8, // halbe Flugbreite (x ∈ [-spreadX, +spreadX])
+    birdBobAmp: 0.12, // sanftes Auf/Ab im Flug
+    birdBobSpeed: 2.0,
+  },
+
   duck: {
     scale: 0.42, // Gesamtgröße
     bodyRadius: 0.5,
