@@ -4,11 +4,7 @@ import type { EventBus } from '../events/EventBus';
 import type { Economy } from '../systems/Economy';
 import type { GameEvents } from '../types/events';
 import type { DuckRarity, Tip } from '../types/domain';
-
-/** Hex-Zahl → CSS-Farbe (#rrggbb). Spiegelt CardReveal. */
-function hex(color: number): string {
-  return `#${color.toString(16).padStart(6, '0')}`;
-}
+import { hex } from '../utils/color';
 
 /** Reihenfolge der Tiers für stabile Sortierung (Basics → Expert). */
 const TIER_ORDER: Record<DuckRarity, number> = {

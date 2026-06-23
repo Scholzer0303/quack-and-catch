@@ -5,11 +5,7 @@ import { prefersReducedMotion } from '../fx/reducedMotion';
 import type { GameEvents } from '../types/events';
 import type { DuckRarity } from '../types/domain';
 import { clamp, lerp } from '../utils/math';
-
-/** Hex-Zahl → CSS-Farbe (#rrggbb). */
-function hex(color: number): string {
-  return `#${color.toString(16).padStart(6, '0')}`;
-}
+import { hex } from '../utils/color';
 
 /**
  * Belohnungs-Modal beim Fang: zeigt Tokens + Tipp-Karte mit Rarität-Theming

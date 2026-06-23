@@ -3,7 +3,7 @@
 > **Start hier in einer neuen Session.** Diese Datei macht den Wiedereinstieg nahtlos. Danach `docs/STATUS.md` + `docs/BACKLOG.md` lesen.
 
 ## TL;DR
-3D-Entenangel-Lernspiel (Three.js + Vite + TS strict). **M0–M4 fertig & gepusht**; **M4.6 (Game-Feel & Bright-Comic-Overhaul) Steps 1–9 gepusht** (Comic-Tag, Toon+Outline-Enten, **Fang-Engine-Neumodell**: feste Schräg-Sicht aufs ganze Becken, Maus → Wasserpunkt W, Halten senkt den Haken **ins Wasser**, **räumlicher Fang** (Ente nahe W; Perfect = mittig), Rute schwenkt stark, Rute/Haken Toon+Outline; **Schwierigkeit je Rarität** via `catchMulByRarity`; **Jahrmarkt-Welt** Step 8; **Juice + Bloom/Glow** Step 9: Splash · Catch-Pop · Perfect-Flash · Mini-Screenshake (skaliert) · HUD-Count-up · Bloom-Postprocessing mit Mobile-Quality-Guards · Glow seltener Enten, reduced-motion respektiert). **Step 10 = Tipp-Modal-Politur** gepusht (Emoji-Medaillon je Tipp via neuem `Tip.icon`-Pflichtfeld · Rarität-Glow/Theming über `data-rarity`+`--qc-accent` · Token-Count-up · Rarität-/Kategorie-Chips · Summary-Liste mit Emoji; reduced-motion gated). **Step 11 = Intro-Sequenz** gepusht (3-Schritt-CSS-Storyboard Bude → Ticket → Angel → los, „Weiter"/„Los geht's!" + „Überspringen"; neuer `IntroScreen.ts` ersetzt `StartScreen.ts`, **keine neue Phase** (lebt in Phase `start`), **kein Save-Eingriff**; läuft einmal pro Seitenaufruf (Boot), „Überspringen" springt zum Steuerungs-Schritt). **M4.6 inhaltlich fertig + `/code-review` (Step 10+11) gelaufen: 11 Findings, alle low/medium, kritische behoben (Skip-Onboarding, reduced-motion-Cache, color-mix-Fallback, toter Reset-Branch).** **AKTUELL offen / NÄCHSTER SCHRITT:** **Abnahme**, dann **M4.5 Vercel-Live-Deploy** → M5 Codex. **Siehe Abschnitt „AKTUELL: M4.6" unten.** Repo: https://github.com/Scholzer0303/quack-and-catch (öffentlich).
+3D-Entenangel-Lernspiel (Three.js + Vite + TS strict). **M0–M4 fertig & gepusht**; **M4.6 (Game-Feel & Bright-Comic-Overhaul) Steps 1–9 gepusht** (Comic-Tag, Toon+Outline-Enten, **Fang-Engine-Neumodell**: feste Schräg-Sicht aufs ganze Becken, Maus → Wasserpunkt W, Halten senkt den Haken **ins Wasser**, **räumlicher Fang** (Ente nahe W; Perfect = mittig), Rute schwenkt stark, Rute/Haken Toon+Outline; **Schwierigkeit je Rarität** via `catchMulByRarity`; **Jahrmarkt-Welt** Step 8; **Juice + Bloom/Glow** Step 9: Splash · Catch-Pop · Perfect-Flash · Mini-Screenshake (skaliert) · HUD-Count-up · Bloom-Postprocessing mit Mobile-Quality-Guards · Glow seltener Enten, reduced-motion respektiert). **Step 10 = Tipp-Modal-Politur** gepusht (Emoji-Medaillon je Tipp via neuem `Tip.icon`-Pflichtfeld · Rarität-Glow/Theming über `data-rarity`+`--qc-accent` · Token-Count-up · Rarität-/Kategorie-Chips · Summary-Liste mit Emoji; reduced-motion gated). **Step 11 = Intro-Sequenz** gepusht (3-Schritt-CSS-Storyboard Bude → Ticket → Angel → los, „Weiter"/„Los geht's!" + „Überspringen"; neuer `IntroScreen.ts` ersetzt `StartScreen.ts`, **keine neue Phase** (lebt in Phase `start`), **kein Save-Eingriff**; läuft einmal pro Seitenaufruf (Boot), „Überspringen" springt zum Steuerungs-Schritt). **M4.6 inhaltlich fertig + `/code-review` (Step 10+11) gelaufen: 11 Findings, alle low/medium, kritische behoben (Skip-Onboarding, reduced-motion-Cache, color-mix-Fallback, toter Reset-Branch).** **M5 (Tipp-Codex) ✅ gepusht + reviewt** (54 Karten + `CodexScreen`). **AKTUELL offen / NÄCHSTER SCHRITT:** **Abnahme**, dann **M4.5 Vercel-Live-Deploy** (braucht Vercel-Konto/Login des Nutzers) → M6 Shop. **Siehe Abschnitt „AKTUELL: M5" unten.** Repo: https://github.com/Scholzer0303/quack-and-catch (öffentlich).
 
 ## Session-Start-Routine (Pflicht)
 ```bash
@@ -53,12 +53,13 @@ src/systems/            ← DuckSpawner (Reel-API, instanceColor, +Toon-Gradient
                            Economy (+snapshot/hydrate), RewardSystem, SaveSystem (M4). M8: AudioManager
 src/world/              ← StallBuilder, BasinBuilder(+shaders/water), RodBuilder(buildRod→{stick(Kamera),rig(world),line,hookGroup,tip}; Toon+Outline),
                            DuckFactory (MeshToonMaterial+Gradient, buildToonGradient exportiert), materials/OutlineMaterial (Inverted-Hull)
-src/ui/                 ← Reticle (Fadenkreuz am Wasserpunkt + Farb-/Dip-Feedback), UIRoot, HUD, IntroScreen
-                           (3-Schritt-Storyboard, Phase `start`), CardReveal (Modal), SummaryScreen, styles.css. (Shop/Codex ab M5/M6)
-src/data/               ← ducks.ts (RARITY_DEFS/LOOT_TABLES/rollRarity), tips.ts (12 Karten). rods.ts ab M6
+src/ui/                 ← Reticle, UIRoot (besitzt Screens, Phase-Routing, hält `economy`-Ref), HUD, IntroScreen
+                           (3-Schritt-Storyboard, Phase `start`, +Codex-Button), CardReveal (Modal), SummaryScreen (+Codex-Button),
+                           CodexScreen (Phase `codex`: Grid locked/unlocked, Filter, Detail), styles.css. (Shop ab M6)
+src/data/               ← ducks.ts (RARITY_DEFS/LOOT_TABLES/rollRarity), tips.ts (54 Karten, 9 Kategorien). rods.ts ab M6
 src/events/EventBus.ts  ← typisiertes Pub/Sub
 src/types/              ← domain.ts, events.ts, state.ts (M4: SaveData + createDefaultSave)
-src/utils/              ← math (oval/lerp/clamp/damp), rng (mulberry32/weightedPick/randInt)
+src/utils/              ← math (oval/lerp/clamp/damp), rng (mulberry32/weightedPick/randInt), color (hex 0xRRGGBB→#rrggbb)
 scripts/                ← smoke_test.py (Render, 0 Fehler) + catch_test.py (Fang→Reward→Pause) +
                            save_test.py (Reload-Persistenz + Korruptions-Fallback) — brauchen __qc
 ```
@@ -127,4 +128,11 @@ Timer 0 → `round:ended` → `summary`. `setPhase('playing')` resettet Timer/Sc
 - **M4.6-Release-Timing-Falle (Tests):** `release()` läuft event-synchron **vor** dem nächsten Frame. Springt der Cursor unmittelbar vor `up()` weit, hängt die Kamera (aimInstant) ein Frame nach → W/Strahl inkonsistent. Im echten Spiel irrelevant (Cursor folgt flüssig). In `catch_test.py`/`save_test.py` deshalb **kein** Re-Aim/`evaluate` zwischen `down` und `up`; ruhig halten (~360 ms, bis `dip ≥ armProgress`), dann loslassen.
 
 ## Roadmap-Rest
-**M4.6 Game-Feel & Comic-Overhaul (IN ARBEIT, Steps 1–7 ✅, Rest = Jahrmarkt-Welt/Juice/Modals)** → M4.5 Vercel-Live-Deploy → M5 Codex → M6 Shop → M7 Progression → M8 Audio (+ Rest-Juice) → M9 Stretch. Tipp-Codex: ~50–60 eigene, faktisch geprüfte deutsche Karten (12 seit M3).
+**M4.6 ✅ + M5 ✅** → **M4.5 Vercel-Live-Deploy (nächster Schritt; braucht Vercel-Konto/Login des Nutzers)** → M6 Shop → M7 Progression → M8 Audio (+ Rest-Juice) → M9 Stretch.
+
+## AKTUELL: M5 — Tipp-Codex-Screen ✅ (gepusht, reviewt)
+- **Inhalt:** `data/tips.ts` 12 → **54 geprüfte deutsche Karten** (9 Kategorien, alle Tiers; bestehende 12 IDs stabil — Economy/Save keyt darauf).
+- **`ui/CodexScreen.ts`** (Phase `codex`, war schon im `GamePhase`-Typ): tier-gefärbtes Grid, **freigeschaltet → Icon + Titel + Klick-Detail**, **gesperrt → nur 🔒 + Tier-Farbe** (kein Spoiler), Kategorie-Filter-Chips, Fortschritt „X / 54". Esc steppt aus Detail zurück bzw. schließt. Folgt dem `SummaryScreen`-Lifecycle; `dispose()` entfernt window-keydown + bus-Sub + Overlay.
+- **Navigation:** Einstieg aus **Intro (letzter Step)** + **Summary** via neue `UICallbacks.onOpenCodex`/`onCloseCodex`. `Game.codexReturn` merkt die Quelle → `onCloseCodex` kehrt **reset-frei** dorthin zurück (nie über `playing`). `UIRoot` bekommt jetzt `economy` durchgereicht (vor UIRoot angelegt).
+- **Kein Save-Eingriff:** `KNOWN_TIP_IDS` aus `TIPS` abgeleitet → neue IDs automatisch bekannt, kein Schema-Bump. `firstTimeCodexBonus` lag bereits in `Economy`.
+- **Review-Fix:** `hex()` nach `src/utils/color.ts` extrahiert (war in `CardReveal` + `CodexScreen` dupliziert). Details: `LESSONS_LEARNED.md` 2026-06-23.

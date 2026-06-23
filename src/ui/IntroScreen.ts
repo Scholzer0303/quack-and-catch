@@ -136,8 +136,9 @@ export class IntroScreen {
   }
 
   setVisible(visible: boolean): void {
-    // Intro läuft einmal pro Seitenaufruf (Boot, Phase `start`); die Phase kehrt
-    // nie nach `start` zurück → kein Re-Show, kein Step-Reset nötig.
+    // Reines Sichtbarkeits-Toggle ohne Re-Render: `step` bleibt erhalten. Seit M5
+    // kann die Phase aus `codex` nach `start` zurückkehren → Intro wird dann erneut
+    // gezeigt (am letzten Step, Start- + Codex-Button da). Bewusst kein Step-Reset.
     this.overlay.hidden = !visible;
   }
 

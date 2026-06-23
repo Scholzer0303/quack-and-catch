@@ -4,6 +4,30 @@ Laufendes Log: Entscheidungen, Stolpersteine, Fixes, Balance-Erkenntnisse. Neues
 
 ---
 
+## 2026-06-23 — M5: Tipp-Codex-Screen (54 Karten + CodexScreen)
+
+**Produkt-Entscheidungen**
+- M4.5 (Vercel-Deploy) bewusst übersprungen — braucht Vercel-Konto/Login des Nutzers; kommt, wenn er dafür da ist. M5 ist reiner Code → Lern-Kern des Spiels.
+- **Locked-Karten:** nur 🔒 + Tier-Farbe (kein Titel/Text-Spoiler) — Sammelanreiz, bestätigt vom Nutzer. Einstieg in den Codex nur aus Intro + Summary (nicht während der Runde).
+
+**Architektur (additiv, minimal-invasiv)**
+- **Phase `codex` existierte bereits** im `GamePhase`-Typ → keine neue Phase nötig, nur Verdrahten. `CodexScreen` folgt exakt dem `SummaryScreen`-Lifecycle (`constructor(parent,bus,economy,onClose)` → `qc-…-overlay` → `setVisible` toggelt `hidden` → `dispose` unsubt+entfernt).
+- **Navigation reset-frei:** `Game.codexReturn = state.getPhase()` vor `setPhase('codex')`; `onCloseCodex` → `setPhase(codexReturn)`. Da Codex nur aus `start`/`summary` öffnet und dorthin zurückkehrt, läuft es **nie durch `playing`** → kein Timer/Score-Reset (der nur bei `playing` & `from≠paused` greift). Summary-Inhalt bleibt erhalten (wird nur bei `round:ended` neu gebaut).
+- **Kein Save-Eingriff:** `SaveSystem.KNOWN_TIP_IDS` wird aus `TIPS` abgeleitet → die 42 neuen IDs sind automatisch bekannt, kein `schemaVersion`-Bump, keine Migration. `firstTimeCodexBonus` lag bereits in `Economy.onReward`.
+- **Codex liest live:** rendert aus `TIPS` + `economy.isUnlocked(id)`, re-rendert auf `economy:changed` — aber **nur wenn sichtbar** (Boot-`hydrate`-Emit feuert, während Codex hidden ist → korrekt ignoriert).
+
+**Stolpersteine / Erkenntnisse**
+- **Codex-Overlay deckend machen:** Erst war der Gradient halbtransparent → die 3D-Szene (Rute/Becken) schien durchs Grid. Fix: nahezu deckende Basis (`rgba(7,24,40,0.97)` unter dem Radial) — Codex ist ein Vollbild-Screen, kein Modal über lebender Szene.
+- **`window`-keydown (Esc) sauber balancieren:** Listener nur in `setVisible(true)` adden, in `setVisible(false)` **und** `dispose()` entfernen; Idempotenz-Guard (`visible === !hidden → return`) verhindert Doppel-Add/Remove. Esc steppt erst aus dem Detail zurück, dann schließt es den Codex.
+- **Review-Fix (REUSE):** `hex(0xRRGGBB→#rrggbb)` war in `CardReveal` **und** `CodexScreen` dupliziert → nach `src/utils/color.ts` gezogen, beide importieren. Single Source of Truth (Projektregel „kein toter Code / strikt modular").
+- **Doku-Drift (M4.6 nachgezogen):** `IntroScreen.setVisible`-Kommentar behauptete „Phase kehrt nie nach `start` zurück" — seit M5 falsch (codex→start). Kommentar korrigiert; Verhalten unverändert (reines Toggle, `step` bleibt am letzten Schritt mit Start- + Codex-Button).
+
+**Multi-Agent-Review (high, 2 Finder-Angles → Verify): 1 Finding (hex-Dupe, behoben) + 1 Doku-Drift (Kommentar, behoben). Keine Korrektheits-Bugs.**
+
+**Verifikation:** typecheck/lint/build grün; Smoke (0 Konsolenfehler bis auf swiftshader-Outline-Shader-Rauschen, headless-only); `save_test.py` `ok:true` (Tokens+Tipps überleben Reload, neue IDs in `KNOWN_TIP_IDS`, Korruption → Default); Codex-Screenshots (Grid locked/unlocked + Detail) gesichtet.
+
+---
+
 ## 2026-06-22 — M4.6 Steps 10+11: Tipp-Modal-Politur + Intro-Sequenz (+ Multi-Agent-Review)
 
 **Produkt-Entscheidungen (vom Nutzer)**

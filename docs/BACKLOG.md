@@ -71,10 +71,11 @@ Eingeschoben nach Nutzer-Live-Test (Wettbewerb): Steuerung muss „cool" sein + 
 - [ ] GitHub-Repo mit Vercel verbinden (Auto-Deploy von `main`), Live-URL holen
 - [ ] Live-URL in README + STATUS eintragen
 
-## M5 — Tipp-Codex-Screen
-- [ ] `data/tips.ts` auf ~50–60 Karten ausbauen (alle Tiers + Kategorien, geprüft)
-- [ ] `ui/CodexScreen` (Grid locked/unlocked, Tier-Farbe + Kategorie-Filter, Detail, Fortschritt)
-- [ ] Codex in State-Machine + `firstTimeCodexBonus`
+## M5 — Tipp-Codex-Screen ✅
+- [x] `data/tips.ts` auf ~50–60 Karten ausbauen (54 Karten, 9 Kategorien, alle Tiers, geprüft)
+- [x] `ui/CodexScreen` (Grid locked/unlocked, Tier-Farbe + Kategorie-Filter, Detail, Fortschritt)
+- [x] Codex in State-Machine (Phase `codex`, Einstieg aus Intro/Summary) + `firstTimeCodexBonus` (lag bereits in `Economy`)
+- Verifiziert: typecheck/lint/build grün; Smoke (0 Konsolenfehler bis auf swiftshader-Rauschen) + `save_test.py` (`ok:true`, neue IDs in `KNOWN_TIP_IDS`); Codex-Screenshots (Grid locked/unlocked + Detail) gesichtet.
 
 ## M6 — Upgrade-Shop
 - [ ] `data/rods.ts` Katalog (Rods + Upgrades)
