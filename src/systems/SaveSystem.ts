@@ -44,8 +44,17 @@ export class SaveSystem {
       equippedRodId: this.current.equippedRodId,
       upgradeStacks: this.current.upgradeStacks,
     });
+    // Mute-Initialwert an AudioManager + MuteButton (beide vor save.load gebaut).
+    // VOR dem Abonnieren emittieren, damit dieser Lade-Emit keinen Write auslöst.
+    this.bus.emit('audio:muteChanged', { muted: this.current.muted });
     // ERST nach hydrate abonnieren (sonst triggert der hydrate-Emit einen Write).
     this.unsub.push(this.bus.on('economy:changed', () => this.onEconomyChanged()));
+    this.unsub.push(
+      this.bus.on('audio:muteChanged', (e) => {
+        this.current.muted = e.muted;
+        this.scheduleWrite();
+      }),
+    );
     window.addEventListener('pagehide', this.onPageHide);
     document.addEventListener('visibilitychange', this.onVisibility);
   }

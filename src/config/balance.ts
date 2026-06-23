@@ -197,6 +197,24 @@ export const BALANCE = {
       haloScale: 1.05, // Halo-Durchmesser (Welteinheiten), etwas größer als die Ente
       intensity: 3.5, // Helligkeitsfaktor × emissiveIntensity
     },
+    sparkle: {
+      // Gold-Funken-Burst bei epic/legendary-Fang (additiv, füttert Bloom).
+      // Ein Burst zur Zeit (seltene Top-Momente); Partikel poppen aus dem Fangpunkt
+      // nach außen/oben und fallen mit Gravitation zurück, während sie ausblenden.
+      count: 14, // Partikel pro Burst (1 InstancedMesh)
+      durationMs: 720,
+      size: 0.05, // Partikelgröße (Welteinheiten)
+      spread: 0.9, // horizontale Reichweite (Welteinheiten)
+      rise: 0.7, // vertikaler Anfangs-Pop
+      gravity: 1.8, // zieht die Partikel zurück (Welteinheiten/s²)
+      color: 0xffe066, // helles Gold
+      hdrBoost: 1.6, // HDR-Faktor (Farbkanäle > 1) → überschreitet die Bloom-Threshold (vgl. glow.intensity)
+    },
+    haptics: {
+      // Mobile-Vibration (navigator.vibrate; auf Desktop fehlt die API → No-op). Nur wenn nicht reduced-motion.
+      catchMs: 18, // kurzer Impuls bei jedem Fang
+      perfectPattern: [12, 30, 14] as number[], // Doppel-Buzz bei Perfect
+    },
   },
 
   // Postprocessing-Qualität (Bloom). Mobile (coarse pointer) wird herabgestuft.

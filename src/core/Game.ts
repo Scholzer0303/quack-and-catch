@@ -13,10 +13,13 @@ import { FishingRod } from '../systems/FishingRod';
 import { Economy } from '../systems/Economy';
 import { RewardSystem } from '../systems/RewardSystem';
 import { SaveSystem } from '../systems/SaveSystem';
+import { AudioManager } from '../systems/AudioManager';
 import { GameStateMachine } from './GameStateMachine';
 import { Reticle } from '../ui/Reticle';
 import { SplashFx } from '../fx/SplashFx';
+import { SparkleFx } from '../fx/SparkleFx';
 import { DuckGlowFx } from '../fx/DuckGlowFx';
+import { vibrate } from '../fx/haptics';
 import { UIRoot } from '../ui/UIRoot';
 import { mulberry32 } from '../utils/rng';
 import { BALANCE } from '../config/balance';
@@ -36,11 +39,13 @@ export class Game {
   private readonly fishingRod: FishingRod;
   private readonly reticle: Reticle;
   private readonly splashFx: SplashFx;
+  private readonly sparkleFx: SparkleFx;
   private readonly duckGlow: DuckGlowFx | null;
   private readonly state: GameStateMachine;
   private readonly economy: Economy;
   private readonly reward: RewardSystem;
   private readonly save: SaveSystem;
+  private readonly audio: AudioManager;
   private readonly ui: UIRoot;
   private readonly busUnsub: Array<() => void> = [];
   // Phase, in die Codex/Shop beim Schließen zurückkehren (Quelle: 'start' oder 'summary').
@@ -80,6 +85,8 @@ export class Game {
     this.reticle = new Reticle(); // Fadenkreuz am Wasser-Zielpunkt
     this.splashFx = new SplashFx(); // Wasser-Splash beim Fang
     this.sceneManager.add(this.splashFx.group);
+    this.sparkleFx = new SparkleFx(); // Gold-Funken bei epic/legendary-Fang
+    this.sceneManager.add(this.sparkleFx.mesh);
 
     // Bloom je nach Quality-Guard; null = direkter Render-Fallback (Mobile/off).
     const postFx = Game.resolvePostFx();
@@ -131,6 +138,10 @@ export class Game {
       }),
     );
 
+    // Audio (M8): prozeduraler Synth, lazy bei erster Geste. VOR save.load bauen,
+    // damit der Mute-Lade-Emit (`audio:muteChanged`) den gespeicherten Zustand setzt.
+    this.audio = new AudioManager(this.bus);
+
     // Persistenz: NACH der UIRoot laden, damit der hydrate-Emit (`economy:changed`)
     // das bereits gebaute HUD erreicht und der geladene Token-Saldo erscheint.
     this.save = new SaveSystem(this.bus, this.economy);
@@ -147,6 +158,12 @@ export class Game {
         const mul = e.duck ? (sh.byRarity[e.duck.rarity] ?? 1) : 1;
         this.cameraRig.addShake(sh.catchIntensity * mul + (e.perfect ? sh.perfectBonus : 0));
         if (e.perfect) this.reticle.flash();
+        // Gold-Funken nur bei den seltensten Fängen (Top-Moment).
+        if (e.duck && (e.duck.rarity === 'epic' || e.duck.rarity === 'legendary')) {
+          this.sparkleFx.spawn(p.x, p.z);
+        }
+        // Mobile-Haptik: Doppel-Buzz bei Perfect, sonst kurzer Impuls.
+        vibrate(e.perfect ? BALANCE.juice.haptics.perfectPattern : BALANCE.juice.haptics.catchMs);
       }),
     );
 
@@ -222,6 +239,7 @@ export class Game {
     }
     this.fishingRod.update(dt);
     this.splashFx.update(dt);
+    this.sparkleFx.update(dt);
     this.ui.animateHud(dt);
     this.reticle.render(this.fishingRod.getView(), dt);
     if (this.post) this.post.render();
@@ -263,12 +281,14 @@ export class Game {
     this.input.dispose();
     this.ui.dispose();
     this.reward.dispose();
+    this.audio.dispose();
     this.save.dispose(); // vor economy/bus: Flush braucht lebende Economy + Bus
     this.economy.dispose();
     this.state.dispose();
     this.reticle.dispose();
     this.fishingRod.dispose();
     this.splashFx.dispose();
+    this.sparkleFx.dispose();
     this.duckGlow?.dispose();
     this.ducks.dispose();
     this.basin.dispose();

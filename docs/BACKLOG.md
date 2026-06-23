@@ -91,10 +91,11 @@ Eingeschoben nach Nutzer-Live-Test (Wettbewerb): Steuerung muss „cool" sein + 
 - [x] Magnet zieht nahe Enten; Legendary-Gating — **bereits durch M6 abgedeckt** (Magnet `HookRaycaster`, Legendary-Gate `lineStrength`-Snap in `FishingRod`); in M7 verifiziert, kein neuer Code
 - Verifiziert: typecheck/lint/build grün; Smoke (0 Konsolenfehler) + `catch_test` (Pool 14, 8 aktiv/Tier 0, Respawn voll); M7-Wegwerf-Test: Gold → 14 aktiv + ~1.8× Rotation + Epic/Legendary; zurück → 8 aktiv; Reload → 14 aktiv (gespeicherter Tier greift am Boot).
 
-## M8 — Juice + Audio
-- [ ] `systems/AudioManager` (Synth: cast/hook/perfect/reel/reward/fail, First-Gesture-Unlock, Mute)
-- [ ] Visuelle Juice (Catch-Pop, Splash-Ripple, Perfect-Flash, Legendary-Sparkle, HUD-Count-up, Low-Time-Pulse)
-- [ ] Camera-Punch, Mobile-Haptik, reduced-motion respektieren
+## M8 — Juice + Audio ✅
+- [x] `systems/AudioManager` (prozeduraler WebAudio-Synth: cast/hook/perfect/reel/reward/fail + roundEnd + lowTick, First-Gesture-Unlock → `audio:unlocked`, Mute über `audio:muteChanged`); persistenter 🔊-Button (`ui/MuteButton`, oben rechts, alle Phasen); `save.muted` greift jetzt
+- [x] Visuelle Juice komplett: Catch-Pop · Splash-Ripple · Perfect-Flash · HUD-Count-up · Low-Time-Pulse (alle bereits M4.6) + **Legendary-Sparkle** neu (`fx/SparkleFx`, Gold-Burst bei epic/legendary, additiv → Bloom)
+- [x] Camera-Punch (M4.6-Shake) + **Mobile-Haptik** (`fx/haptics`, `navigator.vibrate`, coarse-pointer + nicht-reduced-motion gated); reduced-motion respektiert (Sparkle/Haptik aus, Audio bleibt)
+- Verifiziert: typecheck/lint/build grün; Smoke (0 Konsolenfehler; intermittentes swiftshader-MeshBasic-Rauschen unverändert vorhanden, auch auf clean HEAD). Audio braucht echte Geste → manuell geprüft.
 
 ## M9 — Stretch (nur bei Zeit, nie auf Kosten der Stabilität)
 - [ ] Mehrere Becken/Themes

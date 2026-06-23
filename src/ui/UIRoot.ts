@@ -5,6 +5,7 @@ import { SummaryScreen } from './SummaryScreen';
 import { CardReveal } from './CardReveal';
 import { CodexScreen } from './CodexScreen';
 import { ShopScreen } from './ShopScreen';
+import { MuteButton } from './MuteButton';
 import type { EventBus } from '../events/EventBus';
 import type { Economy } from '../systems/Economy';
 import type { GameEvents, GamePhase } from '../types/events';
@@ -32,6 +33,7 @@ export class UIRoot {
   private readonly cardReveal: CardReveal;
   private readonly codexScreen: CodexScreen;
   private readonly shopScreen: ShopScreen;
+  private readonly muteButton: MuteButton;
   private readonly unsub: Array<() => void> = [];
 
   constructor(bus: EventBus<GameEvents>, economy: Economy, callbacks: UICallbacks) {
@@ -56,6 +58,8 @@ export class UIRoot {
     this.cardReveal = new CardReveal(this.root, bus, callbacks.onResume);
     this.codexScreen = new CodexScreen(this.root, bus, economy, callbacks.onCloseCodex);
     this.shopScreen = new ShopScreen(this.root, bus, economy, callbacks.onCloseShop);
+    // Stummschalt-Button: phasenunabhängig sichtbar (kein setVisible-Routing).
+    this.muteButton = new MuteButton(this.root, bus);
 
     // Boot-Zustand ist 'start' (kein phase:changed beim Boot) → initial setzen.
     this.hud.setVisible(false);
@@ -84,6 +88,7 @@ export class UIRoot {
   dispose(): void {
     for (const off of this.unsub) off();
     this.unsub.length = 0;
+    this.muteButton.dispose();
     this.shopScreen.dispose();
     this.codexScreen.dispose();
     this.cardReveal.dispose();

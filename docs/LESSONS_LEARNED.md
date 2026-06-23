@@ -4,6 +4,26 @@ Laufendes Log: Entscheidungen, Stolpersteine, Fixes, Balance-Erkenntnisse. Neues
 
 ---
 
+## 2026-06-23 — M8: Juice + Audio (WebAudio-Synth + Mute + Rest-Juice)
+
+**Produkt-Entscheidungen (mit Nutzer abgestimmt):** Sound-Charakter **hell & cartoonig (Chiptune)**; Mute = **kleiner 🔊-Button oben rechts, in allen Phasen sichtbar**.
+
+**Audio prozedural, kein Asset:** `AudioManager` baut Töne aus Oszillatoren (square/triangle) + Gain-Hüllkurve — passt zur Projektregel „alle Assets aus Primitives". Sound-Definitionen (Noten/Dauern/Wellenform) liegen als **Daten-`const` im Manager**, nicht in `balance.ts` (Präzedenz: `RARITY_DEFS`/tips.ts sind ebenfalls Content außerhalb von `balance.ts`; in `balance.audio` nur der Quer-Tunable `masterGain`). Haptik/Sparkle-Tunables dagegen in `balance.juice.haptics`/`.sparkle` (echte Tuning-Werte).
+
+**Autoplay-Policy (Lazy-Unlock):** Browser verbieten Audio ohne Nutzergeste. `AudioContext` wird daher **erst bei der ersten Geste** erzeugt/resumed (einmaliger `window`-Listener auf `pointerdown`/`keydown`/`touchstart`, danach entfernt → `audio:unlocked`). Davor sind alle `play()` No-ops → **headless/Smoke-sicher** (kein Kontext, kein Crash ohne Geste). Sauberes Stoppen jeder Note (`osc.stop`) → kein Node-Leak; `dispose()` schließt den Kontext.
+
+**Mute-Kanal = ein Event als Single Source of Truth:** `audio:muteChanged {muted}`. MuteButton **emittiert** (Klick), AudioManager **wendet an** (Master-Gain 0/`masterGain`, Kontext bleibt offen), SaveSystem **persistiert**. Reihenfolge-Vertrag wie bei `economy:changed`/`rod:statsChanged`: AudioManager + UIRoot (Button) werden **vor** `save.load()` gebaut; `load()` emittiert den geladenen `muted`-Wert **vor** dem Abonnieren → der Lade-Emit löst keinen redundanten Write aus, setzt aber Button-Icon + Audio korrekt. Der erste Mute-Klick ist selbst die Geste, die Audio entsperrt (pointerdown vor click) → Reihenfolge stimmt.
+
+**Low-Time-Tick-Falle:** `round:tick` feuert mehrfach/Sekunde (throttled, plus Sofort-Ticks bei Score-Änderung). `lowTick` daher nur bei **Sekundenwechsel** (`Math.ceil(timeRemaining)` ≠ `lastTickSec`, `>0`, `≤ lowTimeWarnSec`); außerhalb der Warnzone `lastTickSec=-1` zurücksetzen → bei der nächsten Runde wieder scharf. Der **visuelle** Low-Time-Puls existierte schon (`.qc-timer.low-time` → `qc-pulse` seit M3) — M8 ergänzt nur den Ton.
+
+**Legendary-Sparkle (`SparkleFx`):** ein `InstancedMesh` kleiner Oktaeder, deterministische Einheits-Geschwindigkeiten je Index (kein RNG nötig), poppen am Fangpunkt nach außen/oben mit Gravitation, blenden gemeinsam aus. Additive **HDR-Gold-Farbe** (`Color × 1.6`, Kanäle > 1) → überschreitet die Bloom-Threshold (gleiches Prinzip wie `DuckGlowFx`, nicht der `[0,1]`-MeshBasic-Default). Trigger im **bestehenden** `hook:result`-Juice-Subscriber in `Game` nur für epic/legendary; `reduced-motion` → `spawn()` No-op.
+
+**Mute-UI-Position:** HUD belegt oben rechts die Tokens-Gruppe → der 🔊-Button sitzt knapp **unter** der HUD-Leiste (`top: clamp(3.8rem,…)`), damit er die Tokens nicht überdeckt; `.qc-ui` ist `pointer-events:none`, der Button braucht explizit `pointer-events:auto` (wie `.qc-btn`).
+
+**Smoke-Beobachtung:** Ein Lauf zeigte einen `MeshBasicMaterial`-`VALIDATE_STATUS false`-Log (swiftshader). Per `git stash`-Vergleich verifiziert: **intermittentes swiftshader-Rauschen**, tritt auch auf clean HEAD auf und verschwindet bei Re-Run — **nicht** von `SparkleFx` eingeführt (dessen Mesh ist bis zum ersten Fang `visible=false`, wird also nicht kompiliert). Echte GPU unbetroffen.
+
+**Review-Fixes (8 Finder-Angles, recall-biased):** 3 echte Quality-Findings behoben — (1) `SparkleFx`-HDR-Faktor `1.6` war Magic Number in der Logik (CLAUDE.md-Verstoß; `DuckGlowFx` zieht den analogen Faktor aus `balance`) → nach `BALANCE.juice.sparkle.hdrBoost`; (2) Partikel-Streuung über `(i*7)%count` **entartet bei count=14** (`rVar` nahm nur 2 Werte an → bandiger Burst) → auf den bestehenden `mulberry32`-Seed-RNG umgestellt (echte Varianz, deterministisch); (3) `SparkleFx.spawn` setzte `visible=true` ohne Matrizen → latenter Origin-Flash bei Default-Identität, jetzt `update(0)` am Ende von `spawn`. Plus Doku-Drift: `balance.haptics`-Kommentar behauptete „nur coarse pointer", `haptics.ts` prüft das nicht (Desktop hat keine `vibrate`-API → faktisch No-op) → Kommentar korrigiert. Bewusst **nicht** geändert (low/by-design): `lowTick` kann bei Fang in der Warnzone mitklingen; `ctx.resume()` fire-and-forget (erster Ton evtl. verschluckt); Haptik ignoriert Mute (Haptik ≠ Ton, nur reduced-motion gated).
+
 ## 2026-06-23 — M7: Progression koppeln (Rod-Tier → Becken + Loot)
 
 **Scope-Erkenntnis beim Code-Lesen (Plan-Phase):** Von den 3 BACKLOG-Tasks waren **2 schon durch M6 erledigt** — Magnet (`HookRaycaster.nearestDuck`) und Legendary-Gating (`FishingRod.release`: `RARITY_DEFS[rarity].weight > stats.lineStrength` → Snap; Gewichte 1–5, `lineStrength` Holz3/Glück4/Magnet4/Gold5 → Legendary nur mit Goldrute, Epic ab Tier-1). M7 reduzierte sich auf **einen Bug**: der Rod-**Tier** wurde nie an die Engine propagiert.

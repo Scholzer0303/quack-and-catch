@@ -17,4 +17,7 @@ export type GameEvents = {
   'round:tick': { timeRemaining: number; score: number };
   'round:ended': { score: number };
   'audio:unlocked': Record<string, never>;
+  // Stummschaltung umgeschaltet (Single Source of Truth): MuteButton emittiert,
+  // AudioManager wendet an, SaveSystem persistiert. Lade-Emit setzt den Initialwert.
+  'audio:muteChanged': { muted: boolean };
 };
