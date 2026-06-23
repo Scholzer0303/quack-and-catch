@@ -7,7 +7,7 @@
 
 ## Session-Start-Routine (Pflicht)
 ```bash
-git log --oneline -15   # zuletzt: M6 Upgrade-Shop (data/rods.ts + Economy Kauf/Equip/Stacking + ShopScreen + Stats wirken, reviewt); davor M5 + M4.5
+git log --oneline -15   # zuletzt: M7 Progression (rod:statsChanged trägt tier → DuckSpawner.setTier: Becken-Anzahl/Speed/Loot folgt der Rute); davor M6 Shop + M5 + M4.5
 git status              # sollte clean sein
 npm install             # falls node_modules fehlt
 ```
