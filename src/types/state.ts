@@ -15,6 +15,7 @@ export interface SaveData {
   equippedRodId: string; // aktuell ausgerüstete Rute
   upgradeStacks: Record<string, number>; // Upgrade-ID → Anzahl Stapel
   muted: boolean; // reserviert für M8-Audio; bis dahin nur persistiert
+  highScore: number; // beste Rundenpunktzahl (M9), additiv ergänzt
 }
 
 /** Frischer Default-Stand. Factory (nicht Konstante) — sonst teilten sich
@@ -28,5 +29,6 @@ export function createDefaultSave(): SaveData {
     equippedRodId: STARTER_ROD_ID,
     upgradeStacks: {},
     muted: false,
+    highScore: 0,
   };
 }

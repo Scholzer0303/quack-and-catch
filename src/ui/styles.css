@@ -291,6 +291,13 @@
   font-size: 0.9rem;
   margin: 0.6rem 0 1.2rem;
 }
+/* Rekord-Zeile im Summary (M9). */
+.qc-record {
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--qc-gold);
+}
 
 /* ---------- Karten-Modal (Reward) ---------- */
 /* --qc-accent wird je Fang von CardReveal gesetzt (Rarität-Bodyfarbe bzw. Gold). */

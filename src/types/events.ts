@@ -19,6 +19,9 @@ export type GameEvents = {
   // Fang-Serie (M9): steigt mit jedem Fang in Folge, bricht bei Miss/Snap.
   // `multiplier` skaliert die Token-Belohnung (RewardSystem). count=0 → kein Combo.
   'combo:changed': { count: number; multiplier: number };
+  // Highscore-Auswertung am Rundenende (M9): trägt die Rundenpunktzahl, den (ggf.
+  // aktualisierten) Rekord und ob er gerade gebrochen wurde. SummaryScreen rendert hieraus.
+  'highscore:changed': { score: number; highScore: number; isNewRecord: boolean };
   'audio:unlocked': Record<string, never>;
   // Stummschaltung umgeschaltet (Single Source of Truth): MuteButton emittiert,
   // AudioManager wendet an, SaveSystem persistiert. Lade-Emit setzt den Initialwert.

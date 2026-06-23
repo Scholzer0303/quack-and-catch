@@ -5,6 +5,7 @@ import { createDefaultSave, type SaveData } from '../types/state';
 import type { EventBus } from '../events/EventBus';
 import type { GameEvents } from '../types/events';
 import type { Economy } from './Economy';
+import type { HighscoreSystem } from './HighscoreSystem';
 
 const KEY = BALANCE.save.storageKey;
 const KNOWN_TIP_IDS: ReadonlySet<string> = new Set(TIPS.map((t) => t.id));
@@ -32,6 +33,7 @@ export class SaveSystem {
   constructor(
     private readonly bus: EventBus<GameEvents>,
     private readonly economy: Economy,
+    private readonly highscore: HighscoreSystem,
   ) {}
 
   /** Einmal beim Boot: laden, validieren, Economy hydratisieren, dann abonnieren. */
@@ -44,6 +46,7 @@ export class SaveSystem {
       equippedRodId: this.current.equippedRodId,
       upgradeStacks: this.current.upgradeStacks,
     });
+    this.highscore.hydrate(this.current.highScore); // geladenen Rekord übernehmen
     // Mute-Initialwert an AudioManager + MuteButton (beide vor save.load gebaut).
     // VOR dem Abonnieren emittieren, damit dieser Lade-Emit keinen Write auslöst.
     this.bus.emit('audio:muteChanged', { muted: this.current.muted });
@@ -52,6 +55,14 @@ export class SaveSystem {
     this.unsub.push(
       this.bus.on('audio:muteChanged', (e) => {
         this.current.muted = e.muted;
+        this.scheduleWrite();
+      }),
+    );
+    // Neuer Rundenrekord → persistieren (nur bei Rekord, nicht bei jeder Runde).
+    this.unsub.push(
+      this.bus.on('highscore:changed', (e) => {
+        if (!e.isNewRecord) return;
+        this.current.highScore = e.highScore;
         this.scheduleWrite();
       }),
     );
@@ -186,6 +197,12 @@ export class SaveSystem {
 
     const muted = typeof o.muted === 'boolean' ? o.muted : def.muted;
 
+    // Highscore: ganzzahlig, nicht-negativ (sonst Default 0).
+    const highScore =
+      typeof o.highScore === 'number' && Number.isFinite(o.highScore) && o.highScore >= 0
+        ? Math.floor(o.highScore)
+        : def.highScore;
+
     return {
       schemaVersion: BALANCE.save.schemaVersion,
       tokens,
@@ -194,6 +211,7 @@ export class SaveSystem {
       equippedRodId,
       upgradeStacks,
       muted,
+      highScore,
     };
   }
 }

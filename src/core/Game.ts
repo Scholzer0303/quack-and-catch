@@ -14,6 +14,7 @@ import { FishingRod } from '../systems/FishingRod';
 import { Economy } from '../systems/Economy';
 import { ComboSystem } from '../systems/ComboSystem';
 import { RewardSystem } from '../systems/RewardSystem';
+import { HighscoreSystem } from '../systems/HighscoreSystem';
 import { SaveSystem } from '../systems/SaveSystem';
 import { AudioManager } from '../systems/AudioManager';
 import { GameStateMachine } from './GameStateMachine';
@@ -50,6 +51,7 @@ export class Game {
   private readonly economy: Economy;
   private readonly combo: ComboSystem;
   private readonly reward: RewardSystem;
+  private readonly highscore: HighscoreSystem;
   private readonly save: SaveSystem;
   private readonly audio: AudioManager;
   private readonly ui: UIRoot;
@@ -126,6 +128,8 @@ export class Game {
     // Fang-Serie (M9): RewardSystem liest den Combo-Multiplikator beim Landen.
     this.combo = new ComboSystem(this.bus);
     this.reward = new RewardSystem(this.bus, this.economy, mulberry32(0x5eed01), this.combo);
+    // Persistenter Rundenrekord (M9): wertet round:ended aus, SaveSystem persistiert.
+    this.highscore = new HighscoreSystem(this.bus);
     this.ui = new UIRoot(this.bus, this.economy, {
       onStart: () => this.state.start(),
       onRestart: () => this.state.restart(),
@@ -161,7 +165,7 @@ export class Game {
 
     // Persistenz: NACH der UIRoot laden, damit der hydrate-Emit (`economy:changed`)
     // das bereits gebaute HUD erreicht und der geladene Token-Saldo erscheint.
-    this.save = new SaveSystem(this.bus, this.economy);
+    this.save = new SaveSystem(this.bus, this.economy, this.highscore);
     this.save.load();
 
     // Juice: Fang-Feedback. Splash am Wasserpunkt W (Shake/Flash folgen additiv).
@@ -306,6 +310,7 @@ export class Game {
     this.ui.dispose();
     this.reward.dispose();
     this.combo.dispose();
+    this.highscore.dispose();
     this.audio.dispose();
     this.save.dispose(); // vor economy/bus: Flush braucht lebende Economy + Bus
     this.economy.dispose();

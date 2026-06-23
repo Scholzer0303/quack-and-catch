@@ -40,24 +40,33 @@ export class SummaryScreen {
         if (e.to === 'playing' && e.from !== 'paused') this.collected.length = 0;
       }),
     );
-    this.unsub.push(bus.on('round:ended', (e) => this.render(e.score, onRestart)));
+    // Rendert aus `highscore:changed` (folgt unmittelbar auf `round:ended`): trägt
+    // Punktzahl + aktuellen Rekord + ob er gerade gebrochen wurde.
+    this.unsub.push(bus.on('highscore:changed', (e) => this.render(e, onRestart)));
   }
 
-  private render(score: number, onRestart: () => void): void {
+  private render(e: GameEvents['highscore:changed'], onRestart: () => void): void {
     const title = document.createElement('h1');
     title.className = 'qc-title';
-    title.textContent = 'Runde vorbei';
+    title.textContent = e.isNewRecord ? '🏆 Neuer Rekord!' : 'Runde vorbei';
 
     const scoreEl = document.createElement('div');
     scoreEl.className = 'qc-score-big';
-    scoreEl.textContent = String(score);
+    scoreEl.textContent = String(e.score);
 
     const sub = document.createElement('p');
     sub.className = 'qc-subtitle';
     const n = this.collected.length;
     sub.textContent = n > 0 ? `${n} Tipp${n === 1 ? '' : 's'} gesammelt` : 'Punkte';
 
-    const nodes: HTMLElement[] = [title, scoreEl, sub];
+    // Rekord-Zeile: bei neuem Rekord bestätigend, sonst der zu schlagende Bestwert.
+    const record = document.createElement('p');
+    record.className = 'qc-record';
+    record.textContent = e.isNewRecord
+      ? `🏆 Bestwert: ${e.highScore}`
+      : `Rekord: ${e.highScore} — schlag ihn!`;
+
+    const nodes: HTMLElement[] = [title, scoreEl, sub, record];
 
     if (n > 0) {
       const list = document.createElement('ul');
