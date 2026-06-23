@@ -39,7 +39,7 @@ export class UIRoot {
     this.root.className = 'qc-ui';
     document.body.appendChild(this.root);
 
-    this.hud = new HUD(this.root, bus);
+    this.hud = new HUD(this.root, bus, economy);
     this.introScreen = new IntroScreen(
       this.root,
       callbacks.onStart,

@@ -1,7 +1,9 @@
 import { BALANCE } from '../config/balance';
 import { clamp, lerp } from '../utils/math';
 import { prefersReducedMotion } from '../fx/reducedMotion';
+import { findRod } from '../data/rods';
 import type { EventBus } from '../events/EventBus';
+import type { Economy } from '../systems/Economy';
 import type { GameEvents } from '../types/events';
 
 interface CountAnim {
@@ -9,8 +11,6 @@ interface CountAnim {
   to: number;
   elapsed: number;
 }
-
-const ROD_NAME = 'Bambusrute'; // M6: dynamisch aus rod:equipped
 
 /** mm:ss aus Restsekunden (aufgerundet, nie negativ). */
 function formatTime(sec: number): string {
@@ -57,7 +57,11 @@ export class HUD {
   private tokenAnim: CountAnim | null = null;
   private readonly reduced = prefersReducedMotion();
 
-  constructor(parent: HTMLElement, bus: EventBus<GameEvents>) {
+  constructor(
+    parent: HTMLElement,
+    bus: EventBus<GameEvents>,
+    private readonly economy: Economy,
+  ) {
     this.bar = document.createElement('div');
     this.bar.className = 'qc-hud';
 
@@ -67,7 +71,7 @@ export class HUD {
 
     this.rod = document.createElement('div');
     this.rod.className = 'qc-rod';
-    this.rod.textContent = `🎣 ${ROD_NAME}`;
+    this.updateRodName(); // ausgerüstete Rute (Starter bis hydrate/Equip nachzieht)
 
     parent.append(this.bar, this.rod);
 
@@ -78,6 +82,13 @@ export class HUD {
 
     this.unsub.push(bus.on('round:tick', (e) => this.onTick(e)));
     this.unsub.push(bus.on('economy:changed', (e) => this.onEconomy(e)));
+    // Rod-Chip folgt der ausgerüsteten Rute (Laden/Equip/Upgrade).
+    this.unsub.push(bus.on('rod:statsChanged', () => this.updateRodName()));
+  }
+
+  private updateRodName(): void {
+    const name = findRod(this.economy.getEquippedRodId())?.name ?? 'Angel';
+    this.rod.textContent = `🎣 ${name}`;
   }
 
   private onTick(e: GameEvents['round:tick']): void {
