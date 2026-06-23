@@ -1,23 +1,9 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { BALANCE } from '../config/balance';
-import { buildToonGradient } from '../world/DuckFactory';
+import { buildToonGradient, bakeVertexColor } from '../world/DuckFactory';
 import { prefersReducedMotion } from './reducedMotion';
 import { mulberry32 } from '../utils/rng';
-
-/** Färbt alle Vertices einer Geometrie einfarbig (gebackene Vertex-Farbe). */
-function paint(geo: THREE.BufferGeometry, hex: number): THREE.BufferGeometry {
-  const c = new THREE.Color(hex);
-  const n = geo.getAttribute('position').count;
-  const colors = new Float32Array(n * 3);
-  for (let i = 0; i < n; i++) {
-    colors[i * 3] = c.r;
-    colors[i * 3 + 1] = c.g;
-    colors[i * 3 + 2] = c.b;
-  }
-  geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-  return geo;
-}
 
 /**
  * Himmel-Deko (M9): bunte Ballons steigen langsam auf und wrappen am oberen
@@ -53,11 +39,11 @@ export class SkyDecoFx {
     this.grad = buildToonGradient(BALANCE.toon.gradientStops);
     const body = new THREE.SphereGeometry(0.35, 12, 10);
     body.scale(1, 1.18, 1);
-    paint(body, 0xffffff);
+    bakeVertexColor(body, 0xffffff);
     const knot = new THREE.ConeGeometry(0.08, 0.14, 6);
     knot.rotateX(Math.PI);
     knot.translate(0, -0.42, 0);
-    paint(knot, 0xffffff);
+    bakeVertexColor(knot, 0xffffff);
     const bGeo = mergeGeometries([body, knot], false);
     body.dispose();
     knot.dispose();
@@ -118,8 +104,7 @@ export class SkyDecoFx {
       const x =
         this.balloonX[i]! + Math.sin(elapsed * s.balloonSwaySpeed + this.balloonPhase[i]!) * s.balloonSwayAmp;
       this.dummy.position.set(x, y, s.balloonZ);
-      this.dummy.rotation.set(0, 0, 0);
-      this.dummy.scale.setScalar(s.balloonScale);
+      this.dummy.scale.setScalar(s.balloonScale); // Rotation bleibt Identität (Dummy nie gedreht)
       this.dummy.updateMatrix();
       this.balloons.setMatrixAt(i, this.dummy.matrix);
     }
@@ -130,7 +115,6 @@ export class SkyDecoFx {
       const x = ((elapsed * s.birdSpeed + this.birdOff[i]!) % span) - s.birdSpreadX;
       const y = this.birdRowY[i]! + Math.sin(elapsed * s.birdBobSpeed + i) * s.birdBobAmp;
       this.dummy.position.set(x, y, s.birdZ);
-      this.dummy.rotation.set(0, 0, 0);
       this.dummy.scale.setScalar(s.birdScale);
       this.dummy.updateMatrix();
       this.birds.setMatrixAt(i, this.dummy.matrix);

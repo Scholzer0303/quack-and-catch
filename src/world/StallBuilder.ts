@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { BALANCE } from '../config/balance';
-import { buildToonGradient } from './DuckFactory';
+import { buildToonGradient, bakeVertexColor } from './DuckFactory';
 import { buildOutlineMaterial } from './materials/OutlineMaterial';
 import { prefersReducedMotion } from '../fx/reducedMotion';
 
@@ -23,20 +23,6 @@ export interface StallParts {
   /** Kurzes Aufblitzen aller Glühbirnen (bei einem Fang ausgelöst). */
   flash(): void;
   dispose(): void;
-}
-
-/** Färbt alle Vertices einer Geometrie einfarbig (gebackene Vertex-Farbe fürs Toon-Material). */
-function paint(geo: THREE.BufferGeometry, hex: number): THREE.BufferGeometry {
-  const col = new THREE.Color(hex);
-  const n = geo.getAttribute('position').count;
-  const colors = new Float32Array(n * 3);
-  for (let i = 0; i < n; i++) {
-    colors[i * 3] = col.r;
-    colors[i * 3 + 1] = col.g;
-    colors[i * 3 + 2] = col.b;
-  }
-  geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-  return geo;
 }
 
 /** Nur die für mergeGeometries kompatiblen Attribute behalten (sonst wirft das Merge). */
@@ -70,7 +56,7 @@ export function buildStall(): StallParts {
   const flags: THREE.BufferGeometry[] = [];
 
   const push = (list: THREE.BufferGeometry[], geo: THREE.BufferGeometry, hex: number): void => {
-    list.push(paint(trim(geo), hex));
+    list.push(bakeVertexColor(trim(geo), hex));
   };
   const box = (
     list: THREE.BufferGeometry[],
@@ -278,8 +264,10 @@ export function buildStall(): StallParts {
       if (reduced) return; // bewegungslos bei reduced-motion (Birnen bleiben auf Grundhelligkeit)
       ferrisGroup.rotation.z = elapsed * ferrisAngular;
       if (flashLevel > 0) flashLevel = Math.max(0, flashLevel - dt / c.bulbFlashDecaySec);
-      // Helligkeits-Multiplikator (>1 = HDR → blüht im Bloom); instanceColor trägt warm/cool.
-      const pulse = Math.sin(elapsed * c.bulbPulseSpeed) * c.bulbPulseAmp;
+      // Helligkeits-Multiplikator: NUR aufhellend (0…bulbPulseAmp), damit der Wert nie
+      // unter 1.0 fällt — sonst dippt die Birnen-Luminanz unter die Bloom-Threshold und
+      // das Glühen flackert. So pulsiert die Helligkeit ≥1 (HDR → bleibt im Bloom).
+      const pulse = (0.5 + 0.5 * Math.sin(elapsed * c.bulbPulseSpeed)) * c.bulbPulseAmp;
       bulbMat.color.setScalar(1 + pulse + flashLevel * c.bulbFlashGain);
     },
     flash(): void {

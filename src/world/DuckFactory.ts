@@ -22,8 +22,9 @@ export function buildToonGradient(stops: readonly number[]): THREE.DataTexture {
   return tex;
 }
 
-/** Färbt alle Vertices einer Geometrie einfarbig (für gebackene Vertex-Farben). */
-function paint(geo: THREE.BufferGeometry, hex: number): THREE.BufferGeometry {
+/** Färbt alle Vertices einer Geometrie einfarbig (für gebackene Vertex-Farben).
+ *  Exportiert, damit Welt/FX denselben Helfer nutzen (statt eigener Kopien). */
+export function bakeVertexColor(geo: THREE.BufferGeometry, hex: number): THREE.BufferGeometry {
   const c = new THREE.Color(hex);
   const count = geo.getAttribute('position').count;
   const colors = new Float32Array(count * 3);
@@ -51,29 +52,29 @@ export const DuckFactory = {
 
     const body = new THREE.SphereGeometry(d.bodyRadius, 16, 12);
     body.scale(1, 0.85, 1.15);
-    paint(body, 0xffffff);
+    bakeVertexColor(body, 0xffffff);
 
     const head = new THREE.SphereGeometry(d.headRadius, 14, 10);
     head.translate(0, hy, hz);
-    paint(head, 0xffffff);
+    bakeVertexColor(head, 0xffffff);
 
     const beak = new THREE.ConeGeometry(0.12, 0.26, 8);
     beak.rotateX(Math.PI / 2);
     beak.translate(0, hy - 0.02, hz + 0.3);
-    paint(beak, d.beakColor);
+    bakeVertexColor(beak, d.beakColor);
 
     const eyeL = new THREE.SphereGeometry(0.05, 8, 6);
     eyeL.translate(0.12, hy + 0.08, hz + 0.18);
-    paint(eyeL, d.eyeColor);
+    bakeVertexColor(eyeL, d.eyeColor);
 
     const eyeR = new THREE.SphereGeometry(0.05, 8, 6);
     eyeR.translate(-0.12, hy + 0.08, hz + 0.18);
-    paint(eyeR, d.eyeColor);
+    bakeVertexColor(eyeR, d.eyeColor);
 
     const tail = new THREE.ConeGeometry(0.16, 0.3, 8);
     tail.rotateX(-Math.PI / 2);
     tail.translate(0, 0.12, -d.bodyRadius - 0.04);
-    paint(tail, 0xffffff);
+    bakeVertexColor(tail, 0xffffff);
 
     const parts = [body, head, beak, eyeL, eyeR, tail];
     const merged = mergeGeometries(parts, false);
