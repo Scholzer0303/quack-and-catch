@@ -20,7 +20,7 @@ Laufendes Log: Entscheidungen, Stolpersteine, Fixes, Balance-Erkenntnisse. Neues
 
 **Kein Schema-Bump:** Tier-4-Rute fügt sich in `ownedRodIds`, 46 neue Tip-IDs in `unlockedTips`; `KNOWN_TIP_IDS` leitet sich aus `TIPS` ab → neue IDs automatisch bekannt, SaveSystem ungeändert. `DuckSpawner.capacity = Math.max(...duckCountByTier)` zieht auf 18 automatisch nach, `activeCount` per `?? [0]`-Fallback robust für Tier 4.
 
-**Code-Review (M11-Diff, xhigh):** 0 Korrektheits-Defekte. Einzige Beobachtung (kein Bug, beabsichtigt): heilig sehr schwer (Fangzone ~0.059 WE, Drift bis ~×2.9) — gewollter Hardcore-Chase, Tier-4-Magnet (1.0) assistiert. **Browser-Smoke für M11 diese Session NICHT erneut gefahren** (in STATUS als Empfehlung vor M12 vermerkt).
+**Code-Review (M11-Diff, xhigh):** 0 Korrektheits-Defekte. Einzige Beobachtung (kein Bug, beabsichtigt): heilig sehr schwer (Fangzone ~0.059 WE, Drift bis ~×2.9) — gewollter Hardcore-Chase, Tier-4-Magnet (1.0) assistiert. **Browser-Smoke `ok:true`** (0 Konsolenfehler/Page-Errors) + **`catch_test` `ok:true`** (`duckCount 18` = Tier-4-Kapazität greift, `aliveCount 10` Tier 0) gegen Dev-Server gefahren → M11-Daten/Loop laden fehlerfrei.
 
 ## 2026-06-23 — M10: Pause-Menü + Shop-Eskalation + Fang-Tuning (Nutzer-Feedback 1/3)
 
