@@ -4,6 +4,24 @@ Laufendes Log: Entscheidungen, Stolpersteine, Fixes, Balance-Erkenntnisse. Neues
 
 ---
 
+## 2026-06-23 — M11: Heilige Ente + Tier-4-Rute + Wissens-Crossover + 100 Karten (Nutzer-Feedback 2/3)
+
+**Produkt-Entscheidungen (mit Nutzer abgestimmt):** Chase-Tuning **Hardcore** (heilig extrem selten, winzigste Fangzone, Top-Belohnung); Tipp-Inhalte **nicht** heilig-lastig, sondern insgesamt **tieferes/fortgeschrittenes Wissen als Belohnung** — schwerer fangbare Enten geben tieferes Wissen, **Crossover** liefert auch bei normalen Enten „hier und da" Top-Wissen. Verteilung 14/16/18/20/20/12 (heilig bewusst schlank). Je Sub-Step ein Commit/Push.
+
+**6. Rarität sauber durchziehen — Typsystem zeigt die meisten Stellen:** `DuckRarity` um `'heilig'` erweitern → `tsc --noEmit` listet sofort jede **strikt** typisierte `Record<DuckRarity, T>`-Map, die einen Eintrag braucht (hier nur zwei: `RARITY_DEFS` in `data/ducks.ts`, `TIER_ORDER` in `CodexScreen`). Die **gefährlichen** sind die **lose** getippten `as Record<string, number>`-Maps (`speedMulByRarity`, `catchMulByRarity`, `shake.byRarity`, `tokensByRarity`): kein TS-Fehler, aber ohne heilig-Eintrag greift still der `?? fallback` → falsches Verhalten. Vorab per Grep über `ByRarity`/`Record<` gefunden und alle ergänzt. Plus **eine hartcodierte Aufzählung** (`Game.ts` Sparkle-Gate `=== 'epic' || 'legendary'`) — die findet kein Typecheck, nur Grep nach `rarity ===`.
+
+**`RARITY_ORDER` als kanonische Single Source:** Statt die Tier-Reihenfolge an mehreren Stellen zu pflegen (Codex hatte eine Hand-Map ohne heilig → latente NaN-Sortier-Lücke), eine `export const RARITY_ORDER: readonly DuckRarity[]` in `types/domain.ts`. `CodexScreen.TIER_ORDER` leitet sich per `Object.fromEntries(RARITY_ORDER.map((r,i)=>[r,i]))` ab, `RewardSystem.rollTipTier` nutzt sie fürs Crossover. Index = Rang → Crossover „strikt höheres Tier" = `RARITY_ORDER.slice(idx+1)`.
+
+**Fang-Gate ist gewichtsbasiert — Alt-Weg muss in der Loot-Table existieren:** `FishingRod` reißt ab bei `RARITY_DEFS[rarity].weight > lineStrength`. heilig `weight 6` ⇒ `lineStrength ≥ 6`. Tier-4-Rute hat 6; der vom BACKLOG geforderte **Alt-Weg** (Gold-Rute 5 + `up-schnur`×1 → 6) funktioniert aber nur, wenn die heilige Ente im **Tier-3-Loot** überhaupt auftaucht — Upgrades ändern den Rod-**Tier** (= Loot-Table-Index) nicht. Daher heilig-Gewicht in Tabelle 3 = `1` (minimal), in der neuen Tabelle 4 = `4`. Sonst wäre der Alt-Weg tot.
+
+**Crossover ändert nur das Tipp-Tier, nie die Tokens:** In `RewardSystem.onLanded` werden die Tokens **vor** `pickTip` aus der echten `rarity` der Ente berechnet; `rollTipTier` würfelt danach optional ein höheres Tier nur für die Kartenwahl. So gibt eine gelbe Ente selten eine Epic/Legendary/heilig-**Karte**, aber weiterhin gelbe **Tokens** (Anforderung erfüllt, ohne Sonderpfad).
+
+**Inhalt adversarisch gegen Docs prüfen (CLAUDE.md „nie erfinden"):** 46 Karten selbst verfasst (konsistente Stimme), Fakten aus dem `claude-api`-Skill + Claude-Code-Wissen; dann **Verifikations-Workflow** (6 Agents, `claude-code-guide`, gegen docs.claude.com). 7 Findings → **5 echte Präzisierungen angenommen** (Token-Zählung ist offiziell „Schätzung", nicht „exakt"; Batch = halber **Preis**, nicht halbe Tokens; adaptives Denken „bei aktuellen Modellen" statt absolut; Subagent-Hintergrund statt „async kommuniziert"; SKILL.md-Frontmatter ohne Pflicht-`name`-Behauptung), **2 abgelehnt** (PreToolUse-Hooks **können** blocken; Streaming **verhindert** HTTP-Timeouts bei großen Ausgaben — beides durch die Docs/Skill belegt). **Lehre:** Verifier-Findings selbst gegenprüfen — nicht jedes „misleading" stimmt; aber „exakt"→„geschätzt" war ein echter, leicht zu übersehender Fehler.
+
+**Kein Schema-Bump:** Tier-4-Rute fügt sich in `ownedRodIds`, 46 neue Tip-IDs in `unlockedTips`; `KNOWN_TIP_IDS` leitet sich aus `TIPS` ab → neue IDs automatisch bekannt, SaveSystem ungeändert. `DuckSpawner.capacity = Math.max(...duckCountByTier)` zieht auf 18 automatisch nach, `activeCount` per `?? [0]`-Fallback robust für Tier 4.
+
+**Code-Review (M11-Diff, xhigh):** 0 Korrektheits-Defekte. Einzige Beobachtung (kein Bug, beabsichtigt): heilig sehr schwer (Fangzone ~0.059 WE, Drift bis ~×2.9) — gewollter Hardcore-Chase, Tier-4-Magnet (1.0) assistiert. **Browser-Smoke für M11 diese Session NICHT erneut gefahren** (in STATUS als Empfehlung vor M12 vermerkt).
+
 ## 2026-06-23 — M10: Pause-Menü + Shop-Eskalation + Fang-Tuning (Nutzer-Feedback 1/3)
 
 **Kontext:** Nach Live-Test kam ein großes Feedback-Paket. Mit dem Nutzer 4 Design-Forks geklärt (Heilige Ente als 6. Tier · Basics für Gelb behalten, Masse anspruchsvoll · Optik = Gloss+Rim auf Toon-Basis · Pause-„Ende" → Summary) und in 3 Meilensteine geschnitten (M10 schnelle Wins → M11 Inhalt/Tier → M12 Optik). M10 hier, je Sub-Step ein Commit/Push.

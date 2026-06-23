@@ -116,11 +116,13 @@ Teil 1/3 des Nutzer-Feedback-Pakets nach Live-Test (Plan `~/.claude/plans/pipeli
 - [x] **Step 3 Fang-Tuning:** `duck.speedMulByRarity` (seltenere Enten schneller, live in `DuckSpawner.update`); `duckCountByTier` 8/10/12/14 → 10/12/14/16 („mehr Enten"); `catch_test` auf 10 aktive Enten angepasst.
 - Verifiziert: typecheck/lint grün; `npm test` 14/14; `build` grün; Smoke `ok:true` (0 Konsolenfehler); `catch_test` `ok:true` (10 aktiv, Fang→Reward→Pause); Pause-Flow per Playwright (Button-Klick + ESC beidseitig, Timer friert, Resume erhält Runde, „Ende"→Summary).
 
-## M11 — Heilige Ente + Wissens-Kopplung + 100 Karten (geplant)
-- [ ] 6. Rarität `'heilig'` (über Legendary): `DuckRarity` + alle `Record<…rarity…>`-Maps (RARITY_DEFS, LOOT_TABLES, catchMulByRarity, perfectMul, tokensByRarity, speedMulByRarity, RARITY_ORDER); weiß+goldener Halo, engste Fang-Zone, Token-Range über Legendary.
-- [ ] Equipment-Chase: Tier-4-Rute „Heilige Kirmesrute" (lineStrength 6) + `…ByTier`-Arrays auf Länge 5; Alternativweg über gestapelte `up-schnur`.
-- [ ] Wissens-Crossover: `rewards.crossoverChance` in `RewardSystem.pickTip` (auch gelbe Ente → selten Top-Wissen; Tokens bleiben rarität-gebunden).
-- [ ] `data/tips.ts` 54 → 100 anspruchsvolle Karten (IDs stabil; neues `heilig`-Tier = Geheimwissen; faktisch korrekt + adversarisch geprüft).
+## M11 — Heilige Ente + Wissens-Kopplung + 100 Karten ✅
+Teil 2/3 des Nutzer-Feedback-Pakets. Kein Schema-Bump (neue Rute in `ownedRodIds`, neue Tip-IDs in `unlockedTips`; `KNOWN_TIP_IDS` leitet sich aus `TIPS` ab). Hardcore-Chase-Tuning (Nutzer-Wunsch); Tipp-Fokus auf tiefes Wissen + Crossover statt heilig-Masse.
+- [x] **Step 1 Rarität `'heilig'`:** `DuckRarity` erweitert + kanonische `RARITY_ORDER`-Konstante (`types/domain.ts`); `RARITY_DEFS.heilig` (cremeweiß + goldener Halo, `weight 6`, `baseValue 900`); `LOOT_TABLES` heilig-Spalte (Tier 0–2 = 0, Tier 3 = 1 für Alt-Weg, neue Tier-4-Tabelle = 4); `balance` heilig in `speedMulByRarity 1.45`/`catchMulByRarity 0.14`/`shake.byRarity 4.5`/`tokensByRarity [200,300]`; `duckCountByTier`/`rotationSpeedMulByTier` auf Länge 5; Sparkle-Gate (`Game.ts`) + `TIER_ORDER` (`CodexScreen`, aus `RARITY_ORDER` abgeleitet) decken heilig ab.
+- [x] **Step 2 Tier-4-Rute:** `rod-heilig` „Heilige Kirmesrute" (tier 4, Preis 1200, `lineStrength 6`, Top-Stats); Alt-Weg bleibt: Gold-Rute (5) + 1× „Stärkere Schnur" → 6.
+- [x] **Step 3 Wissens-Crossover:** `rewards.crossoverChance 0.12`; `RewardSystem.rollTipTier` wählt per `RARITY_ORDER` ein strikt höheres Tier (Top-Tier heilig → kein Crossover); Tokens bleiben rarität-gebunden (vor `pickTip` berechnet).
+- [x] **Step 4 Tipp-Codex 54 → 100:** 46 neue Karten (common 14, uncommon 16, rare 18, epic 20, legendary 20, heilig 12); fortgeschrittenes Claude/Claude-Code-Wissen, heilig = Geheimwissen; bestehende 54 IDs unverändert.
+- Verifiziert: typecheck/lint grün; `npm test` 19/19; `build` grün. **Faktencheck per Verifikations-Workflow** (6 Agents gegen aktuelle docs.claude.com): 7 Findings → 5 Karten präzisiert (Token-Zählung „geschätzt", Batch „halber Preis", adaptive Thinking, Subagent-Async, Skill-Frontmatter), 2 abgelehnt (Hook-Blocking + Streaming-Timeout sind laut Docs korrekt). **Code-Review (M11-Diff, 10 Angles, xhigh):** 0 Korrektheits-Defekte.
 
 ## M12 — Optik-Overhaul (geplant)
 - [ ] Enten: rundere Geo + echte Augen (Sklera+Pupille) + roter Schnabel; Gummi-Gloss via `onBeforeCompile` (Specular-Hotspot + Fresnel) auf der Toon-Basis (kein envMap).
