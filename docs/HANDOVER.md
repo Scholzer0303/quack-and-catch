@@ -7,7 +7,7 @@
 
 ## Session-Start-Routine (Pflicht)
 ```bash
-git log --oneline -15   # zuletzt: M4.5 Vercel-Deploy (live + Git-Auto-Deploy); davor M5 Tipp-Codex (54 Karten + CodexScreen)
+git log --oneline -15   # zuletzt: M6 Upgrade-Shop (data/rods.ts + Economy Kauf/Equip/Stacking + ShopScreen + Stats wirken, reviewt); davor M5 + M4.5
 git status              # sollte clean sein
 npm install             # falls node_modules fehlt
 ```
