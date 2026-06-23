@@ -124,10 +124,13 @@ Teil 2/3 des Nutzer-Feedback-Pakets. Kein Schema-Bump (neue Rute in `ownedRodIds
 - [x] **Step 4 Tipp-Codex 54 → 100:** 46 neue Karten (common 14, uncommon 16, rare 18, epic 20, legendary 20, heilig 12); fortgeschrittenes Claude/Claude-Code-Wissen, heilig = Geheimwissen; bestehende 54 IDs unverändert.
 - Verifiziert: typecheck/lint grün; `npm test` 19/19; `build` grün. **Faktencheck per Verifikations-Workflow** (6 Agents gegen aktuelle docs.claude.com): 7 Findings → 5 Karten präzisiert (Token-Zählung „geschätzt", Batch „halber Preis", adaptive Thinking, Subagent-Async, Skill-Frontmatter), 2 abgelehnt (Hook-Blocking + Streaming-Timeout sind laut Docs korrekt). **Code-Review (M11-Diff, 10 Angles, xhigh):** 0 Korrektheits-Defekte.
 
-## M12 — Optik-Overhaul (geplant)
-- [ ] Enten: rundere Geo + echte Augen (Sklera+Pupille) + roter Schnabel; Gummi-Gloss via `onBeforeCompile` (Specular-Hotspot + Fresnel) auf der Toon-Basis (kein envMap).
-- [ ] Wasser: Fresnel-Himmel-Reflexion + Crest-Glitzer + sattere Tiefe (`shaders/water.ts`).
-- [ ] Grading: ACESFilmic + Sättigungs-Boost Richtung Subway Surfers; Quality-Guards/reduced-motion respektieren.
+## M12 — Optik-Overhaul ✅ (Teil 3/3 des Feedback-Pakets)
+Toon-Basis bleibt (kein Material-Wechsel → instanceColor/Outline/Bloom unangetastet). Je Sub-Step ein Commit/Push. Kein Schema-Bump.
+- [x] **Step 1 Enten:** rundere/pummeligere Geo + größerer runder Kopf; **echte Augen** (weiße Sklera + dunkle Pupille) + **roter glänzender Schnabel** via neuem **Detail-Mesh** (3. InstancedMesh, teilt instanceMatrix by reference, KEIN instanceColor → über alle Raritäten farbecht); **Gummi-Gloss** via `onBeforeCompile` (weicher Specular-Hotspot + Fresnel-Himmel-Tint) auf der geteilten `MeshToonMaterial` (kein envMap, Cel-Bänder bleiben); Rim-Licht leicht kräftiger.
+- [x] **Step 2 Wasser:** analytische Wellen-Normale (Sinus-Ableitungen) → blickwinkelabhängige Reflexe; **Fresnel-Himmel-Reflexion** (heller am flachen Blickwinkel) + **Crest-Glitzer** (scharfes Sonnen-Specular) mit wanderndem **Caustics-Schimmer**; sattere Tiefenfarbe. Rein im Shader (kein Render-Target → Mobile-sicher).
+- [x] **Step 3 Grading:** **Grade-Pass ersetzt OutputPass** (ACES-Filmic-Tonemapping + Sättigungs-Boost + Linear→sRGB in einem Pass, läuft NACH dem Bloom → Bloom-Threshold in linearem HDR unberührt); Renderer bleibt `NoToneMapping` im Composer-Pfad (kein doppeltes Tonemapping); Quality-Guards (coarse-pointer/postFx) respektiert.
+- Verifiziert: typecheck/lint/build/preview grün; Smoke `ok:true` (0 Konsolenfehler) + `catch_test` `ok:true` (Fang→Reward→Pause, `duckCount 18`/`aliveCount 10`); In-Game-Shots (Gloss, weiße Augen + roter Schnabel rarität-unabhängig, Wasser-Fresnel/Glitzer, ACES-Sättigung) gesichtet.
+- **Code-Review (M12-Diff, 5 Dimensionen adversarisch verifiziert):** 2 echte Findings behoben — (1) MEDIUM: Wasser-Funkeln ohne reduced-motion-Gate → `u_shimmerAmp`=0 bei `prefersReducedMotion()`; (2) LOW: `'off'`-Fallback-ACES divergierte gegen das rohe Wasser-ShaderMaterial → entfernt (rendert wie vor M12). Reduced-motion-Probe: `u_shimmerAmp=0` bestätigt.
 
 ## Offene Reste (optional, nie auf Kosten der Stabilität)
 - [ ] Mehrere Becken/Themes
