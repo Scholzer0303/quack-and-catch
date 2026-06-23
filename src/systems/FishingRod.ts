@@ -3,7 +3,8 @@ import { BALANCE } from '../config/balance';
 import { clamp, lerp, damp } from '../utils/math';
 import type { EventBus } from '../events/EventBus';
 import type { GameEvents } from '../types/events';
-import type { Duck } from '../types/domain';
+import type { Duck, RodStats } from '../types/domain';
+import { findRod, STARTER_ROD_ID } from '../data/rods';
 import { DuckSpawner } from './DuckSpawner';
 import { HookRaycaster } from './HookRaycaster';
 import { buildRod, stretchLine, type RodParts } from '../world/RodBuilder';
@@ -31,7 +32,9 @@ export interface RodView {
  */
 export class FishingRod {
   private readonly raycaster = new HookRaycaster();
-  private readonly lineStrength = BALANCE.hook.baseLineStrength;
+  // Aktive Rod-Stats (M6). Start = Starter-Rute (= bisherige BALANCE.hook-Basiswerte);
+  // Game ruft setStats() bei `rod:statsChanged` (Equip/Upgrade/Laden).
+  private stats: RodStats = { ...findRod(STARTER_ROD_ID)!.stats };
 
   private readonly rod: RodParts;
   /** Schnur + Haken (world-space); Game hängt das in die Szene. */
@@ -78,13 +81,23 @@ export class FishingRod {
   }
 
   private get lowerDur(): number {
-    return BALANCE.hook.lowerDurationMs / 1000;
+    return BALANCE.hook.lowerDurationMs / 1000 / this.stats.castSpeed; // schneller bei höherem castSpeed
   }
   private get reelDur(): number {
-    return BALANCE.hook.reelDurationMs / 1000;
+    return BALANCE.hook.reelDurationMs / 1000 / this.stats.reelSpeed; // schneller bei höherem reelSpeed
   }
   private get cooldownDur(): number {
     return BALANCE.hook.cooldownMs / 1000;
+  }
+
+  /** Effektiver Fang-Radius um W (vor der Raritäts-Skalierung in HookRaycaster). */
+  private get reachRadius(): number {
+    return BALANCE.hook.catchRadius * this.stats.reach;
+  }
+
+  /** Aktive Rod-Stats setzen (Game bei `rod:statsChanged`). */
+  setStats(stats: RodStats): void {
+    this.stats = { ...stats };
   }
 
   setAim(ndcX: number, ndcY: number): void {
@@ -107,7 +120,7 @@ export class FishingRod {
     const armed = this.dip >= BALANCE.hook.armProgress;
     if (armed && this.wValid && this.near && this.near.alive) {
       const duck = this.near;
-      if (RARITY_DEFS[duck.rarity].weight > this.lineStrength) {
+      if (RARITY_DEFS[duck.rarity].weight > this.stats.lineStrength) {
         this.resolveSnap(duck); // zu schwer → reißt ab
         return;
       }
@@ -133,7 +146,9 @@ export class FishingRod {
     const w = this.raycaster.resolveWaterPoint(this.camera, this.aimNdc, BALANCE.basin.waterY);
     this.wValid = w !== null;
     if (w) this.target.copy(w);
-    this.near = this.wValid ? this.raycaster.nearestDuck(this.target, this.ducks.ducks, BALANCE.hook.catchRadius) : null;
+    this.near = this.wValid
+      ? this.raycaster.nearestDuck(this.target, this.ducks.ducks, this.reachRadius, this.stats.magnetRadius)
+      : null;
     this.nearPerfect = false;
     if (this.near) {
       const mul = BALANCE.hook.catchMulByRarity[this.near.rarity] ?? 1;
@@ -193,8 +208,10 @@ export class FishingRod {
     this.highlight.visible = show;
     if (!show) return;
     this.highlight.position.set(this.target.x, BALANCE.basin.waterY + 0.04, this.target.z);
-    // Ring zeigt die effektive Fang-Zone: bei seltenen Enten sichtbar kleiner.
-    const s = this.near ? (BALANCE.hook.catchMulByRarity[this.near.rarity] ?? 1) : 1;
+    // Ring zeigt die effektive Fang-Zone: skaliert mit reach (Rute) und — bei
+    // einer Ziel-Ente — mit ihrer Raritäts-Toleranz (seltener = sichtbar kleiner).
+    const mul = this.near ? (BALANCE.hook.catchMulByRarity[this.near.rarity] ?? 1) : 1;
+    const s = this.stats.reach * mul;
     this.highlight.scale.set(s, s, s);
     const mat = this.highlight.material as THREE.MeshBasicMaterial;
     mat.color.set(this.nearPerfect ? 0xffcf3f : this.near ? 0x5cf2a0 : 0xbfead8);

@@ -99,8 +99,16 @@ export const LOOT_TABLES: ReadonlyArray<ReadonlyArray<[DuckRarity, number]>> = [
   ],
 ];
 
-/** Würfelt eine Rarität gemäß der Loot-Table des Rod-Tiers. */
-export function rollRarity(rng: Rng, tier: number): DuckRarity {
+/**
+ * Würfelt eine Rarität gemäß der Loot-Table des Rod-Tiers.
+ * `luck` > 0 verschiebt die Gewichte selten-wärts (M6): effektives Gewicht =
+ * weight × (1 + luck × luckWeightFactor)^rang (rang: common=0 … legendary=4).
+ * luck = 0 lässt die Tabelle unverändert (rückwärtskompatibel).
+ */
+export function rollRarity(rng: Rng, tier: number, luck = 0): DuckRarity {
   const table = LOOT_TABLES[tier] ?? LOOT_TABLES[0]!;
-  return weightedPick(rng, table);
+  if (luck <= 0) return weightedPick(rng, table);
+  const base = 1 + luck * BALANCE.shop.luckWeightFactor;
+  const scaled: Array<[DuckRarity, number]> = table.map(([r, w], i) => [r, w * Math.pow(base, i)]);
+  return weightedPick(rng, scaled);
 }

@@ -39,8 +39,35 @@ export class HookRaycaster {
   }
 
   /** Nächste lebende Ente in ihrer rarität-abhängigen Fang-Zone (XZ-Abstand) zu W.
-   *  Effektiver Radius = catchRadius × catchMulByRarity[rarity] (seltener = kleiner). */
-  nearestDuck(w: THREE.Vector3, ducks: readonly Duck[], catchRadius: number): Duck | null {
+   *  Effektiver Radius = catchRadius × catchMulByRarity[rarity] (seltener = kleiner).
+   *  Magnet (magnetRadius > 0): zieht W anteilig zur nächsten Ente im Magnet-Radius,
+   *  bevor gefangt wird — assistiert das Zielen (mutiert W = Fang-/Highlight-Punkt). */
+  nearestDuck(
+    w: THREE.Vector3,
+    ducks: readonly Duck[],
+    catchRadius: number,
+    magnetRadius = 0,
+  ): Duck | null {
+    if (magnetRadius > 0) {
+      let mBest: Duck | null = null;
+      let mBestD2 = magnetRadius * magnetRadius;
+      for (const duck of ducks) {
+        if (!duck.alive) continue;
+        const dx = duck.worldX - w.x;
+        const dz = duck.worldZ - w.z;
+        const d2 = dx * dx + dz * dz;
+        if (d2 <= mBestD2) {
+          mBestD2 = d2;
+          mBest = duck;
+        }
+      }
+      if (mBest) {
+        const f = BALANCE.shop.magnetPullFraction;
+        w.x += (mBest.worldX - w.x) * f;
+        w.z += (mBest.worldZ - w.z) * f;
+      }
+    }
+
     const muls = BALANCE.hook.catchMulByRarity;
     let best: Duck | null = null;
     let bestD2 = Infinity;

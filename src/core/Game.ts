@@ -43,8 +43,9 @@ export class Game {
   private readonly save: SaveSystem;
   private readonly ui: UIRoot;
   private readonly busUnsub: Array<() => void> = [];
-  // Phase, in die der Codex beim Schließen zurückkehrt (Quelle: 'start' oder 'summary').
+  // Phase, in die Codex/Shop beim Schließen zurückkehren (Quelle: 'start' oder 'summary').
   private codexReturn: GamePhase = 'start';
+  private shopReturn: GamePhase = 'start';
 
   constructor(container: HTMLElement) {
     this.renderer = new RendererManager();
@@ -111,7 +112,23 @@ export class Game {
         this.state.setPhase('codex');
       },
       onCloseCodex: () => this.state.setPhase(this.codexReturn),
+      // Shop öffnet aus 'start' oder 'summary'; Schließen kehrt reset-frei dorthin zurück.
+      onOpenShop: () => {
+        this.shopReturn = this.state.getPhase();
+        this.state.setPhase('shop');
+      },
+      onCloseShop: () => this.state.setPhase(this.shopReturn),
     });
+
+    // Rod-Stats (M6) in die Engine routen: bei Equip/Upgrade/Laden übernehmen
+    // FishingRod (reach/cast/reel/line/magnet) und DuckSpawner (luck). VOR save.load
+    // abonnieren, damit der hydrate-Emit die geladene Rute sofort anwendet.
+    this.busUnsub.push(
+      this.bus.on('rod:statsChanged', (e) => {
+        this.fishingRod.setStats(e.stats);
+        this.ducks.setLuck(e.stats.luck);
+      }),
+    );
 
     // Persistenz: NACH der UIRoot laden, damit der hydrate-Emit (`economy:changed`)
     // das bereits gebaute HUD erreicht und der geladene Token-Saldo erscheint.

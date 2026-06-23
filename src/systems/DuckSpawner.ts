@@ -27,6 +27,7 @@ export class DuckSpawner {
   private readonly count: number;
   private readonly rng: Rng;
   private readonly tier: number;
+  private luck = 0; // M6: Rod-Glück verschiebt die Respawn-Loot-Table (setLuck)
 
   constructor(rng: Rng, tier = 0) {
     this.rng = rng;
@@ -74,6 +75,11 @@ export class DuckSpawner {
       this.setInstanceColor(i, rarity);
     }
     this.writeMatrices(0);
+  }
+
+  /** Rod-Glück setzen (M6): wirkt auf zukünftige Respawns (Loot-Table-Shift). */
+  setLuck(luck: number): void {
+    this.luck = luck;
   }
 
   /** Setzt die Raritäts-Körperfarbe eines Slots (InstancedMesh.instanceColor). */
@@ -147,7 +153,7 @@ export class DuckSpawner {
     this.reeling.delete(slot);
     duck.trackT = this.rng();
     duck.bobPhase = this.rng() * TWO_PI;
-    duck.rarity = rollRarity(this.rng, this.tier);
+    duck.rarity = rollRarity(this.rng, this.tier, this.luck);
     duck.alive = true;
     this.setInstanceColor(slot, duck.rarity);
   }
