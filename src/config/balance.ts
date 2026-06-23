@@ -316,6 +316,10 @@ export const BALANCE = {
     // Glück: skaliert die Loot-Gewichte selten-wärts. Effektives Gewicht =
     // weight × (1 + luck × luckWeightFactor)^rang (rang: common=0 … legendary=4).
     luckWeightFactor: 1.0,
+    // Preis-Eskalation stapelbarer Upgrades: jede weitere Stufe kostet mehr
+    // (Standard in Aufbau-Spielen). Preis(Stufe n, 0-indiziert) = Basispreis ×
+    // growth^n. Bsp. Schnellrolle (35): 35 → 60 → 102.
+    upgradePriceGrowth: 1.7,
   },
 
   rewards: {

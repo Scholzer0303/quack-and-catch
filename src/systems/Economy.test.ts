@@ -51,12 +51,22 @@ describe('Economy — Kauf-/Ausrüst-Validierung (M6/M9)', () => {
   });
 
   it('respektiert maxStacks beim Upgrade-Kauf', () => {
-    // up-schnur: Preis 30, maxStacks 2
+    // up-schnur: Basispreis 30, maxStacks 2; Preis eskaliert (30 → 51)
     expect(eco.buyUpgrade('up-schnur')).toBe(true);
     expect(eco.buyUpgrade('up-schnur')).toBe(true);
     expect(eco.buyUpgrade('up-schnur')).toBe(false); // maxStacks erreicht
     expect(eco.getStacks('up-schnur')).toBe(2);
-    expect(eco.getTokens()).toBe(40); // 100 - 2×30
+    expect(eco.getTokens()).toBe(19); // 100 - 30 - round(30×1.7)=51
+  });
+
+  it('eskaliert den Upgrade-Preis je gekaufter Stufe (×growth)', () => {
+    const rich = makeEconomy(1000);
+    // up-rolle: Basispreis 35, growth 1.7 → 35 → 60 → 101
+    expect(rich.getUpgradePrice('up-rolle')).toBe(35);
+    rich.buyUpgrade('up-rolle');
+    expect(rich.getUpgradePrice('up-rolle')).toBe(60); // round(35 × 1.7)
+    rich.buyUpgrade('up-rolle');
+    expect(rich.getUpgradePrice('up-rolle')).toBe(101); // round(35 × 1.7²)
   });
 
   it('lehnt unbekannte Upgrades ab', () => {

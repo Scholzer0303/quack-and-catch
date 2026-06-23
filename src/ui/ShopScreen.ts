@@ -153,8 +153,10 @@ export class ShopScreen {
       action.textContent = '✓ Maximal';
       action.disabled = true;
     } else {
-      action.textContent = `Kaufen · 🪙 ${up.price}`;
-      action.disabled = !this.economy.canAfford(up.price);
+      // Eskalierter Preis der nächsten Stufe (steigt mit jeder gekauften Stufe).
+      const price = this.economy.getUpgradePrice(up.id);
+      action.textContent = `Kaufen · 🪙 ${price}`;
+      action.disabled = !this.economy.canAfford(price);
       action.addEventListener('click', () => this.economy.buyUpgrade(up.id));
     }
     card.appendChild(action);

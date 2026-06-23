@@ -63,6 +63,15 @@ export class Economy {
     return this.upgradeStacks.get(upgradeId) ?? 0;
   }
 
+  /** Eskalierter Preis der NÄCHSTEN Stufe = Basispreis × growth^(aktuelle Stacks).
+   *  Stufe 1 kostet den Basispreis, jede weitere mehr (vgl. shop.upgradePriceGrowth). */
+  getUpgradePrice(upgradeId: string): number {
+    const up = findUpgrade(upgradeId);
+    if (!up) return 0;
+    const stacks = this.upgradeStacks.get(upgradeId) ?? 0;
+    return Math.round(up.price * Math.pow(BALANCE.shop.upgradePriceGrowth, stacks));
+  }
+
   canAfford(price: number): boolean {
     return this.tokens >= price;
   }
@@ -91,8 +100,9 @@ export class Economy {
     const up = findUpgrade(upgradeId);
     if (!up) return false;
     const current = this.upgradeStacks.get(upgradeId) ?? 0;
-    if (current >= up.maxStacks || this.tokens < up.price) return false;
-    this.tokens -= up.price;
+    const price = this.getUpgradePrice(upgradeId); // eskaliert mit den Stacks
+    if (current >= up.maxStacks || this.tokens < price) return false;
+    this.tokens -= price;
     this.upgradeStacks.set(upgradeId, current + 1);
     this.emitStatsChanged();
     this.bus.emit('economy:changed', { tokens: this.tokens });
