@@ -67,9 +67,9 @@ export const BALANCE = {
     innerWallDrop: 0.2, // wie weit die Innenwand unter die Wasserlinie reicht
     // Progression: Index = Beckenspeed-Tier (= Rod-Tier). Mehr Enten im Becken
     // (Nutzer-Wunsch „mehr Enten"), gelb dominiert über die Loot-Table.
-    duckCountByTier: [10, 12, 14, 16],
+    duckCountByTier: [10, 12, 14, 16, 18],
     baseRotationSpeed: 0.055, // t/s bei Tier 0 — etwas schneller = Enten als Ziel anspruchsvoller
-    rotationSpeedMulByTier: [1.0, 1.25, 1.5, 1.8],
+    rotationSpeedMulByTier: [1.0, 1.25, 1.5, 1.8, 2.0],
     trackInset: 0.72, // Entenbahn-Radius = Beckenradius × Faktor (innerhalb des Rands)
     duckFloatY: 0.08, // Schwimmhöhe über der Wasserlinie
     laneJitter: 0.18, // radialer Versatz (Welteinheiten)
@@ -173,6 +173,7 @@ export const BALANCE = {
       rare: 1.16,
       epic: 1.24,
       legendary: 1.32,
+      heilig: 1.45, // heilige Ente driftet am schnellsten (Hardcore-Chase)
     } as Record<string, number>,
   },
 
@@ -222,6 +223,7 @@ export const BALANCE = {
       rare: 0.4,
       epic: 0.3,
       legendary: 0.24,
+      heilig: 0.14, // winzigste Fang-Zone — präzisestes Zielen nötig
     } as Record<string, number>,
     basinInset: 0.96, // W aufs Wasser-Oval clampen (knapp innerhalb des Rands)
     perfectTokenBonus: 0.25, // +25 % Tokens bei Perfect
@@ -258,10 +260,14 @@ export const BALANCE = {
     shake: {
       // Mini-Screenshake (additiver, abklingender Kamera-Rotations-Offset, rad).
       catchIntensity: 0.01, // Basis-Impuls bei common
-      byRarity: { common: 1, uncommon: 1.4, rare: 2.0, epic: 2.7, legendary: 3.5 } as Record<
-        string,
-        number
-      >,
+      byRarity: {
+        common: 1,
+        uncommon: 1.4,
+        rare: 2.0,
+        epic: 2.7,
+        legendary: 3.5,
+        heilig: 4.5,
+      } as Record<string, number>,
       perfectBonus: 0.008, // Extra-Punch bei Perfect
       maxIntensity: 0.05, // Deckel (kein Übel-Shake)
       frequency: 38, // Schwing-Frequenz (rad/s) des abklingenden Shakes
@@ -341,6 +347,7 @@ export const BALANCE = {
       rare: [8, 12],
       epic: [20, 30],
       legendary: [60, 90],
+      heilig: [200, 300], // Hardcore-Belohnung für die seltenste Ente
     } as Record<string, [number, number]>,
     firstTimeCodexBonus: 5,
   },

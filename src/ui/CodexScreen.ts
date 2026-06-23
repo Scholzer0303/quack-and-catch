@@ -3,17 +3,13 @@ import { TIPS } from '../data/tips';
 import type { EventBus } from '../events/EventBus';
 import type { Economy } from '../systems/Economy';
 import type { GameEvents } from '../types/events';
-import type { DuckRarity, Tip } from '../types/domain';
+import { RARITY_ORDER, type DuckRarity, type Tip } from '../types/domain';
 import { hex } from '../utils/color';
 
-/** Reihenfolge der Tiers für stabile Sortierung (Basics → Expert). */
-const TIER_ORDER: Record<DuckRarity, number> = {
-  common: 0,
-  uncommon: 1,
-  rare: 2,
-  epic: 3,
-  legendary: 4,
-};
+/** Reihenfolge der Tiers für stabile Sortierung (Basics → Geheimwissen). */
+const TIER_ORDER: Record<DuckRarity, number> = Object.fromEntries(
+  RARITY_ORDER.map((r, i) => [r, i]),
+) as Record<DuckRarity, number>;
 
 /** Kategorien in Erst-Auftritts-Reihenfolge aus TIPS (für die Filter-Chips). */
 const CATEGORIES: readonly string[] = [...new Set(TIPS.map((t) => t.kategorie))];

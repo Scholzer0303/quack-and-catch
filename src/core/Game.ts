@@ -186,7 +186,12 @@ export class Game {
         this.cameraRig.addShake(sh.catchIntensity * mul + (e.perfect ? sh.perfectBonus : 0));
         if (e.perfect) this.reticle.flash();
         // Gold-Funken nur bei den seltensten Fängen (Top-Moment).
-        if (e.duck && (e.duck.rarity === 'epic' || e.duck.rarity === 'legendary')) {
+        if (
+          e.duck &&
+          (e.duck.rarity === 'epic' ||
+            e.duck.rarity === 'legendary' ||
+            e.duck.rarity === 'heilig')
+        ) {
           this.sparkleFx.spawn(p.x, p.z);
         }
         // Zuschauer jubeln bei jedem Fang (hochspringen, klingt ab).

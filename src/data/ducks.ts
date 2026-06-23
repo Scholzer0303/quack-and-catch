@@ -62,6 +62,19 @@ export const RARITY_DEFS: Record<DuckRarity, RarityDef> = {
     emissiveIntensity: 0.9,
     hasGlint: true,
   },
+  // Heilige Ente (M11): die seltenste Stufe. Cremeweißer Körper mit goldenem Halo
+  // (emissive Gold, höchste Intensität → hellstes Bloom-Glow). weight 6 ⇒ nur mit
+  // lineStrength ≥ 6 fangbar (Tier-4-Rute oder Gold-Rute + „Stärkere Schnur").
+  heilig: {
+    rarity: 'heilig',
+    baseValue: 900,
+    weight: 6,
+    bodyColor: 0xfff6e0,
+    accentColor: BALANCE.duck.beakColor,
+    emissive: 0xffd24a,
+    emissiveIntensity: 1.3,
+    hasGlint: true,
+  },
 };
 
 /**
@@ -75,6 +88,7 @@ export const LOOT_TABLES: ReadonlyArray<ReadonlyArray<[DuckRarity, number]>> = [
     ['rare', 6],
     ['epic', 1],
     ['legendary', 0],
+    ['heilig', 0],
   ],
   [
     ['common', 55],
@@ -82,6 +96,7 @@ export const LOOT_TABLES: ReadonlyArray<ReadonlyArray<[DuckRarity, number]>> = [
     ['rare', 12],
     ['epic', 4],
     ['legendary', 1],
+    ['heilig', 0],
   ],
   [
     ['common', 42],
@@ -89,6 +104,7 @@ export const LOOT_TABLES: ReadonlyArray<ReadonlyArray<[DuckRarity, number]>> = [
     ['rare', 18],
     ['epic', 8],
     ['legendary', 2],
+    ['heilig', 0],
   ],
   [
     ['common', 30],
@@ -96,6 +112,18 @@ export const LOOT_TABLES: ReadonlyArray<ReadonlyArray<[DuckRarity, number]>> = [
     ['rare', 23],
     ['epic', 13],
     ['legendary', 4],
+    // heilig schon bei Tier 3 minimal vertreten → Alt-Weg (Gold-Rute + „Stärkere
+    // Schnur" auf lineStrength 6) kann die heilige Ente überhaupt antreffen+landen.
+    ['heilig', 1],
+  ],
+  // Tier 4 (Heilige Kirmesrute): heilig spürbar (aber weiterhin selten) vertreten.
+  [
+    ['common', 22],
+    ['uncommon', 26],
+    ['rare', 24],
+    ['epic', 16],
+    ['legendary', 8],
+    ['heilig', 4],
   ],
 ];
 

@@ -1,6 +1,20 @@
 // Domänen-Typen: stabile Verträge für Enten, Angeln, Upgrades und Tipp-Karten.
 
-export type DuckRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+export type DuckRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | 'heilig';
+
+/**
+ * Kanonische Rang-Reihenfolge der Raritäten (Basics → Geheimwissen). Single Source
+ * für jede ordnungsabhängige Logik (Codex-Sortierung, Wissens-Crossover). Der Index
+ * ist zugleich der „Rang" (common=0 … heilig=5).
+ */
+export const RARITY_ORDER: readonly DuckRarity[] = [
+  'common',
+  'uncommon',
+  'rare',
+  'epic',
+  'legendary',
+  'heilig',
+];
 
 /** Tipp-Stufen entsprechen 1:1 den Raritäten (gemeinsame visuelle Sprache). */
 export type TipTier = DuckRarity;
