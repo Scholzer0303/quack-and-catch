@@ -491,7 +491,182 @@
   .qc-intro-figure,
   .qc-intro-prop,
   .qc-intro-speech,
-  .qc-overlay {
+  .qc-overlay,
+  .qc-codex-overlay,
+  .qc-codex-card {
     animation: none;
   }
+}
+
+/* ---------- Sekundär-Button (Ghost) ---------- */
+.qc-btn-ghost {
+  color: var(--qc-text);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 207, 63, 0.4);
+  box-shadow: none;
+  font-size: 0.95rem;
+  padding: 0.55rem 1.2rem;
+}
+.qc-btn-ghost:hover {
+  filter: none;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* ---------- Tipp-Codex (Phase `codex`) ---------- */
+.qc-codex-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: auto;
+  overflow-y: auto;
+  padding: 1.5rem;
+  /* Nahezu deckend, damit die 3D-Szene (Rute/Becken) nicht durchscheint. */
+  background:
+    radial-gradient(circle at 50% 18%, rgba(40, 110, 165, 0.28), transparent 70%),
+    rgba(7, 24, 40, 0.97);
+  animation: qc-fade-in 0.25s ease-out;
+}
+.qc-codex-overlay[hidden] {
+  display: none;
+}
+.qc-codex {
+  width: min(60rem, 100%);
+  margin: 0 auto;
+}
+.qc-codex-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+  margin-bottom: 1rem;
+}
+.qc-codex-head .qc-title {
+  margin: 0;
+}
+.qc-codex-progress {
+  color: var(--qc-muted);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+.qc-codex-head .qc-btn-ghost {
+  margin-left: auto;
+}
+
+/* Kategorie-Filter-Chips */
+.qc-codex-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1.2rem;
+}
+.qc-chip {
+  pointer-events: auto;
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--qc-text);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 1rem;
+  padding: 0.28rem 0.7rem;
+  transition: background 0.15s ease;
+}
+.qc-chip:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+.qc-chip.is-active {
+  color: var(--qc-bg);
+  background: var(--qc-gold);
+  border-color: var(--qc-gold);
+}
+.qc-chip.is-static {
+  cursor: default;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* Grid */
+.qc-codex-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: 0.7rem;
+  padding-bottom: 1.5rem;
+}
+.qc-codex-card {
+  --qc-accent: var(--qc-gold);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+  padding: 0.9rem 0.7rem;
+  border-radius: 0.9rem;
+  background: var(--qc-panel);
+  border: 1px solid color-mix(in srgb, var(--qc-accent) 45%, transparent);
+  box-shadow: 0 0.5rem 1.2rem rgba(0, 0, 0, 0.3);
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.15s ease;
+}
+.qc-codex-card[data-locked='false'] {
+  cursor: pointer;
+}
+.qc-codex-card[data-locked='false']:hover,
+.qc-codex-card[data-locked='false']:focus-visible {
+  transform: translateY(-3px);
+  box-shadow:
+    0 0.7rem 1.6rem rgba(0, 0, 0, 0.4),
+    0 0 0.9rem color-mix(in srgb, var(--qc-accent) 35%, transparent);
+  outline: none;
+}
+.qc-codex-card[data-locked='true'] {
+  opacity: 0.55;
+  filter: saturate(0.5);
+  border-style: dashed;
+}
+.qc-codex-medal {
+  width: 3rem;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  line-height: 1;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--qc-accent) 14%, rgba(0, 0, 0, 0.25));
+  border: 2px solid color-mix(in srgb, var(--qc-accent) 55%, transparent);
+}
+.qc-codex-card-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--qc-text);
+}
+.qc-codex-locked {
+  color: var(--qc-muted);
+  font-weight: 500;
+  font-size: 0.72rem;
+}
+
+/* Detail-Ansicht (eine freigeschaltete Karte groß) */
+.qc-codex-detail {
+  --qc-accent: var(--qc-gold);
+  width: min(30rem, 100%);
+  margin: 2rem auto 0;
+  text-align: center;
+  padding: 1.6rem;
+  border-radius: 1.2rem;
+  background: var(--qc-panel);
+  border: 1px solid color-mix(in srgb, var(--qc-accent) 50%, transparent);
+  box-shadow: 0 1.2rem 2.6rem rgba(0, 0, 0, 0.45);
+}
+.qc-codex-detail-chips {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.qc-codex-detail .qc-card-text {
+  margin: 0.6rem 0 1.2rem;
 }

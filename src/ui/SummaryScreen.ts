@@ -14,7 +14,12 @@ export class SummaryScreen {
   private readonly collected: Tip[] = [];
   private readonly unsub: Array<() => void> = [];
 
-  constructor(parent: HTMLElement, bus: EventBus<GameEvents>, onRestart: () => void) {
+  constructor(
+    parent: HTMLElement,
+    bus: EventBus<GameEvents>,
+    onRestart: () => void,
+    private readonly onOpenCodex?: () => void,
+  ) {
     this.overlay = document.createElement('div');
     this.overlay.className = 'qc-overlay';
     this.overlay.hidden = true;
@@ -79,6 +84,15 @@ export class SummaryScreen {
     btn.textContent = 'Nochmal spielen';
     btn.addEventListener('click', onRestart);
     nodes.push(btn);
+
+    if (this.onOpenCodex) {
+      const codex = document.createElement('button');
+      codex.className = 'qc-btn qc-btn-ghost';
+      codex.type = 'button';
+      codex.textContent = '📖 Tipp-Codex';
+      codex.addEventListener('click', this.onOpenCodex);
+      nodes.push(codex);
+    }
 
     this.screen.replaceChildren(...nodes);
   }

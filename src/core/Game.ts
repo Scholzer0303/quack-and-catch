@@ -4,7 +4,7 @@ import { CameraRig } from './CameraRig';
 import { GameLoop } from './GameLoop';
 import { Postprocessing } from './postprocessing/Postprocessing';
 import { EventBus } from '../events/EventBus';
-import type { GameEvents } from '../types/events';
+import type { GameEvents, GamePhase } from '../types/events';
 import { buildStall, type StallParts } from '../world/StallBuilder';
 import { BasinBuilder } from '../world/BasinBuilder';
 import { DuckSpawner } from '../systems/DuckSpawner';
@@ -43,6 +43,8 @@ export class Game {
   private readonly save: SaveSystem;
   private readonly ui: UIRoot;
   private readonly busUnsub: Array<() => void> = [];
+  // Phase, in die der Codex beim Schließen zurückkehrt (Quelle: 'start' oder 'summary').
+  private codexReturn: GamePhase = 'start';
 
   constructor(container: HTMLElement) {
     this.renderer = new RendererManager();
@@ -99,10 +101,16 @@ export class Game {
     this.state = new GameStateMachine(this.bus);
     this.economy = new Economy(this.bus);
     this.reward = new RewardSystem(this.bus, this.economy, mulberry32(0x5eed01));
-    this.ui = new UIRoot(this.bus, {
+    this.ui = new UIRoot(this.bus, this.economy, {
       onStart: () => this.state.start(),
       onRestart: () => this.state.restart(),
       onResume: () => this.state.setPhase('playing'),
+      // Codex öffnet aus 'start' oder 'summary'; Schließen kehrt reset-frei dorthin zurück.
+      onOpenCodex: () => {
+        this.codexReturn = this.state.getPhase();
+        this.state.setPhase('codex');
+      },
+      onCloseCodex: () => this.state.setPhase(this.codexReturn),
     });
 
     // Persistenz: NACH der UIRoot laden, damit der hydrate-Emit (`economy:changed`)

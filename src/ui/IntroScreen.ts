@@ -65,6 +65,7 @@ export class IntroScreen {
   constructor(
     parent: HTMLElement,
     private readonly onStart: () => void,
+    private readonly onOpenCodex?: () => void,
   ) {
     this.overlay = document.createElement('div');
     this.overlay.className = 'qc-overlay';
@@ -105,6 +106,14 @@ export class IntroScreen {
     btn.type = 'button';
     btn.addEventListener('click', () => this.advance());
     nodes.push(btn);
+
+    // Letzter Schritt: optionaler Einstieg in den Tipp-Codex (vor dem Spiel stöbern).
+    if (this.onOpenCodex && this.step === STEPS.length - 1) {
+      const codex = el('button', 'qc-btn qc-btn-ghost', '📖 Tipp-Codex');
+      codex.type = 'button';
+      codex.addEventListener('click', () => this.onOpenCodex!());
+      nodes.push(codex);
+    }
 
     this.card.replaceChildren(...nodes);
   }
