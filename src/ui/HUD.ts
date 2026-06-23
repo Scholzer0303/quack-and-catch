@@ -47,6 +47,7 @@ export class HUD {
   private readonly bar: HTMLDivElement;
   private readonly rod: HTMLDivElement;
   private readonly combo: HTMLDivElement;
+  private readonly pauseBtn: HTMLButtonElement;
   private readonly scoreEl: HTMLSpanElement;
   private readonly timerEl: HTMLSpanElement;
   private readonly tokensEl: HTMLSpanElement;
@@ -62,6 +63,7 @@ export class HUD {
     parent: HTMLElement,
     bus: EventBus<GameEvents>,
     private readonly economy: Economy,
+    onPause: () => void,
   ) {
     this.bar = document.createElement('div');
     this.bar.className = 'qc-hud';
@@ -80,7 +82,17 @@ export class HUD {
     this.combo.setAttribute('aria-live', 'polite');
     this.combo.style.display = 'none';
 
-    parent.append(this.bar, this.rod, this.combo);
+    // Pause-Button oben links (Subway-Surfers-Position, touch-tauglich). Sichtbarkeit
+    // steuert UIRoot (nur in `playing`). pointer-events aktiviert die CSS-Klasse.
+    this.pauseBtn = document.createElement('button');
+    this.pauseBtn.className = 'qc-pause-btn';
+    this.pauseBtn.type = 'button';
+    this.pauseBtn.textContent = '⏸';
+    this.pauseBtn.setAttribute('aria-label', 'Pause');
+    this.pauseBtn.style.display = 'none';
+    this.pauseBtn.addEventListener('click', onPause);
+
+    parent.append(this.bar, this.rod, this.combo, this.pauseBtn);
 
     // Sinnvolle Startwerte, bevor das erste Event kommt.
     this.scoreEl.textContent = '0';
@@ -173,11 +185,17 @@ export class HUD {
     if (!visible) this.combo.style.display = 'none';
   }
 
+  /** Pause-Button getrennt schalten (nur in `playing`, nicht im Tipp-Modal). */
+  setPauseButtonVisible(visible: boolean): void {
+    this.pauseBtn.style.display = visible ? '' : 'none';
+  }
+
   dispose(): void {
     for (const off of this.unsub) off();
     this.unsub.length = 0;
     this.bar.remove();
     this.rod.remove();
     this.combo.remove();
+    this.pauseBtn.remove();
   }
 }

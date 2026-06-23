@@ -4,6 +4,11 @@ import type { GameEvents, GamePhase } from '../types/events';
 
 const TICK_INTERVAL = BALANCE.ui.hudThrottleMs / 1000; // s zwischen round:tick-Emits
 
+/** Beide Pausen behalten Timer/Score beim Zurück nach `playing` (kein Reset). */
+function isPauseState(phase: GamePhase): boolean {
+  return phase === 'paused' || phase === 'pausemenu';
+}
+
 /**
  * Phasen + Rundenlebenszyklus (Timer + Score) — bewusst eine gekoppelte Einheit:
  * Score/Timer werden beim Eintritt in `playing` zurückgesetzt, der Timer treibt
@@ -55,9 +60,21 @@ export class GameStateMachine {
     if (to === this.phase) return;
     const from = this.phase;
     this.phase = to;
-    // Reset nur bei einer FRISCHEN Runde — Resume aus der Pause behält Timer/Score.
-    if (to === 'playing' && from !== 'paused') this.reset();
+    // Reset nur bei einer FRISCHEN Runde — Resume aus einer Pause (Tipp-Modal ODER
+    // Pause-Menü) behält Timer/Score.
+    if (to === 'playing' && !isPauseState(from)) this.reset();
     this.bus.emit('phase:changed', { from, to });
+  }
+
+  /**
+   * Runde aktiv beenden (Pause-Menü „Ende"): wertet wie ein Timer-Ablauf —
+   * Schluss-Tick, `round:ended` (HighscoreSystem) und Wechsel in die Summary.
+   */
+  endRound(): void {
+    this.timeRemaining = 0;
+    this.bus.emit('round:tick', { timeRemaining: 0, score: this.score });
+    this.bus.emit('round:ended', { score: this.score });
+    this.setPhase('summary');
   }
 
   private reset(): void {

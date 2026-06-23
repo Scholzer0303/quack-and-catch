@@ -146,6 +146,12 @@ export class Game {
         this.state.setPhase('shop');
       },
       onCloseShop: () => this.state.setPhase(this.shopReturn),
+      // Pause-Menü: Button/ESC im Spiel öffnen; „Weiter" (onResume) → playing,
+      // „Ende" beendet die Runde zur Zusammenfassung.
+      onPause: () => {
+        if (this.state.isPlaying()) this.state.setPhase('pausemenu');
+      },
+      onEndRound: () => this.state.endRound(),
     });
 
     // Rod-Stats (M6) in die Engine routen: bei Equip/Upgrade/Laden übernehmen
@@ -220,6 +226,7 @@ export class Game {
     });
 
     window.addEventListener('resize', this.onResize);
+    window.addEventListener('keydown', this.onKeyDown);
     canvas.addEventListener('webglcontextlost', this.onContextLost);
     canvas.addEventListener('webglcontextrestored', this.onContextRestored);
     document.addEventListener('visibilitychange', this.onVisibility);
@@ -255,8 +262,10 @@ export class Game {
   private update(dt: number, elapsed: number): void {
     this.cameraRig.update(dt); // Aim anwenden, bevor geraycastet/gerendert wird
     this.state.update(dt); // Rundentimer (zählt nur in 'playing')
-    // Becken/Enten nur im Tipp-Modal einfrieren — hinter Start/Summary leben sie.
-    if (this.state.getPhase() !== 'paused') {
+    // Becken/Enten in beiden Pausen einfrieren (Tipp-Modal + Pause-Menü) — hinter
+    // Start/Summary/Shop/Codex leben sie weiter (Deko).
+    const phase = this.state.getPhase();
+    if (phase !== 'paused' && phase !== 'pausemenu') {
       this.basin.update(elapsed);
       this.ducks.update(dt, elapsed); // schreibt frische worldX/Y/Z vor dem Raycast
       this.duckGlow?.update(); // Glow-Halos den Enten nachführen
@@ -280,6 +289,15 @@ export class Game {
     this.post?.setSize(window.innerWidth, window.innerHeight);
   };
 
+  // ESC schaltet die Spieler-Pause um: playing → pausemenu, pausemenu → playing.
+  // Andere Phasen (Shop/Codex/paused) bleiben unberührt — die haben eigene Handler.
+  private readonly onKeyDown = (e: KeyboardEvent): void => {
+    if (e.key !== 'Escape') return;
+    const p = this.state.getPhase();
+    if (p === 'playing') this.state.setPhase('pausemenu');
+    else if (p === 'pausemenu') this.state.setPhase('playing');
+  };
+
   // GPU-Kontextverlust (v. a. Mobile): Render-Loop anhalten und bei
   // Wiederherstellung fortsetzen — kein Softlock, keine Fehler-Flut.
   private readonly onContextLost = (event: Event): void => {
@@ -301,6 +319,7 @@ export class Game {
     this.loop.stop();
     const canvas = this.renderer.domElement;
     window.removeEventListener('resize', this.onResize);
+    window.removeEventListener('keydown', this.onKeyDown);
     canvas.removeEventListener('webglcontextlost', this.onContextLost);
     canvas.removeEventListener('webglcontextrestored', this.onContextRestored);
     document.removeEventListener('visibilitychange', this.onVisibility);

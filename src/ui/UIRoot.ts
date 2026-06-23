@@ -1,6 +1,7 @@
 import './styles.css';
 import { HUD } from './HUD';
 import { IntroScreen } from './IntroScreen';
+import { PauseScreen } from './PauseScreen';
 import { SummaryScreen } from './SummaryScreen';
 import { CardReveal } from './CardReveal';
 import { CodexScreen } from './CodexScreen';
@@ -19,6 +20,8 @@ export interface UICallbacks {
   onCloseCodex: () => void; // Codex schließen → zurück zur Quelle
   onOpenShop: () => void; // Shop öffnen (aus Intro/Summary)
   onCloseShop: () => void; // Shop schließen → zurück zur Quelle
+  onPause: () => void; // Pause-Button (HUD) → Pause-Menü öffnen
+  onEndRound: () => void; // „Runde beenden" im Pause-Menü → Summary
 }
 
 /**
@@ -30,6 +33,7 @@ export class UIRoot {
   private readonly root: HTMLDivElement;
   private readonly hud: HUD;
   private readonly introScreen: IntroScreen;
+  private readonly pauseScreen: PauseScreen;
   private readonly summaryScreen: SummaryScreen;
   private readonly cardReveal: CardReveal;
   private readonly codexScreen: CodexScreen;
@@ -43,12 +47,21 @@ export class UIRoot {
     this.root.className = 'qc-ui';
     document.body.appendChild(this.root);
 
-    this.hud = new HUD(this.root, bus, economy);
+    this.hud = new HUD(this.root, bus, economy, callbacks.onPause);
     this.introScreen = new IntroScreen(
       this.root,
       callbacks.onStart,
       callbacks.onOpenCodex,
       callbacks.onOpenShop,
+    );
+    // Pause-Menü: „Weiter" teilt sich onResume mit dem Tipp-Modal (beide → playing,
+    // kein Reset). Shop/Codex kehren reset-frei in die Pause zurück.
+    this.pauseScreen = new PauseScreen(
+      this.root,
+      callbacks.onResume,
+      callbacks.onEndRound,
+      callbacks.onOpenShop,
+      callbacks.onOpenCodex,
     );
     this.summaryScreen = new SummaryScreen(
       this.root,
@@ -66,7 +79,9 @@ export class UIRoot {
 
     // Boot-Zustand ist 'start' (kein phase:changed beim Boot) → initial setzen.
     this.hud.setVisible(false);
+    this.hud.setPauseButtonVisible(false);
     this.introScreen.setVisible(true);
+    this.pauseScreen.setVisible(false);
     this.summaryScreen.setVisible(false);
     this.codexScreen.setVisible(false);
     this.shopScreen.setVisible(false);
@@ -88,11 +103,14 @@ export class UIRoot {
 
   private onPhase(to: GamePhase): void {
     this.introScreen.setVisible(to === 'start');
+    this.pauseScreen.setVisible(to === 'pausemenu');
     this.summaryScreen.setVisible(to === 'summary');
     this.codexScreen.setVisible(to === 'codex');
     this.shopScreen.setVisible(to === 'shop');
-    // HUD bleibt während der Pause (Tipp-Modal) sichtbar.
+    // HUD bleibt während der Pause (Tipp-Modal) sichtbar; das Pause-Menü deckt es ab.
     this.hud.setVisible(to === 'playing' || to === 'paused');
+    // Pause-Button nur im laufenden Spiel (nicht im Tipp-Modal/Menü/Screens).
+    this.hud.setPauseButtonVisible(to === 'playing');
   }
 
   dispose(): void {
@@ -104,6 +122,7 @@ export class UIRoot {
     this.codexScreen.dispose();
     this.cardReveal.dispose();
     this.summaryScreen.dispose();
+    this.pauseScreen.dispose();
     this.introScreen.dispose();
     this.hud.dispose();
     this.root.remove();

@@ -2,7 +2,16 @@
 
 import type { Duck, DuckRarity, RodStats, Tip } from './domain';
 
-export type GamePhase = 'start' | 'playing' | 'summary' | 'shop' | 'codex' | 'paused';
+// `paused` = Belohnungs-Modal (Tipp-Karte friert die Runde ein), `pausemenu` =
+// vom Spieler ausgelöste Pause (Pause-Button/ESC) mit „Weiter"/„Ende".
+export type GamePhase =
+  | 'start'
+  | 'playing'
+  | 'summary'
+  | 'shop'
+  | 'codex'
+  | 'paused'
+  | 'pausemenu';
 
 export type GameEvents = {
   'phase:changed': { from: GamePhase; to: GamePhase };
