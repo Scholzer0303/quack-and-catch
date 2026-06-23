@@ -19,6 +19,7 @@ export class SummaryScreen {
     bus: EventBus<GameEvents>,
     onRestart: () => void,
     private readonly onOpenCodex?: () => void,
+    private readonly onOpenShop?: () => void,
   ) {
     this.overlay = document.createElement('div');
     this.overlay.className = 'qc-overlay';
@@ -84,6 +85,15 @@ export class SummaryScreen {
     btn.textContent = 'Nochmal spielen';
     btn.addEventListener('click', onRestart);
     nodes.push(btn);
+
+    if (this.onOpenShop) {
+      const shop = document.createElement('button');
+      shop.className = 'qc-btn qc-btn-ghost';
+      shop.type = 'button';
+      shop.textContent = '🎣 Angel-Shop';
+      shop.addEventListener('click', this.onOpenShop);
+      nodes.push(shop);
+    }
 
     if (this.onOpenCodex) {
       const codex = document.createElement('button');

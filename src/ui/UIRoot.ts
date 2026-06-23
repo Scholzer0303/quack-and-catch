@@ -4,6 +4,7 @@ import { IntroScreen } from './IntroScreen';
 import { SummaryScreen } from './SummaryScreen';
 import { CardReveal } from './CardReveal';
 import { CodexScreen } from './CodexScreen';
+import { ShopScreen } from './ShopScreen';
 import type { EventBus } from '../events/EventBus';
 import type { Economy } from '../systems/Economy';
 import type { GameEvents, GamePhase } from '../types/events';
@@ -14,6 +15,8 @@ export interface UICallbacks {
   onResume: () => void; // „Weiter" im Tipp-Modal → Runde fortsetzen (aus paused)
   onOpenCodex: () => void; // Codex öffnen (aus Intro/Summary)
   onCloseCodex: () => void; // Codex schließen → zurück zur Quelle
+  onOpenShop: () => void; // Shop öffnen (aus Intro/Summary)
+  onCloseShop: () => void; // Shop schließen → zurück zur Quelle
 }
 
 /**
@@ -28,6 +31,7 @@ export class UIRoot {
   private readonly summaryScreen: SummaryScreen;
   private readonly cardReveal: CardReveal;
   private readonly codexScreen: CodexScreen;
+  private readonly shopScreen: ShopScreen;
   private readonly unsub: Array<() => void> = [];
 
   constructor(bus: EventBus<GameEvents>, economy: Economy, callbacks: UICallbacks) {
@@ -36,16 +40,29 @@ export class UIRoot {
     document.body.appendChild(this.root);
 
     this.hud = new HUD(this.root, bus);
-    this.introScreen = new IntroScreen(this.root, callbacks.onStart, callbacks.onOpenCodex);
-    this.summaryScreen = new SummaryScreen(this.root, bus, callbacks.onRestart, callbacks.onOpenCodex);
+    this.introScreen = new IntroScreen(
+      this.root,
+      callbacks.onStart,
+      callbacks.onOpenCodex,
+      callbacks.onOpenShop,
+    );
+    this.summaryScreen = new SummaryScreen(
+      this.root,
+      bus,
+      callbacks.onRestart,
+      callbacks.onOpenCodex,
+      callbacks.onOpenShop,
+    );
     this.cardReveal = new CardReveal(this.root, bus, callbacks.onResume);
     this.codexScreen = new CodexScreen(this.root, bus, economy, callbacks.onCloseCodex);
+    this.shopScreen = new ShopScreen(this.root, bus, economy, callbacks.onCloseShop);
 
     // Boot-Zustand ist 'start' (kein phase:changed beim Boot) → initial setzen.
     this.hud.setVisible(false);
     this.introScreen.setVisible(true);
     this.summaryScreen.setVisible(false);
     this.codexScreen.setVisible(false);
+    this.shopScreen.setVisible(false);
 
     this.unsub.push(bus.on('phase:changed', (e) => this.onPhase(e.to)));
   }
@@ -59,6 +76,7 @@ export class UIRoot {
     this.introScreen.setVisible(to === 'start');
     this.summaryScreen.setVisible(to === 'summary');
     this.codexScreen.setVisible(to === 'codex');
+    this.shopScreen.setVisible(to === 'shop');
     // HUD bleibt während der Pause (Tipp-Modal) sichtbar.
     this.hud.setVisible(to === 'playing' || to === 'paused');
   }
@@ -66,6 +84,7 @@ export class UIRoot {
   dispose(): void {
     for (const off of this.unsub) off();
     this.unsub.length = 0;
+    this.shopScreen.dispose();
     this.codexScreen.dispose();
     this.cardReveal.dispose();
     this.summaryScreen.dispose();

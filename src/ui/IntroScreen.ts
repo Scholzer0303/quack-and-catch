@@ -66,6 +66,7 @@ export class IntroScreen {
     parent: HTMLElement,
     private readonly onStart: () => void,
     private readonly onOpenCodex?: () => void,
+    private readonly onOpenShop?: () => void,
   ) {
     this.overlay = document.createElement('div');
     this.overlay.className = 'qc-overlay';
@@ -107,12 +108,20 @@ export class IntroScreen {
     btn.addEventListener('click', () => this.advance());
     nodes.push(btn);
 
-    // Letzter Schritt: optionaler Einstieg in den Tipp-Codex (vor dem Spiel stöbern).
-    if (this.onOpenCodex && this.step === STEPS.length - 1) {
-      const codex = el('button', 'qc-btn qc-btn-ghost', '📖 Tipp-Codex');
-      codex.type = 'button';
-      codex.addEventListener('click', () => this.onOpenCodex!());
-      nodes.push(codex);
+    // Letzter Schritt: optionaler Einstieg in Tipp-Codex + Shop (vor dem Spiel stöbern).
+    if (this.step === STEPS.length - 1) {
+      if (this.onOpenCodex) {
+        const codex = el('button', 'qc-btn qc-btn-ghost', '📖 Tipp-Codex');
+        codex.type = 'button';
+        codex.addEventListener('click', () => this.onOpenCodex!());
+        nodes.push(codex);
+      }
+      if (this.onOpenShop) {
+        const shop = el('button', 'qc-btn qc-btn-ghost', '🎣 Angel-Shop');
+        shop.type = 'button';
+        shop.addEventListener('click', () => this.onOpenShop!());
+        nodes.push(shop);
+      }
     }
 
     this.card.replaceChildren(...nodes);

@@ -12,6 +12,7 @@ npm-debug.log*
 # Smoke-/Optik-Test-Artefakte (Screenshots)
 smoke_screenshot.png
 ingame_screenshot.png
+shop_screenshot.png
 
 # Claude Code (lokale Session-Artefakte)
 .claude/
