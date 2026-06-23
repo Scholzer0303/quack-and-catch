@@ -10,9 +10,7 @@ dist-ssr/
 npm-debug.log*
 
 # Smoke-/Optik-Test-Artefakte (Screenshots)
-smoke_screenshot.png
-ingame_screenshot.png
-shop_screenshot.png
+*_screenshot.png
 
 # Claude Code (lokale Session-Artefakte)
 .claude/
@@ -29,5 +27,5 @@ shop_screenshot.png
 *.sln
 Thumbs.db
 
+# Vercel
 .vercel
-live_screenshot.png

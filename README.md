@@ -4,7 +4,7 @@
 
 **▶️ Live spielen: https://quack-and-catch.vercel.app**
 
-**Status:** 🚧 In Entwicklung (Wettbewerbsbeitrag Coding-Challenge). Spielbarer Kern steht: 3D-Szene, Timing-Fang, Belohnungen, HUD/Screens, **persistenter Fortschritt** und **Tipp-Codex** (54 Karten). Live auf Vercel deployt.
+**Status:** 🚧 In Entwicklung (Wettbewerbsbeitrag Coding-Challenge). Spielbarer Kern steht: 3D-Szene, Timing-Fang, Belohnungen, HUD/Screens, **persistenter Fortschritt** und **Tipp-Codex** (100 Karten). Live auf Vercel deployt.
 
 ## Konzept in einem Satz
 Du stehst in Ego-Perspektive an einem Stand, hakst vorbeitreibende Gummienten im richtigen Moment, und je seltener die Ente, desto wertvoller der Claude-Tipp + Tokens — mit denen du im Shop bessere Angeln kaufst, um an die legendären Enten zu kommen.
@@ -19,7 +19,7 @@ Der Spannungsbogen: erste Fänge → erste seltene Ente → Shop → bessere Ang
 ## Features
 - **Echtes 3D-First-Person** — Three.js-Szene, Kamera-Aim im Cone, Angel als Hand-Feel im Vordergrund.
 - **Skill-basierte Hak-Mechanik** — Halten zum Auswerfen, Loslassen im Timing-Window; zentrales **Perfect**-Sub-Window für +25 % Tokens.
-- **Raritäten & Loot-Tables** — fünf Stufen (Common → Legendary), per-Instanz eingefärbt, loot-table-getrieben.
+- **Raritäten & Loot-Tables** — sechs Stufen (gewöhnlich bis heilige Ente), per-Instanz eingefärbt, loot-table-getrieben.
 - **Tipp-Codex** — faktisch korrekte, deutsche Lern-Tipps zu Claude & Claude Code, gestuft nach Schwierigkeit.
 - **Token-Economy** — Belohnung je Rarität (+Erstfreischalt-Bonus), HUD-Anzeige in Echtzeit.
 - **Persistenter Fortschritt** — Tokens + freigeschaltete Tipps in `localStorage`: **versioniert** (`schemaVersion`), **debounced** und **korruptionssicher** (defekte Daten fallen sauber auf Default zurück, kein Crash).
@@ -53,7 +53,7 @@ npm run preview  # gebauten Build lokal testen
 Mehr Details im Game-Design-Doc: [`docs/DESIGN.md`](docs/DESIGN.md).
 
 ## Live-Demo
-_(folgt — M4.5)_
+**▶️ https://quack-and-catch.vercel.app** — direkt im Browser spielbar, Desktop & Mobile.
 
 ## Projektstruktur & Fortschritt
 Planung und Stand werden laufend gepflegt:
