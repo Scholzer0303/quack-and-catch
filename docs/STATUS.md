@@ -3,8 +3,8 @@
 > Schnellüberblick für den Session-Start. Wird nach jedem Meilenstein aktualisiert.
 
 **Stand:** 2026-06-23
-**Aktueller Meilenstein:** **M8 (Juice + Audio) ✅ — fertig & gepusht.** Das Spiel klingt jetzt: neuer **`systems/AudioManager`** (prozeduraler WebAudio-Synth, Chiptune; cast/hook/perfect/reel/reward/fail + roundEnd + lowTick; Lazy-Unlock bei erster Geste → `audio:unlocked`). Persistenter **🔊-Mute-Button** (`ui/MuteButton`, oben rechts, alle Phasen) über das neue Event **`audio:muteChanged`** (Single Source of Truth: Button emittiert → AudioManager mutet Master-Gain → SaveSystem persistiert; `save.muted` greift). Rest-Juice komplett: **Legendary-Sparkle** (`fx/SparkleFx`, Gold-Burst bei epic/legendary, additiv → Bloom) + **Mobile-Haptik** (`fx/haptics`, `navigator.vibrate`, gated). reduced-motion respektiert (Sparkle/Haptik aus, Audio bleibt). **Davor: M7 (Progression) ✅ + M6 (Shop) ✅ + M5 (Codex) ✅ + M4.5 (Live-Deploy) ✅. Nächster Schritt: M9 — Stretch (nur bei Zeit).**
-**Letzter Build:** grün (typecheck/lint/build ✓); Smoke `ok:true` (0 Konsolenfehler; intermittentes swiftshader-MeshBasic-Rauschen tritt auch auf clean HEAD auf, per `git stash`-Vergleich verifiziert → kein Regress). Audio braucht echte Nutzergeste → manuell geprüft.
+**Aktueller Meilenstein:** **M9 (Lebhaftigkeit, Sog & Politur) ✅ — fertig & gepusht (Sub-Schritte 1–7).** Der Jahrmarkt lebt: **jubelnde Zuschauer-Menge** (`world/CrowdBuilder`+`CharacterFactory`, InstancedMesh Toon+Outline, springen bei jedem Fang), **reaktive Welt** (Riesenrad dreht, Lichterketten pulsieren + blitzen beim Fang auf — `StallBuilder.update/flash`), **Himmel-Deko** (`fx/SkyDecoFx`: Ballons + Vögel; via NDC-Projektion ins einzige sichtbare Band über der hinteren Beckenhälfte platziert) und **Abend-Stimmung** (Verlaufshimmel + warmer Ambient-Wash + mehr Bloom). Sog: **Combo/Streak** (`systems/ComboSystem` → Token-Multiplikator, HUD-Badge „🔥 Combo N · ×M") + **persistenter Highscore** (`systems/HighscoreSystem`, Rekord-Zeile/„🏆 Neuer Rekord!" im Summary). Politur: **Vitest + jsdom** (13 Tests: Economy + SaveSystem), `:focus-visible`, Ring-Farbe nach `balance.aim`. **Davor: M8 (Audio) ✅ + M7 (Progression) ✅ + M6 (Shop) ✅ + M5 (Codex) ✅ + M4.5 (Live) ✅. Roadmap-Kern + M9 abgeschlossen.**
+**Letzter Build:** grün (typecheck/lint/build ✓); **`npm test` 13/13 grün**; Smoke `ok:true` (0 Konsolenfehler). Audio + Combo/Crowd-Animation brauchen echte Nutzergeste/Frames → zusätzlich per Playwright-Probe verifiziert.
 **Politur (nach M8):** Snap-Feedback — reißt die Linie an einer zu schweren (leuchtenden epic/legendary) Ente, kommt jetzt ein eigener `snap`-Sound + Toast „💪 Zu schwer — stärkere Rute im Shop!" (`ui/Toast`); klärt das Rod-Gating auf. Verifiziert (Playwright: Snap→Toast, Auto-Hide, Miss→kein Toast, 0 Fehler).
 **Live-URL:** **https://quack-and-catch.vercel.app** (Vercel, Prod-Deploy ✓ — lädt sauber, 0 Konsolenfehler, `canvas:2`; **Git-Auto-Deploy von `main` aktiv**)
 **Repo:** https://github.com/Scholzer0303/quack-and-catch
@@ -26,11 +26,13 @@
 
 - **M8 (✅ gepusht):** Juice + Audio — neuer **`systems/AudioManager`** (prozeduraler WebAudio-Synth, Chiptune; Sound-Daten als `const` im Modul, nur `masterGain` in `balance.audio`; Lazy-`AudioContext` bei erster Geste → `audio:unlocked`, headless-sicher). Neues Event **`audio:muteChanged`** als Mute-Single-Source-of-Truth: **`ui/MuteButton`** (oben rechts, alle Phasen) emittiert, AudioManager mutet den Master-Gain, SaveSystem persistiert (`save.muted` greift; Lade-Emit vor dem Abonnieren → kein redundanter Write). Rest-Juice: **`fx/SparkleFx`** (Gold-Burst bei epic/legendary, additive HDR-Farbe → Bloom, deterministische Partikel) im bestehenden `hook:result`-Subscriber + **`fx/haptics`** (`navigator.vibrate`, gated). `lowTick` nur bei Sekundenwechsel in der Warnzone. reduced-motion: Sparkle/Haptik aus, Audio bleibt. Kein Schema-Bump.
 
+- **M9 (✅ gepusht, Sub-Schritte 1–7):** Lebhaftigkeit, Sog & Politur. **9.1** Zuschauer-Menge (`world/CrowdBuilder`+`CharacterFactory`); **9.2** reaktive Welt (Riesenrad-Drehung + Birnen-Puls/Flash, `StallBuilder` Refactor: drehbare Teile aus dem Merge + `update`/`flash`); **9.3** Himmel-Deko (`fx/SkyDecoFx`, Ballons+Vögel, NDC-platziert); **9.4** Abend-Stimmung (Verlaufshimmel via CanvasTexture + warmer Ambient + mehr Bloom, `SceneManager`/`balance.render`); **9.5** Combo/Streak (`systems/ComboSystem` → `combo:changed`, Token-Multiplikator in `RewardSystem`, HUD-Badge); **9.6** persistenter Highscore (`systems/HighscoreSystem` → `highscore:changed`, SaveData additiv, Summary-Rekord); **9.7** Politur (Vitest+jsdom 13 Tests, `:focus-visible`, Ring-Farbe → `balance.aim`). Alle Tunables in `balance.{crowd,skyDeco,combo,stall,render}`. Kein Schema-Bump.
+
 ## ✅ M4.6 abgeschlossen (Steps 1–11)
 Direktes Fadenkreuz · heller Comic-Tag · Toon+Outline-Enten · Steuerungs-Redesign · räumliche Fang-Engine · Schwierigkeit je Rarität · Jahrmarkt-Welt · Juice+Bloom/Glow · Tipp-Modal-Politur · Intro-Sequenz. Reviewt (11 Findings, kritische behoben).
 
-## ⏭️ Nächster Meilenstein — M9 (Stretch, nur bei Zeit)
-- Optional: mehrere Becken/Themes · DE/EN-Sprachtoggle · lokale Bestenliste · mehr Enten/Tipps · evtl. `lil-gui` (dev-only). **Nie auf Kosten der Stabilität.** Roadmap-Kern (M0–M8) ist abgeschlossen.
+## ⏭️ Nächster Meilenstein — keiner offen (Roadmap-Kern + M9 ✅)
+- Optionale Reste (nie auf Kosten der Stabilität): mehrere Becken/Themes · DE/EN-Sprachtoggle · mehr Enten/Tipps · evtl. `lil-gui` (dev-only).
 - **Neuer Kontext?** Zuerst [`docs/HANDOVER.md`](HANDOVER.md) lesen.
 
 ## 📌 Offene Punkte / Entscheidungen
@@ -40,6 +42,7 @@ Direktes Fadenkreuz · heller Comic-Tag · Toon+Outline-Enten · Steuerungs-Rede
 ## Verifikations-Checkliste (Definition of Done je Meilenstein)
 - [ ] `npm run typecheck` grün
 - [ ] `npm run lint` grün
+- [ ] `npm test` grün (Vitest, seit M9)
 - [ ] `npm run build` + `npm run preview` fehlerfrei
 - [ ] Browser: null Konsolenfehler, ~60 fps, Desktop + Mobile
 - [ ] committet + zu `origin` gepusht, STATUS aktualisiert

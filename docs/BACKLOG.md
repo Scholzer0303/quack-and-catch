@@ -97,8 +97,18 @@ Eingeschoben nach Nutzer-Live-Test (Wettbewerb): Steuerung muss „cool" sein + 
 - [x] Camera-Punch (M4.6-Shake) + **Mobile-Haptik** (`fx/haptics`, `navigator.vibrate`, coarse-pointer + nicht-reduced-motion gated); reduced-motion respektiert (Sparkle/Haptik aus, Audio bleibt)
 - Verifiziert: typecheck/lint/build grün; Smoke (0 Konsolenfehler; intermittentes swiftshader-MeshBasic-Rauschen unverändert vorhanden, auch auf clean HEAD). Audio braucht echte Geste → manuell geprüft.
 
-## M9 — Stretch (nur bei Zeit, nie auf Kosten der Stabilität)
+## M9 — Lebhaftigkeit, Sog & Politur ✅
+Nutzer-Wunsch nach Live-Test: mehr Leben/Atmosphäre + „süchtiger". Alle Tunables in `balance.{crowd,skyDeco,combo,stall,render}`, kein Schema-Bump.
+- [x] **9.1 Zuschauer-Menge:** `world/CrowdBuilder` + `CharacterFactory` (InstancedMesh Toon + geteilte Outline, Muster wie DuckSpawner); wippen im Leerlauf, springen bei jedem Fang jubelnd (`crowd.cheer` auf `hook:result`). reduced-motion → statisch.
+- [x] **9.2 Reaktive Welt:** `StallBuilder` Refactor — drehbares Riesenrad (eigene Group, Beine statisch im Merge) + pulsierende Lichterketten, die beim Fang aufblitzen (`update(dt,elapsed)`/`flash()`). reduced-motion → still.
+- [x] **9.3 Himmel-Deko:** `fx/SkyDecoFx` — aufsteigende Ballons + ziehende Vögel (je 1 InstancedMesh, Bewegung aus `elapsed`); via NDC-Projektion ins einzige sichtbare Band über der hinteren Beckenhälfte platziert (Top-Down-Kamera + Vordergrund-Markise lassen kaum Himmel frei). reduced-motion → statisch.
+- [x] **9.4 Abend-Stimmung:** Verlaufshimmel (CanvasTexture-Hintergrund, explizit disposed) + warmer Ambient-Wash + violettes Gegenlicht + mehr Bloom; `SceneManager`/`balance.render`. Hält die Comic-Helligkeit.
+- [x] **9.5 Combo/Streak:** `systems/ComboSystem` zählt Fänge in Folge (Reset bei Miss/Snap + frischer Runde, NICHT im Tipp-Modal) → `combo:changed`; `RewardSystem` skaliert Tokens; HUD-Badge „🔥 Combo N · ×M" (Pop, reduced-motion-gated). Stufen 2/4/6/9 → ×1.25/1.5/2/3.
+- [x] **9.6 Persistenter Highscore:** `systems/HighscoreSystem` wertet `round:ended` aus → `highscore:changed`; SaveData um `highScore` additiv erweitert (feldweise validiert); SummaryScreen zeigt Rekord-Zeile bzw. „🏆 Neuer Rekord!".
+- [x] **9.7 Audit-Politur:** Vitest + jsdom (13 Tests: Economy Kauf/Equip/maxStacks + SaveSystem Defaults/Korruption/Version/Reparatur/Highscore-Persistenz); `:focus-visible` für Buttons/Mute; Highlight-Ring-Farbe → `balance.aim`. (SparkleFx + haptics hatten reduced-motion-Guards bereits → Audit-Befund war veraltet.)
+- Verifiziert: typecheck/lint/build grün; `npm test` 13/13; Smoke `ok:true` (0 Konsolenfehler); Playwright-Proben für Combo (Serie/Reset/Token-Skalierung) + Highscore (Rekord überlebt Reload) + In-Game-Shots (Crowd/Deko/Abend/Combo-Badge).
+
+## Offene Reste (optional, nie auf Kosten der Stabilität)
 - [ ] Mehrere Becken/Themes
 - [ ] DE/EN-Sprachtoggle
-- [ ] Lokale Bestenliste
 - [ ] Mehr Enten/Tipps; optional `lil-gui` (dev-only, aus Prod getreeshakt)
