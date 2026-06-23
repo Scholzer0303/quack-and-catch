@@ -11,15 +11,21 @@ export const BALANCE = {
     fov: 60,
     near: 0.1,
     far: 100,
-    fogNear: 18, // luftiger heller Tag — Fog erst spät, kaum Culling
+    fogNear: 18, // luftiger Himmel — Fog erst spät, kaum Culling
     fogFar: 80,
-    clearColor: 0x9ed8ff, // heller sonniger Himmel (Comic-Tag)
-    ambientIntensity: 1.05, // helle, gleichmäßige Grundausleuchtung
-    dirColor: 0xfff4d6, // warmes Sonnenlicht
-    dirIntensity: 1.25,
+    // Abend-/Golden-Hour-Stimmung (M9): vertikaler Himmel-Verlauf (oben Dämmerblau,
+    // unten warmer Horizont) statt flachem Hellblau. Hält die Comic-Helligkeit, wird
+    // nur gemütlicher. clearColor = Fog-Ton (am Horizont), Hintergrund ist der Verlauf.
+    clearColor: 0xf3c98f, // warmer Horizont-/Fog-Ton
+    skyTop: 0x6f8fd6, // Dämmerblau oben
+    skyBottom: 0xffd7a3, // warmes Pfirsich am Horizont
+    ambientColor: 0xfff0d8, // warmer Grundton (Golden-Hour-Wash über die ganze Szene)
+    ambientIntensity: 1.0, // helle, gleichmäßige Grundausleuchtung
+    dirColor: 0xffe2b0, // warmes Abendsonnenlicht
+    dirIntensity: 1.2,
     dirPosition: [3.5, 7, 4] as [number, number, number],
-    rimColor: 0x9bd6ff, // helles, kühles Gegenlicht
-    rimIntensity: 0.45,
+    rimColor: 0xb6a6ff, // weiches violettes Gegenlicht (Abend)
+    rimIntensity: 0.5,
     rimPosition: [-4, 3, -5] as [number, number, number],
   },
 
@@ -278,7 +284,7 @@ export const BALANCE = {
     postFx: 'high' as 'off' | 'low' | 'high', // Desktop-Default
     coarsePointerPostFx: 'low' as 'off' | 'low' | 'high', // Mobile: Bloom in halber Auflösung
     bloomResolutionScale: { low: 0.5, high: 1.0 } as Record<string, number>,
-    bloomStrength: 0.55, // moderat — Glanzlichter, kein Washout
+    bloomStrength: 0.65, // Abend: Lichterketten/Ferris glühen etwas kräftiger
     bloomRadius: 0.4,
     bloomThreshold: 0.9, // hoch → nur die hellsten Elemente blühen (heller Comic-Tag bleibt klar)
   },
