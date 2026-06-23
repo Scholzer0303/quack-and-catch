@@ -3,8 +3,8 @@
 > Schnellüberblick für den Session-Start. Wird nach jedem Meilenstein aktualisiert.
 
 **Stand:** 2026-06-23
-**Aktueller Meilenstein:** **M6 (Upgrade-Shop) ✅ — fertig, reviewt & gepusht.** Katalog `data/rods.ts` (4 Ruten + 4 stapelbare Upgrades, Starter spiegelt `BALANCE.hook`); `Economy` Kauf/Equip/Upgrade-Stacking + `getActiveRodStats`; `ui/ShopScreen` (Phase `shop`, Kaufen/Ausrüsten/Affordability, Einstieg Intro+Summary reset-frei via `shopReturn`); Rod-Stats wirken in `FishingRod`/`HookRaycaster`/`DuckSpawner` (reach/cast/reel/line/magnet/luck; `timingWindowMul` entfernt). SaveData additiv (kein Schema-Bump). Review-Fixes: Glück wirkt sofort auf den sichtbaren Pool + HUD-Rod-Chip dynamisch. **Davor: M5 (Tipp-Codex) ✅ + M4.5 (Vercel-Live-Deploy live) ✅. Nächster Schritt: M7 — Progression koppeln (Rod-Tier → Becken-Speed + Loot-Table-Auswahl).**
-**Letzter Build:** grün (typecheck/lint/build ✓); Smoke (0 Konsolenfehler bis auf swiftshader-Outline-Shader-Rauschen); Shop-Funktions-/Persistenz-/Korruptionstest via `__qc.economy` `ok` (Kauf/Equip/Stacking, maxStacks/Affordability blocken, Reload überlebt, Korruption → Default); ShopScreen-Screenshot gesichtet. Hinweis: Bloom drückt headless/swiftshader auf ~10 fps → Tests zustandsbasiert (echte GPU unbetroffen).
+**Aktueller Meilenstein:** **M7 (Progression koppeln) ✅ — fertig & gepusht.** Der Tier der ausgerüsteten Rute propagiert jetzt in die Engine: `rod:statsChanged` trägt `tier`; `DuckSpawner` allokiert auf max. Kapazität (14) und schaltet per `setTier` aktive Entenzahl (8/10/12/14), Rotation (×1.0–1.8) und Loot-Table (`LOOT_TABLES[tier]`) um. **Behebt den Boot-Bug**, dass eine gespeicherte bessere Rute nur `luck`, aber nicht Tier/Becken anwendete. **Magnet + Legendary-Gating waren bereits durch M6 abgedeckt** (Magnet via `HookRaycaster`, Legendary-Gate via `lineStrength`-Snap in `FishingRod` — Legendary nur mit Goldrute fangbar). **Davor: M6 (Upgrade-Shop) ✅ + M5 (Tipp-Codex) ✅ + M4.5 (Vercel-Live-Deploy live) ✅. Nächster Schritt: M8 — Juice + Audio.**
+**Letzter Build:** grün (typecheck/lint/build ✓); Smoke (0 Konsolenfehler); `catch_test` ✓ (Pool-Kapazität 14, 8 aktiv bei Tier 0, Respawn voll); M7-Tier-Test (Wegwerf) ✓: Gold → 14 aktiv + ~1.8× Rotation + Epic/Legendary im Mix, zurück auf Starter → 8 aktiv, Reload → 14 aktiv (gespeicherter Tier greift am Boot). Hinweis: Bloom drückt headless/swiftshader auf ~10 fps → Tests zustandsbasiert (echte GPU unbetroffen).
 **Live-URL:** **https://quack-and-catch.vercel.app** (Vercel, Prod-Deploy ✓ — lädt sauber, 0 Konsolenfehler, `canvas:2`; **Git-Auto-Deploy von `main` aktiv**)
 **Repo:** https://github.com/Scholzer0303/quack-and-catch
 
@@ -21,11 +21,13 @@
 
 - **M6 (✅ gepusht, reviewt):** Upgrade-Shop — `data/rods.ts` (4 Ruten + 4 stapelbare Upgrades; Starter spiegelt `BALANCE.hook`-Basiswerte → regressionsfrei); `Economy` Kauf/Equip/Upgrade-Stacking (`buyRod`/`equipRod`/`buyUpgrade`/`getActiveRodStats`); neuer `ui/ShopScreen` (Phase `shop`): Ruten Kaufen/Ausrüsten/Ausgerüstet + Affordability-Dimming, Upgrades Stufe x/max, Stat-Chips; Einstieg Intro+Summary reset-frei via `shopReturn`. Rod-Stats wirken (`reach`/`castSpeed`/`reelSpeed`/`lineStrength`/`magnetRadius`/`luck`; `timingWindowMul` entfernt). SaveData additiv (`ownedRodIds`/`equippedRodId`/`upgradeStacks`, kein Schema-Bump). Review-Fixes: Glück re-rollt den sichtbaren Pool sofort + HUD-Rod-Chip folgt der Rute.
 
+- **M7 (✅ gepusht):** Progression koppeln — `rod:statsChanged` trägt `tier` (einzige Emit-Stelle `Economy.emitStatsChanged`). `DuckSpawner` allokiert auf max. Kapazität (`Math.max(...duckCountByTier)` = 14) und steuert per neuem `setTier(tier)` die aktive Entenzahl (geparkte Slots = `alive=false` + Null-Skala-Matrix), Rotation (`rotationSpeedMulByTier`) und Loot-Table (`rollRarity(rng, tier, luck)`); `Game` ruft im `rod:statsChanged`-Handler `setLuck` **und** `setTier`. Behebt den Boot-Bug (gespeicherte Rute griff nur für `luck`). Magnet + Legendary-Gating bereits durch M6 abgedeckt → kein neuer Code, nur verifiziert. `catch_test` prüft jetzt `aliveCount` (8) statt Pool-Länge (14). Kein Schema-Bump, keine neuen Magic Numbers.
+
 ## ✅ M4.6 abgeschlossen (Steps 1–11)
 Direktes Fadenkreuz · heller Comic-Tag · Toon+Outline-Enten · Steuerungs-Redesign · räumliche Fang-Engine · Schwierigkeit je Rarität · Jahrmarkt-Welt · Juice+Bloom/Glow · Tipp-Modal-Politur · Intro-Sequenz. Reviewt (11 Findings, kritische behoben).
 
-## ⏭️ Nächster Meilenstein — M7 (Progression koppeln)
-- Rod-Tier → Becken-Speed (Entenzahl + Rotation, `duckCountByTier`/`rotationSpeedMulByTier` liegen bereit) · Rod-Tier → Loot-Table-**Auswahl** (`LOOT_TABLES[tier]`) + `luck`-Shift kombiniert · Magnet/Legendary-Gating-Feinschliff. (M6 hat nur die 6 Stats verdrahtet; Tier-Kopplung bewusst nach M7 verschoben.)
+## ⏭️ Nächster Meilenstein — M8 (Juice + Audio)
+- `systems/AudioManager` (WebAudio-Synth: cast/hook/perfect/reel/reward/fail, First-Gesture-Unlock, persistentes Mute — `save.muted` liegt bereit) · Rest-Juice (Legendary-Sparkle, Low-Time-Pulse) · Mobile-Haptik · reduced-motion respektieren.
 - **Neuer Kontext?** Zuerst [`docs/HANDOVER.md`](HANDOVER.md) lesen.
 
 ## 📌 Offene Punkte / Entscheidungen

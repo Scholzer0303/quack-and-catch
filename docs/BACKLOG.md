@@ -85,10 +85,11 @@ Eingeschoben nach Nutzer-Live-Test (Wettbewerb): Steuerung muss „cool" sein + 
 - [x] Rod-Stats wirken: `reach`→catchRadius×, `castSpeed`/`reelSpeed`→Tempo, `lineStrength`→Snap-Gate, `magnetRadius`→`HookRaycaster` zieht W, `luck`→`rollRarity`-Shift (`timingWindowMul` entfernt — kein Konsument im räumlichen Engine). HUD-Rod-Chip folgt der Rute.
 - Verifiziert: typecheck/lint/build grün; Smoke (0 Konsolenfehler bis auf swiftshader-Outline-Rauschen); Funktions-/Persistenz-/Korruptions-Test via `__qc.economy` (Kauf/Equip/Stacking, maxStacks/Affordability blocken, Reload überlebt, unbekannte IDs/Over-Max → Default); ShopScreen-Screenshot gesichtet. Review (3 Finder-Angles): 2 Fixes (Glück wirkt sofort auf Pool, HUD-Rod-Name dynamisch).
 
-## M7 — Progression koppeln
-- [ ] Rod-Tier → Becken-Speed (Entenzahl + Rotation)
-- [ ] Rod-Tier → Loot-Table-Auswahl + `luck`-Shift
-- [ ] Magnet zieht nahe Enten; Legendary-Gating
+## M7 — Progression koppeln ✅
+- [x] Rod-Tier → Becken-Speed (Entenzahl 8/10/12/14 + Rotation ×1.0–1.8) — `DuckSpawner.setTier`, max-Kapazität-Pool (14) mit geparkten Slots
+- [x] Rod-Tier → Loot-Table-Auswahl (`rollRarity(rng, tier, luck)`) + `luck`-Shift kombiniert; `tier` propagiert über `rod:statsChanged` (behebt Boot-Bug)
+- [x] Magnet zieht nahe Enten; Legendary-Gating — **bereits durch M6 abgedeckt** (Magnet `HookRaycaster`, Legendary-Gate `lineStrength`-Snap in `FishingRod`); in M7 verifiziert, kein neuer Code
+- Verifiziert: typecheck/lint/build grün; Smoke (0 Konsolenfehler) + `catch_test` (Pool 14, 8 aktiv/Tier 0, Respawn voll); M7-Wegwerf-Test: Gold → 14 aktiv + ~1.8× Rotation + Epic/Legendary; zurück → 8 aktiv; Reload → 14 aktiv (gespeicherter Tier greift am Boot).
 
 ## M8 — Juice + Audio
 - [ ] `systems/AudioManager` (Synth: cast/hook/perfect/reel/reward/fail, First-Gesture-Unlock, Mute)

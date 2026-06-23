@@ -4,6 +4,22 @@ Laufendes Log: Entscheidungen, Stolpersteine, Fixes, Balance-Erkenntnisse. Neues
 
 ---
 
+## 2026-06-23 — M7: Progression koppeln (Rod-Tier → Becken + Loot)
+
+**Scope-Erkenntnis beim Code-Lesen (Plan-Phase):** Von den 3 BACKLOG-Tasks waren **2 schon durch M6 erledigt** — Magnet (`HookRaycaster.nearestDuck`) und Legendary-Gating (`FishingRod.release`: `RARITY_DEFS[rarity].weight > stats.lineStrength` → Snap; Gewichte 1–5, `lineStrength` Holz3/Glück4/Magnet4/Gold5 → Legendary nur mit Goldrute, Epic ab Tier-1). M7 reduzierte sich auf **einen Bug**: der Rod-**Tier** wurde nie an die Engine propagiert.
+
+**Der Bug:** `DuckSpawner` wurde in `Game` hart mit `tier=0` konstruiert; `rod:statsChanged` rief nur `setLuck`. Folge: gespeicherte bessere Rute → trotzdem Loot-Table **Tier 0** und langsames 8-Enten-Becken. `rollRarity(rng, tier, luck)` bekam den Rod-Tier nie zu sehen.
+
+**Fix (minimal, additiv):**
+- **`tier` ins Event:** `rod:statsChanged: { stats, tier }`. Einzige Emit-Stelle `Economy.emitStatsChanged` (deckt equip/upgrade/hydrate ab) hängt `findRod(equippedRodId)?.tier ?? 0` an. `Game`-Handler ruft `setLuck` **dann** `setTier` (finaler Reroll nutzt korrekten Tier+Luck).
+- **InstancedMesh-Kapazität ist fix → auf Maximum allozieren:** `capacity = Math.max(...duckCountByTier)` (=14, **kein neuer Magic-Wert**, liest die bestehende Tunable). Pro Tier sind `activeCount` Slots aktiv, der Rest **geparkt** (`alive=false` + Null-Skala-Matrix). So wächst/schrumpft die sichtbare Entenzahl ohne Mesh-Neubau.
+- **`setTier(tier)`** (Guard `tier===this.tier`): aktive Slots reaktivieren (frische Bahnposition, neue `speed` aus `rotationSpeedMulByTier`, Reroll mit `tier+luck`), überzählige parken. `writeMatrices` überspringt `slot >= activeCount`. Laufende Reels werden nicht angefasst (`reeling`-Guard) — relevant nur theoretisch, da Equip in Phase `shop` läuft (kein aktiver Reel).
+- **Keine Folgeänderung an `DuckGlowFx`:** sizet sich auf `ducks.ducks.length` (jetzt 14) und versteckt `!alive` bereits → geparkte Slots automatisch unsichtbar. `nearestDuck` ignoriert `!alive` → geparkte unfangbar.
+
+**Test-Anpassung:** `catch_test.py` prüfte `ducks.ducks.length == 8` (Pool-Länge). Pool ist jetzt **14** (Kapazität); „Becken voll bei Tier 0" = **`aliveCount == 8`**. Assertion umgestellt.
+
+**Verifikation:** typecheck/lint/build grün; Smoke (0 Konsolenfehler) + `catch_test` ✓; M7-Wegwerf-Test (`__qc.economy`/`__qc.ducks`): Tier 0 = 14 total/8 alive/common-heavy; Gold-Equip = 14 alive, mean `speed` ~1.8×, Mix mit Epic+Legendary; zurück auf Starter = 8 alive; **Reload = 14 alive am Boot** (Boot-Bug-Fix nachgewiesen, ohne `state.start()`).
+
 ## 2026-06-23 — M6: Upgrade-Shop (Ruten + Upgrades + Stats wirken)
 
 **Produkt-Entscheidungen (mit Nutzer abgestimmt)**
