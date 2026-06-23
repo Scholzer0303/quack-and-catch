@@ -350,6 +350,10 @@ export const BALANCE = {
       heilig: [200, 300], // Hardcore-Belohnung für die seltenste Ente
     } as Record<string, [number, number]>,
     firstTimeCodexBonus: 5,
+    // Wissens-Crossover (M11): mit dieser Wahrscheinlichkeit gibt eine Ente eine
+    // Karte aus einem HÖHEREN Tier preis (auch eine gewöhnliche Ente bringt so
+    // „hier und da" Top-Wissen). Tokens bleiben rarität-gebunden (unabhängig davon).
+    crossoverChance: 0.12,
   },
 
   audio: {

@@ -3,7 +3,7 @@ import { randInt, type Rng } from '../utils/rng';
 import { TIPS } from '../data/tips';
 import type { EventBus } from '../events/EventBus';
 import type { GameEvents } from '../types/events';
-import type { DuckRarity, Tip } from '../types/domain';
+import { RARITY_ORDER, type DuckRarity, type Tip } from '../types/domain';
 import type { Economy } from './Economy';
 import type { ComboSystem } from './ComboSystem';
 
@@ -50,13 +50,27 @@ export class RewardSystem {
     this.bus.emit('reward:granted', { tokens, tip, isNewTip });
   }
 
-  /** Tipp des passenden Tiers; bevorzugt noch nicht freigeschaltete. */
+  /** Tipp des Ziel-Tiers (ggf. per Crossover höher); bevorzugt noch nicht freigeschaltete. */
   private pickTip(rarity: DuckRarity): Tip | null {
-    const ofTier = TIPS.filter((t) => t.tier === rarity);
+    const tier = this.rollTipTier(rarity);
+    const ofTier = TIPS.filter((t) => t.tier === tier);
     if (ofTier.length === 0) return null;
     const fresh = ofTier.filter((t) => !this.economy.isUnlocked(t.id));
     const pool = fresh.length > 0 ? fresh : ofTier;
     return pool[randInt(this.rng, 0, pool.length - 1)] ?? null;
+  }
+
+  /**
+   * Wissens-Crossover (M11): meist liefert eine Ente eine Karte ihres eigenen Tiers.
+   * Mit `crossoverChance` springt sie aber auf ein STRIKT höheres Tier — so gibt auch
+   * eine gewöhnliche Ente selten Top-Wissen preis. Das Top-Tier (heilig) hat kein
+   * höheres → kein Crossover. Tokens bleiben rarität-gebunden (hier nicht berührt).
+   */
+  private rollTipTier(rarity: DuckRarity): DuckRarity {
+    const idx = RARITY_ORDER.indexOf(rarity);
+    const higher = RARITY_ORDER.slice(idx + 1);
+    if (higher.length === 0 || this.rng() >= BALANCE.rewards.crossoverChance) return rarity;
+    return higher[randInt(this.rng, 0, higher.length - 1)] ?? rarity;
   }
 
   dispose(): void {
