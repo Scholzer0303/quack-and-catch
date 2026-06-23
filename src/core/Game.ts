@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import { RendererManager } from './RendererManager';
 import { SceneManager } from './SceneManager';
 import { CameraRig } from './CameraRig';
@@ -116,7 +117,16 @@ export class Game {
             strength: BALANCE.quality.bloomStrength,
             radius: BALANCE.quality.bloomRadius,
             threshold: BALANCE.quality.bloomThreshold,
+            exposure: BALANCE.quality.gradeExposure,
+            saturation: BALANCE.quality.gradeSaturation,
           });
+    // M12 Grading: Im Composer-Pfad macht der Grade-Pass das ACES (Renderer bleibt
+    // NoToneMapping → kein doppeltes Tonemapping). Im 'off'-Fallback tonemappt der
+    // Renderer direkt (ohne Sättigungs-Boost — vernachlässigbar auf Schwach-Geräten).
+    if (!this.post) {
+      this.renderer.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      this.renderer.renderer.toneMappingExposure = BALANCE.quality.gradeExposure;
+    }
 
     // Glow seltener Enten füttert das Bloom — nur sinnvoll, wenn Bloom aktiv ist.
     this.duckGlow = this.post ? new DuckGlowFx(this.ducks) : null;

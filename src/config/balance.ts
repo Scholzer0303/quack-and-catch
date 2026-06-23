@@ -340,6 +340,12 @@ export const BALANCE = {
     bloomStrength: 0.65, // Abend: Lichterketten/Ferris glühen etwas kräftiger
     bloomRadius: 0.4,
     bloomThreshold: 0.9, // hoch → nur die hellsten Elemente blühen (heller Comic-Tag bleibt klar)
+    // M12 Grading (Subway-Surfers-Look): ACES-Filmic-Tonemapping + Sättigungs-
+    // Boost im finalen Grade-Pass (ersetzt OutputPass, läuft NACH dem Bloom →
+    // Bloom-Threshold unberührt). Im 'off'-Fallback (kein Composer) macht der
+    // Renderer das ACES direkt (ohne Sättigungs-Boost — vernachlässigbar).
+    gradeExposure: 1.08, // Belichtung vor dem Tonemapping
+    gradeSaturation: 1.22, // > 1 = sattere Farben (Comic-Pop)
   },
 
   // Upgrade-Shop (M6): Engine-Mapping-Konstanten. Der Katalog-Inhalt (Ruten/
