@@ -73,7 +73,11 @@ export class FishingRod {
     this.camera.add(this.rod.stick); // Rute = Kind der Kamera (Hand-Feel)
 
     const geo = new THREE.TorusGeometry(BALANCE.hook.catchRadius, 0.03, 8, 32);
-    const mat = new THREE.MeshBasicMaterial({ color: 0x5cf2a0, transparent: true, opacity: 0.85 });
+    const mat = new THREE.MeshBasicMaterial({
+      color: BALANCE.aim.ringColor,
+      transparent: true,
+      opacity: BALANCE.aim.ringOpacity,
+    });
     mat.fog = false;
     this.highlight = new THREE.Mesh(geo, mat);
     this.highlight.rotation.x = Math.PI / 2; // flach aufs Wasser

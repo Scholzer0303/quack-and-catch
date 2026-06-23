@@ -261,6 +261,13 @@
   transform: translateY(2px);
   box-shadow: 0 0.1rem 0 rgba(0, 0, 0, 0.25);
 }
+/* Sichtbarer Tastatur-Fokus für alle interaktiven Elemente (Accessibility, M9). */
+.qc-btn:focus-visible,
+.qc-btn-ghost:focus-visible,
+.qc-mute:focus-visible {
+  outline: 3px solid var(--qc-gold);
+  outline-offset: 2px;
+}
 
 /* ---------- Tipp-Liste (Summary) ---------- */
 .qc-tip-list {

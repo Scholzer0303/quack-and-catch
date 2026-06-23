@@ -45,6 +45,8 @@ export const BALANCE = {
     crosshairColorTarget: '#5cf2a0', // grün = Ente fangbar
     crosshairColorNoTarget: 'rgba(255,255,255,0.55)', // neutral = kein Ziel
     crosshairColorCooldown: 'rgba(255,255,255,0.22)', // gedämpft = Cooldown
+    ringColor: 0x5cf2a0, // Drop-Zone-Ring auf dem Wasser (gleiches Grün wie das Ziel-Fadenkreuz)
+    ringOpacity: 0.85,
   },
 
   basin: {
