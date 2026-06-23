@@ -266,5 +266,6 @@ export const BALANCE = {
   ui: {
     hudThrottleMs: 100,
     cardRevealMs: 700,
+    toastMs: 1600, // Anzeigedauer kurzer Hinweis-Einblendungen (z. B. Linie gerissen)
   },
 };

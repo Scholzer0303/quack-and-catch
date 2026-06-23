@@ -118,6 +118,36 @@
   transform: scale(1.08);
 }
 
+/* Kurze Hinweis-Einblendung (z. B. Linie gerissen). Rein informativ, mittig
+   über der Bildmitte; versteckt bis .qc-toast-show. pointer-events none. */
+.qc-toast {
+  position: fixed;
+  top: 38%;
+  left: 50%;
+  transform: translate(-50%, -0.6rem);
+  z-index: 18;
+  pointer-events: none;
+  max-width: min(22rem, 86vw);
+  text-align: center;
+  padding: 0.55rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--qc-text);
+  background: var(--qc-panel);
+  border: 1px solid rgba(255, 207, 63, 0.4);
+  border-radius: 0.7rem;
+  box-shadow: 0 0.6rem 1.6rem rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+.qc-toast.qc-toast-show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
 @keyframes qc-pulse {
   0%,
   100% {
@@ -522,6 +552,11 @@
   .qc-codex-overlay,
   .qc-codex-card {
     animation: none;
+  }
+  /* Toast ohne Slide — nur ein-/ausblenden (Position fix). */
+  .qc-toast {
+    transition: opacity 0.18s ease;
+    transform: translate(-50%, 0);
   }
 }
 

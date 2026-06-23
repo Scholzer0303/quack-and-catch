@@ -6,6 +6,7 @@ import { CardReveal } from './CardReveal';
 import { CodexScreen } from './CodexScreen';
 import { ShopScreen } from './ShopScreen';
 import { MuteButton } from './MuteButton';
+import { Toast } from './Toast';
 import type { EventBus } from '../events/EventBus';
 import type { Economy } from '../systems/Economy';
 import type { GameEvents, GamePhase } from '../types/events';
@@ -34,6 +35,7 @@ export class UIRoot {
   private readonly codexScreen: CodexScreen;
   private readonly shopScreen: ShopScreen;
   private readonly muteButton: MuteButton;
+  private readonly toast: Toast;
   private readonly unsub: Array<() => void> = [];
 
   constructor(bus: EventBus<GameEvents>, economy: Economy, callbacks: UICallbacks) {
@@ -60,6 +62,7 @@ export class UIRoot {
     this.shopScreen = new ShopScreen(this.root, bus, economy, callbacks.onCloseShop);
     // Stummschalt-Button: phasenunabhängig sichtbar (kein setVisible-Routing).
     this.muteButton = new MuteButton(this.root, bus);
+    this.toast = new Toast(this.root);
 
     // Boot-Zustand ist 'start' (kein phase:changed beim Boot) → initial setzen.
     this.hud.setVisible(false);
@@ -69,6 +72,13 @@ export class UIRoot {
     this.shopScreen.setVisible(false);
 
     this.unsub.push(bus.on('phase:changed', (e) => this.onPhase(e.to)));
+    // Linie gerissen (zu schwer): hook:result mit hit:false UND duck ≠ null → Hinweis.
+    // Echter Miss (duck:null) zeigt nichts. (resolveSnap ist die einzige Snap-Quelle.)
+    this.unsub.push(
+      bus.on('hook:result', (e) => {
+        if (!e.hit && e.duck) this.toast.show('💪 Zu schwer — stärkere Rute im Shop!');
+      }),
+    );
   }
 
   /** Pro Frame aus Game: HUD-Count-up vorantreiben. */
@@ -88,6 +98,7 @@ export class UIRoot {
   dispose(): void {
     for (const off of this.unsub) off();
     this.unsub.length = 0;
+    this.toast.dispose();
     this.muteButton.dispose();
     this.shopScreen.dispose();
     this.codexScreen.dispose();

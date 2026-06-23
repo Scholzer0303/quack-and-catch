@@ -17,6 +17,7 @@ type SoundName =
   | 'hook'
   | 'perfect'
   | 'fail'
+  | 'snap'
   | 'reel'
   | 'reward'
   | 'rewardSparkle'
@@ -38,6 +39,11 @@ const SOUNDS: Record<SoundName, Note[]> = {
     { freq: 1047, durMs: 150, delayMs: 210, type: 'triangle', peak: 0.32 },
   ],
   fail: [{ freq: 300, freqEnd: 110, durMs: 240, type: 'sawtooth', peak: 0.22 }],
+  // Saiten-Riss: scharfer Twang abwärts + dumpfer Thud (klar anders als der Miss-'fail').
+  snap: [
+    { freq: 540, freqEnd: 170, durMs: 120, type: 'sawtooth', peak: 0.26 },
+    { freq: 150, freqEnd: 70, durMs: 170, delayMs: 80, type: 'square', peak: 0.2 },
+  ],
   reel: [{ freq: 240, freqEnd: 400, durMs: 90, type: 'triangle', peak: 0.26 }],
   reward: [
     { freq: 988, durMs: 80, type: 'square', peak: 0.3 },
@@ -80,7 +86,8 @@ export class AudioManager {
     this.unsub.push(this.bus.on('hook:cast', () => this.play('cast')));
     this.unsub.push(
       this.bus.on('hook:result', (e) => {
-        if (!e.hit) this.play('fail');
+        // Linie gerissen (zu schwer) → eigener Snap; echter Miss (kein Ziel) → fail.
+        if (!e.hit) this.play(e.duck ? 'snap' : 'fail');
         else if (e.perfect) this.play('perfect');
         else this.play('hook');
       }),
