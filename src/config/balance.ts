@@ -181,6 +181,19 @@ export const BALANCE = {
     lowTimeWarnSec: 10,
   },
 
+  // Fang-Serie (M9): aufeinanderfolgende Fänge bauen einen Token-Multiplikator auf,
+  // ein Miss/Snap bricht ihn. Badge erscheint ab `showAtStreak`. `tiers` aufsteigend
+  // nach `streak`; der Multiplikator ist der höchste erreichte Tier (sonst ×1).
+  combo: {
+    showAtStreak: 2, // ab dieser Serienlänge erscheint das HUD-Badge
+    tiers: [
+      { streak: 2, mult: 1.25 },
+      { streak: 4, mult: 1.5 },
+      { streak: 6, mult: 2 },
+      { streak: 9, mult: 3 },
+    ] as { streak: number; mult: number }[],
+  },
+
   hook: {
     // Räumliches Fang-Modell: Maus → Wasserpunkt W; Halten senkt den Haken zu W,
     // Loslassen mit Ente nahe W fängt (kein Timing-Fenster).

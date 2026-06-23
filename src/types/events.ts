@@ -16,6 +16,9 @@ export type GameEvents = {
   'rod:statsChanged': { stats: RodStats; tier: number };
   'round:tick': { timeRemaining: number; score: number };
   'round:ended': { score: number };
+  // Fang-Serie (M9): steigt mit jedem Fang in Folge, bricht bei Miss/Snap.
+  // `multiplier` skaliert die Token-Belohnung (RewardSystem). count=0 → kein Combo.
+  'combo:changed': { count: number; multiplier: number };
   'audio:unlocked': Record<string, never>;
   // Stummschaltung umgeschaltet (Single Source of Truth): MuteButton emittiert,
   // AudioManager wendet an, SaveSystem persistiert. Lade-Emit setzt den Initialwert.

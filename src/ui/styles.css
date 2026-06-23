@@ -91,6 +91,38 @@
   backdrop-filter: blur(6px);
 }
 
+/* Combo-Badge (M9): oben mittig unter der HUD-Leiste; erscheint ab einer Fang-Serie. */
+.qc-combo {
+  position: absolute;
+  top: clamp(3.6rem, 11vw, 4.8rem);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  padding: 0.3rem 0.9rem;
+  font-size: clamp(0.9rem, 3vw, 1.15rem);
+  font-weight: 800;
+  color: #fff3da;
+  background: linear-gradient(180deg, rgba(242, 86, 78, 0.92), rgba(255, 159, 67, 0.92));
+  border: 1px solid rgba(255, 207, 63, 0.6);
+  border-radius: 2rem;
+  box-shadow: 0 0.3rem 1rem rgba(242, 86, 78, 0.45);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+.qc-combo-pop {
+  animation: qc-combo-pop 0.32s ease-out;
+}
+@keyframes qc-combo-pop {
+  0% {
+    transform: translateX(-50%) scale(1);
+  }
+  35% {
+    transform: translateX(-50%) scale(1.22);
+  }
+  100% {
+    transform: translateX(-50%) scale(1);
+  }
+}
+
 /* Stummschalt-Button: oben rechts, unter der HUD-Leiste (kollidiert nicht mit
    den Tokens), in allen Phasen sichtbar. pointer-events auto, da .qc-ui none. */
 .qc-mute {
@@ -550,7 +582,8 @@
   .qc-intro-speech,
   .qc-overlay,
   .qc-codex-overlay,
-  .qc-codex-card {
+  .qc-codex-card,
+  .qc-combo-pop {
     animation: none;
   }
   /* Toast ohne Slide — nur ein-/ausblenden (Position fix). */

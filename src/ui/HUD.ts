@@ -46,6 +46,7 @@ function statGroup(
 export class HUD {
   private readonly bar: HTMLDivElement;
   private readonly rod: HTMLDivElement;
+  private readonly combo: HTMLDivElement;
   private readonly scoreEl: HTMLSpanElement;
   private readonly timerEl: HTMLSpanElement;
   private readonly tokensEl: HTMLSpanElement;
@@ -73,7 +74,13 @@ export class HUD {
     this.rod.className = 'qc-rod';
     this.updateRodName(); // ausgerüstete Rute (Starter bis hydrate/Equip nachzieht)
 
-    parent.append(this.bar, this.rod);
+    // Combo-Badge (M9): erscheint ab einer Fang-Serie, oben mittig unter der Bar.
+    this.combo = document.createElement('div');
+    this.combo.className = 'qc-combo';
+    this.combo.setAttribute('aria-live', 'polite');
+    this.combo.style.display = 'none';
+
+    parent.append(this.bar, this.rod, this.combo);
 
     // Sinnvolle Startwerte, bevor das erste Event kommt.
     this.scoreEl.textContent = '0';
@@ -84,6 +91,23 @@ export class HUD {
     this.unsub.push(bus.on('economy:changed', (e) => this.onEconomy(e)));
     // Rod-Chip folgt der ausgerüsteten Rute (Laden/Equip/Upgrade).
     this.unsub.push(bus.on('rod:statsChanged', () => this.updateRodName()));
+    this.unsub.push(bus.on('combo:changed', (e) => this.onCombo(e)));
+  }
+
+  private onCombo(e: GameEvents['combo:changed']): void {
+    if (e.count < BALANCE.combo.showAtStreak) {
+      this.combo.style.display = 'none';
+      return;
+    }
+    const mult = e.multiplier % 1 === 0 ? String(e.multiplier) : e.multiplier.toFixed(2);
+    this.combo.textContent = `🔥 Combo ${e.count} · ×${mult}`;
+    this.combo.style.display = '';
+    // Pop bei jeder Erhöhung neu auslösen (reduced-motion: CSS deaktiviert die Animation).
+    if (!this.reduced) {
+      this.combo.classList.remove('qc-combo-pop');
+      void this.combo.offsetWidth; // Reflow erzwingen → Animation startet neu
+      this.combo.classList.add('qc-combo-pop');
+    }
   }
 
   private updateRodName(): void {
@@ -145,6 +169,8 @@ export class HUD {
     const display = visible ? '' : 'none';
     this.bar.style.display = display;
     this.rod.style.display = display;
+    // Combo-Badge folgt der HUD-Sichtbarkeit; beim Ausblenden zurücksetzen.
+    if (!visible) this.combo.style.display = 'none';
   }
 
   dispose(): void {
@@ -152,5 +178,6 @@ export class HUD {
     this.unsub.length = 0;
     this.bar.remove();
     this.rod.remove();
+    this.combo.remove();
   }
 }

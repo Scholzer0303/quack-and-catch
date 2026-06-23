@@ -12,6 +12,7 @@ import { DuckSpawner } from '../systems/DuckSpawner';
 import { InputSystem } from '../systems/InputSystem';
 import { FishingRod } from '../systems/FishingRod';
 import { Economy } from '../systems/Economy';
+import { ComboSystem } from '../systems/ComboSystem';
 import { RewardSystem } from '../systems/RewardSystem';
 import { SaveSystem } from '../systems/SaveSystem';
 import { AudioManager } from '../systems/AudioManager';
@@ -47,6 +48,7 @@ export class Game {
   private readonly duckGlow: DuckGlowFx | null;
   private readonly state: GameStateMachine;
   private readonly economy: Economy;
+  private readonly combo: ComboSystem;
   private readonly reward: RewardSystem;
   private readonly save: SaveSystem;
   private readonly audio: AudioManager;
@@ -121,7 +123,9 @@ export class Game {
     // (RewardSystem hält die Referenz für isNewTip); eigener RNG-Seed.
     this.state = new GameStateMachine(this.bus);
     this.economy = new Economy(this.bus);
-    this.reward = new RewardSystem(this.bus, this.economy, mulberry32(0x5eed01));
+    // Fang-Serie (M9): RewardSystem liest den Combo-Multiplikator beim Landen.
+    this.combo = new ComboSystem(this.bus);
+    this.reward = new RewardSystem(this.bus, this.economy, mulberry32(0x5eed01), this.combo);
     this.ui = new UIRoot(this.bus, this.economy, {
       onStart: () => this.state.start(),
       onRestart: () => this.state.restart(),
@@ -301,6 +305,7 @@ export class Game {
     this.input.dispose();
     this.ui.dispose();
     this.reward.dispose();
+    this.combo.dispose();
     this.audio.dispose();
     this.save.dispose(); // vor economy/bus: Flush braucht lebende Economy + Bus
     this.economy.dispose();

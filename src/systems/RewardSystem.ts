@@ -5,6 +5,7 @@ import type { EventBus } from '../events/EventBus';
 import type { GameEvents } from '../types/events';
 import type { DuckRarity, Tip } from '../types/domain';
 import type { Economy } from './Economy';
+import type { ComboSystem } from './ComboSystem';
 
 /**
  * Wandelt einen Fang in eine Belohnung: rollt Tokens je Rarität (+Perfect-Bonus)
@@ -23,6 +24,7 @@ export class RewardSystem {
     private readonly bus: EventBus<GameEvents>,
     private readonly economy: Economy,
     private readonly rng: Rng,
+    private readonly combo: ComboSystem,
   ) {
     this.unsub.push(
       bus.on('hook:result', (e) => {
@@ -36,9 +38,12 @@ export class RewardSystem {
     const range = BALANCE.rewards.tokensByRarity[rarity] ?? [1, 1];
     let tokens = randInt(this.rng, range[0], range[1]);
     if (this.pendingPerfect) {
-      tokens = Math.round(tokens * (1 + BALANCE.hook.perfectTokenBonus));
+      tokens = tokens * (1 + BALANCE.hook.perfectTokenBonus);
     }
     this.pendingPerfect = false; // sofort verbrauchen → kein Leak in den nächsten Fang
+    // Fang-Serie skaliert die Belohnung (M9). Combo wurde beim `hook:result` dieses
+    // Fangs bereits erhöht → Multiplikator ist aktuell. Rundung am Ende.
+    tokens = Math.round(tokens * this.combo.getMultiplier());
 
     const tip = this.pickTip(rarity);
     const isNewTip = tip ? !this.economy.isUnlocked(tip.id) : false;
