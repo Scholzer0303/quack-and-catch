@@ -70,7 +70,7 @@ Eingeschoben nach Nutzer-Live-Test (Wettbewerb): Steuerung muss „cool" sein + 
 ## M4.5 — Vercel-Live-Deploy (nach MVP)
 - [x] Vercel-Projekt `quack-and-catch` angelegt (Vite erkannt), **Prod-Deploy live**: https://quack-and-catch.vercel.app
 - [x] Live-URL in README + STATUS eingetragen
-- [ ] **Git-Auto-Deploy von `main`** — `vercel git connect` schlägt fehl, solange die Vercel-GitHub-App keinen Zugriff auf den Repo hat. Einmalige Autorisierung durch Nutzer nötig (Vercel-Dashboard → Project → Settings → Git → Connect, oder GitHub-App installieren), danach `vercel git connect` erneut.
+- [x] **Git-Auto-Deploy von `main`** ✅ — nach GitHub-App-Autorisierung `vercel git connect` → „Connected". Jeder Push auf `main` deployt automatisch.
 
 ## M5 — Tipp-Codex-Screen ✅
 - [x] `data/tips.ts` auf ~50–60 Karten ausbauen (54 Karten, 9 Kategorien, alle Tiers, geprüft)

@@ -5,7 +5,7 @@
 **Stand:** 2026-06-23
 **Aktueller Meilenstein:** **M5 — Tipp-Codex-Screen (inhaltlich fertig)** — `data/tips.ts` auf **54 Karten** ausgebaut (9 Kategorien, alle Tiers, faktisch geprüft); neuer **`ui/CodexScreen`** (Phase `codex`): Grid mit Tier-Farbe, **freigeschaltet → Icon + Titel (Klick → Detail)**, **gesperrt → nur 🔒 + Tier-Farbe** (kein Spoiler), Kategorie-Filter-Chips, Fortschritt „X / 54". Einstieg aus **Intro (letzter Step)** + **Summary** über neue Callbacks `onOpenCodex`/`onCloseCodex`; Game merkt Quelle (`codexReturn`) → reset-freie Rückkehr. `firstTimeCodexBonus` lag schon in `Economy`. **Nächster Schritt: `/code-review` über M5-Diff → Abnahme → M4.5 Vercel-Deploy.** (M4.6 davor: Steps 1–11 + Review, kritische Findings behoben.)
 **Letzter Build:** grün (typecheck/lint/build ✓); Smoke (0 Konsolenfehler bis auf swiftshader-Outline-Shader-Rauschen), Save-Regression `ok:true` (neue Tip-IDs automatisch in `KNOWN_TIP_IDS`), Codex-Screenshots (Grid + Detail) gesichtet. Hinweis: Bloom drückt headless/swiftshader auf ~10 fps → Tests zustandsbasiert (echte GPU unbetroffen).
-**Live-URL:** **https://quack-and-catch.vercel.app** (Vercel, Prod-Deploy ✓ — lädt sauber, 0 Konsolenfehler, `canvas:2`)
+**Live-URL:** **https://quack-and-catch.vercel.app** (Vercel, Prod-Deploy ✓ — lädt sauber, 0 Konsolenfehler, `canvas:2`; **Git-Auto-Deploy von `main` aktiv**)
 **Repo:** https://github.com/Scholzer0303/quack-and-catch
 
 ## ✅ Erledigt
