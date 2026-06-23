@@ -86,6 +86,7 @@ export class Game {
     this.ducks = new DuckSpawner(mulberry32(0xc0ffee), 0);
     this.sceneManager.add(this.ducks.mesh);
     if (this.ducks.outlineMesh) this.sceneManager.add(this.ducks.outlineMesh);
+    this.sceneManager.add(this.ducks.detailMesh); // Schnabel/Augen (M12, geteilte Matrix)
 
     // Kamera in die Szene, sonst werden ihre Kinder nicht gerendert. Die Rute
     // hängt FishingRod selbst als Kind der Kamera ein (Hand-Feel + Animation).

@@ -38,11 +38,56 @@ export function bakeVertexColor(geo: THREE.BufferGeometry, hex: number): THREE.B
 }
 
 /**
- * Baut eine stilisierte Low-Poly-Ente (Kugel-Körper + Kopf, Kegel-Schnabel,
- * Augen, Schwanz) als EINE gemergte Geometrie — eine InstancedMesh, ein
- * Draw-Call. Körper/Kopf/Schwanz sind WEISS gebacken, damit die per-Instanz-
- * Raritätsfarbe (InstancedMesh.instanceColor, multipliziert mit der Vertex-Farbe)
- * exakt durchschlägt. Schnabel/Augen behalten ihre Farbe (werden leicht mitgetönt).
+ * Injiziert einen Gummi-Gloss in ein `MeshToonMaterial` (M12): weicher
+ * Blinn-Phong-Specular-Hotspot + Fresnel-Himmel-Tint am Rand, OHNE die
+ * Cel-Bänder/`instanceColor`-Pipeline zu brechen (kein envMap, kein
+ * Material-Wechsel). Licht-/Blickrichtung in VIEW-Space (Kamera ist fast fix).
+ * Der Glanz wird auf `outgoingLight` addiert, bevor Tonemapping läuft.
+ */
+function applyToonGloss(mat: THREE.MeshToonMaterial): void {
+  const g = BALANCE.duck.gloss;
+  mat.onBeforeCompile = (shader) => {
+    shader.uniforms['uGlossLightDir'] = { value: new THREE.Vector3(...g.lightDir).normalize() };
+    shader.uniforms['uGlossColor'] = { value: new THREE.Color(g.color) };
+    shader.uniforms['uGlossShininess'] = { value: g.shininess };
+    shader.uniforms['uGlossStrength'] = { value: g.strength };
+    shader.uniforms['uFresnelColor'] = { value: new THREE.Color(g.fresnelColor) };
+    shader.uniforms['uFresnelPower'] = { value: g.fresnelPower };
+    shader.uniforms['uFresnelStrength'] = { value: g.fresnelStrength };
+    shader.fragmentShader = shader.fragmentShader
+      .replace(
+        '#include <common>',
+        `#include <common>
+        uniform vec3 uGlossLightDir;
+        uniform vec3 uGlossColor;
+        uniform float uGlossShininess;
+        uniform float uGlossStrength;
+        uniform vec3 uFresnelColor;
+        uniform float uFresnelPower;
+        uniform float uFresnelStrength;`,
+      )
+      .replace(
+        '#include <opaque_fragment>',
+        `// M12 Gummi-Gloss: normal/vViewPosition sind hier (View-Space) gültig.
+        vec3 qcViewDir = normalize( vViewPosition );
+        vec3 qcHalf = normalize( uGlossLightDir + qcViewDir );
+        float qcSpec = pow( max( dot( normal, qcHalf ), 0.0 ), uGlossShininess );
+        outgoingLight += uGlossColor * ( qcSpec * uGlossStrength );
+        float qcFres = pow( 1.0 - clamp( dot( normal, qcViewDir ), 0.0, 1.0 ), uFresnelPower );
+        outgoingLight += uFresnelColor * ( qcFres * uFresnelStrength );
+        #include <opaque_fragment>`,
+      );
+  };
+}
+
+/**
+ * Baut eine stilisierte Low-Poly-Ente. ZWEI Geometrien/Meshes (geteilte
+ * instanceMatrix in DuckSpawner):
+ *  - Körper-Geo (Körper/Kopf/Schwanz) WEISS gebacken → per-Instanz-Raritätsfarbe
+ *    (InstancedMesh.instanceColor) schlägt durch (`buildGeometry`/`buildMaterial`).
+ *  - Detail-Geo (roter Schnabel + weiße Augen mit Pupille) mit EIGENEN Farben und
+ *    OHNE instanceColor → bleibt über alle Raritäten farbecht (`buildDetailGeometry`/
+ *    `buildDetailMaterial`). Beide tragen den Gummi-Gloss (M12).
  */
 export const DuckFactory = {
   buildGeometry(): THREE.BufferGeometry {
@@ -50,50 +95,91 @@ export const DuckFactory = {
     const hy = d.headOffset[1];
     const hz = d.headOffset[2];
 
-    const body = new THREE.SphereGeometry(d.bodyRadius, 16, 12);
-    body.scale(1, 0.85, 1.15);
+    // Pummeliger, runder Körper (M12: weniger flach, etwas voller).
+    const body = new THREE.SphereGeometry(d.bodyRadius, 18, 14);
+    body.scale(1.05, 0.95, 1.12);
     bakeVertexColor(body, 0xffffff);
 
-    const head = new THREE.SphereGeometry(d.headRadius, 14, 10);
+    const head = new THREE.SphereGeometry(d.headRadius, 16, 12);
     head.translate(0, hy, hz);
     bakeVertexColor(head, 0xffffff);
 
-    const beak = new THREE.ConeGeometry(0.12, 0.26, 8);
-    beak.rotateX(Math.PI / 2);
-    beak.translate(0, hy - 0.02, hz + 0.3);
-    bakeVertexColor(beak, d.beakColor);
-
-    const eyeL = new THREE.SphereGeometry(0.05, 8, 6);
-    eyeL.translate(0.12, hy + 0.08, hz + 0.18);
-    bakeVertexColor(eyeL, d.eyeColor);
-
-    const eyeR = new THREE.SphereGeometry(0.05, 8, 6);
-    eyeR.translate(-0.12, hy + 0.08, hz + 0.18);
-    bakeVertexColor(eyeR, d.eyeColor);
-
     const tail = new THREE.ConeGeometry(0.16, 0.3, 8);
     tail.rotateX(-Math.PI / 2);
-    tail.translate(0, 0.12, -d.bodyRadius - 0.04);
+    tail.translate(0, 0.14, -d.bodyRadius - 0.02);
     bakeVertexColor(tail, 0xffffff);
 
-    const parts = [body, head, beak, eyeL, eyeR, tail];
+    const parts = [body, head, tail];
     const merged = mergeGeometries(parts, false);
     parts.forEach((p) => p.dispose());
     if (!merged) {
-      throw new Error('DuckFactory: mergeGeometries fehlgeschlagen');
+      throw new Error('DuckFactory: mergeGeometries (Körper) fehlgeschlagen');
     }
     merged.scale(d.scale, d.scale, d.scale);
     merged.computeVertexNormals();
     return merged;
   },
 
-  /** Cel-shaded Material. `vertexColors:true` lässt die per-Instanz-Raritätsfarbe
-   *  (InstancedMesh.instanceColor) durch denselben color_vertex-Chunk durchschlagen.
-   *  `gradientMap` erzeugt die harten Comic-Bänder. */
+  /** Detail-Geo: roter Schnabel + echte Augen (weiße Sklera + dunkle Pupille).
+   *  Eigene gebackene Farben, KEIN instanceColor → über alle Raritäten farbecht. */
+  buildDetailGeometry(): THREE.BufferGeometry {
+    const d = BALANCE.duck;
+    const hy = d.headOffset[1];
+    const hz = d.headOffset[2];
+    const hr = d.headRadius;
+
+    // Roter, leicht nach oben gekippter Schnabel an der Kopf-Front.
+    const beak = new THREE.ConeGeometry(0.13, 0.24, 10);
+    beak.rotateX(Math.PI / 2);
+    beak.translate(0, hy - 0.01, hz + hr + 0.05);
+    bakeVertexColor(beak, d.beakColor);
+
+    // Augen: weiße Sklera-Kugel + kleine dunkle Pupille knapp davor (proud,
+    // damit nichts z-fightet). Spiegelsymmetrisch auf der Kopf-Front-Oberseite.
+    const parts: THREE.BufferGeometry[] = [beak];
+    for (const sx of [1, -1]) {
+      const ex = sx * 0.14;
+      const ey = hy + 0.11;
+      const ez = hz + hr - 0.04;
+      const sclera = new THREE.SphereGeometry(0.078, 12, 10);
+      sclera.translate(ex, ey, ez);
+      bakeVertexColor(sclera, d.eyeScleraColor);
+      const pupil = new THREE.SphereGeometry(0.044, 10, 8);
+      pupil.translate(ex * 0.92, ey, ez + 0.05);
+      bakeVertexColor(pupil, d.eyeColor);
+      parts.push(sclera, pupil);
+    }
+
+    const merged = mergeGeometries(parts, false);
+    parts.forEach((p) => p.dispose());
+    if (!merged) {
+      throw new Error('DuckFactory: mergeGeometries (Detail) fehlgeschlagen');
+    }
+    merged.scale(d.scale, d.scale, d.scale);
+    merged.computeVertexNormals();
+    return merged;
+  },
+
+  /** Cel-shaded Körper-Material. `vertexColors:true` lässt die per-Instanz-
+   *  Raritätsfarbe (InstancedMesh.instanceColor) durchschlagen; `gradientMap`
+   *  erzeugt die Comic-Bänder; `applyToonGloss` den Gummi-Glanz. */
   buildMaterial(): THREE.MeshToonMaterial {
-    return new THREE.MeshToonMaterial({
+    const mat = new THREE.MeshToonMaterial({
       vertexColors: true,
       gradientMap: buildToonGradient(BALANCE.toon.gradientStops),
     });
+    applyToonGloss(mat);
+    return mat;
+  },
+
+  /** Detail-Material (Schnabel/Augen): gebackene Vertexfarben, KEIN instanceColor.
+   *  Gleicher Toon-Gradient + Gloss wie der Körper → stilkonsistent + glänzend. */
+  buildDetailMaterial(): THREE.MeshToonMaterial {
+    const mat = new THREE.MeshToonMaterial({
+      vertexColors: true,
+      gradientMap: buildToonGradient(BALANCE.toon.gradientStops),
+    });
+    applyToonGloss(mat);
+    return mat;
   },
 };

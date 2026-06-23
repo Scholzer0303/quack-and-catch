@@ -16,6 +16,9 @@ export class DuckSpawner {
   readonly mesh: THREE.InstancedMesh;
   /** Schwarze Kontur als 2. InstancedMesh (teilt Geometrie + instanceMatrix). */
   readonly outlineMesh: THREE.InstancedMesh | null;
+  /** Detail-Mesh (Schnabel/Augen, M12): 3. InstancedMesh, teilt die instanceMatrix
+   *  (folgt Bewegung/Reel/Park gratis), aber KEIN instanceColor → farbecht. */
+  readonly detailMesh: THREE.InstancedMesh;
   readonly ducks: Duck[] = [];
   private readonly dummy = new THREE.Object3D();
   private readonly reelDummy = new THREE.Object3D(); // eigener Dummy (Scale ≠ 1 beim Reel)
@@ -24,6 +27,8 @@ export class DuckSpawner {
   private readonly geometry: THREE.BufferGeometry;
   private readonly material: THREE.Material;
   private readonly outlineMaterial: THREE.MeshBasicMaterial | null;
+  private readonly detailGeometry: THREE.BufferGeometry;
+  private readonly detailMaterial: THREE.MeshToonMaterial;
   /** Feste InstancedMesh-Kapazität = max. Entenzahl über alle Tiers (M7). */
   private readonly capacity: number;
   /** Aktuell aktive (sichtbare/fangbare) Enten = duckCountByTier[tier]. */
@@ -62,6 +67,15 @@ export class DuckSpawner {
       this.outlineMaterial = null;
       this.outlineMesh = null;
     }
+
+    // Detail-Mesh (Schnabel/Augen, M12): teilt die instanceMatrix by reference
+    // (wie die Outline) → Bewegung/Reel/Park spiegeln gratis; kein instanceColor.
+    this.detailGeometry = DuckFactory.buildDetailGeometry();
+    this.detailMaterial = DuckFactory.buildDetailMaterial();
+    this.detailMesh = new THREE.InstancedMesh(this.detailGeometry, this.detailMaterial, this.capacity);
+    this.detailMesh.instanceMatrix = this.mesh.instanceMatrix; // geteilt
+    this.detailMesh.position.copy(this.mesh.position);
+    this.detailMesh.frustumCulled = false;
 
     const baseSpeed = this.tierBaseSpeed(tier);
     for (let i = 0; i < this.capacity; i++) {
@@ -228,5 +242,10 @@ export class DuckSpawner {
     this.mesh.dispose();
     if (this.outlineMaterial) this.outlineMaterial.dispose();
     if (this.outlineMesh) this.outlineMesh.dispose();
+    // Detail-Mesh (M12): eigene Geo/Material + Cel-Gradient-Textur freigeben.
+    this.detailGeometry.dispose();
+    if (this.detailMaterial.gradientMap) this.detailMaterial.gradientMap.dispose();
+    this.detailMaterial.dispose();
+    this.detailMesh.dispose();
   }
 }

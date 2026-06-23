@@ -25,7 +25,7 @@ export const BALANCE = {
     dirIntensity: 1.2,
     dirPosition: [3.5, 7, 4] as [number, number, number],
     rimColor: 0xb6a6ff, // weiches violettes Gegenlicht (Abend)
-    rimIntensity: 0.5,
+    rimIntensity: 0.68, // M12: etwas kräftiger für Subway-Surfers-Kantenglanz
     rimPosition: [-4, 3, -5] as [number, number, number],
   },
 
@@ -160,10 +160,23 @@ export const BALANCE = {
   duck: {
     scale: 0.42, // Gesamtgröße
     bodyRadius: 0.5,
-    headRadius: 0.3,
-    headOffset: [0.0, 0.42, 0.34] as [number, number, number],
-    beakColor: 0xff8c1a,
-    eyeColor: 0x14202a,
+    headRadius: 0.36, // M12: größerer runder Kopf (näher am Gummiente-Foto)
+    headOffset: [0.0, 0.46, 0.32] as [number, number, number],
+    beakColor: 0xff3b2f, // M12: glänzendes Rot (Gummiente) statt Orange
+    eyeColor: 0x141c28, // Pupille (dunkel); Sklera separat (eyeScleraColor)
+    eyeScleraColor: 0xf7f8fc, // M12: weißes Auge — eigenes Detail-Mesh, NICHT von instanceColor getönt
+    // M12: Gummi-Gloss (onBeforeCompile auf der Toon-Basis). Weicher Specular-
+    // Hotspot (Blinn-Phong) + Fresnel-Himmel-Tint am Rand — kein envMap, Cel-
+    // Bänder bleiben. lightDir/colors in VIEW-Space (Kamera fast fix).
+    gloss: {
+      lightDir: [0.25, 0.55, 1.0] as [number, number, number], // View-Space-Glanzrichtung (rechts-oben-vorn)
+      color: 0xffffff, // weißer Glanzfleck
+      shininess: 16, // niedrig = großer weicher Fleck (Gummi-Look)
+      strength: 0.55, // Glanz-Intensität (zu hoch → bläht über Bloom-Threshold aus)
+      fresnelColor: 0xbfe6ff, // kühler Himmel-Tint am Silhouetten-Rand
+      fresnelPower: 3.0, // höher = schmalerer Rand
+      fresnelStrength: 0.32,
+    },
     // Schwierigkeit je Rarität: seltenere Enten driften schneller (schwerer zu
     // verfolgen) — zusätzlich zur kleineren Fang-Zone (hook.catchMulByRarity).
     // Bewusst moderat, damit Legendary fordernd, aber fair fangbar bleibt.
