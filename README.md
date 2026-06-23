@@ -2,7 +2,9 @@
 
 > Ein als Jahrmarkt-Fahrgeschäft getarntes Lernspiel: klassisches Entenangeln in echtem 3D-First-Person — jede gefangene Ente schenkt dir einen echten, gestuften Tipp zu **Claude** & **Claude Code**.
 
-**Status:** 🚧 In Entwicklung (Wettbewerbsbeitrag Coding-Challenge). Spielbarer Kern steht: 3D-Szene, Timing-Fang, Belohnungen, HUD/Screens und **persistenter Fortschritt**.
+**▶️ Live spielen: https://quack-and-catch.vercel.app**
+
+**Status:** 🚧 In Entwicklung (Wettbewerbsbeitrag Coding-Challenge). Spielbarer Kern steht: 3D-Szene, Timing-Fang, Belohnungen, HUD/Screens, **persistenter Fortschritt** und **Tipp-Codex** (54 Karten). Live auf Vercel deployt.
 
 ## Konzept in einem Satz
 Du stehst in Ego-Perspektive an einem Stand, hakst vorbeitreibende Gummienten im richtigen Moment, und je seltener die Ente, desto wertvoller der Claude-Tipp + Tokens — mit denen du im Shop bessere Angeln kaufst, um an die legendären Enten zu kommen.

@@ -68,8 +68,9 @@ Eingeschoben nach Nutzer-Live-Test (Wettbewerb): Steuerung muss „cool" sein + 
 - [x] **Intro-Sequenz:** 3-Schritt-CSS-Storyboard (Bude → Ticket an Verkäuferin → Angel → los) als Overlay in Phase `start`; „Weiter"/„Los geht's!" + „Überspringen". Neuer `IntroScreen.ts` ersetzt `StartScreen.ts`; **keine neue Phase, kein Save-Eingriff**; läuft einmal pro Seitenaufruf (Boot, Phase `start`), „Überspringen" springt zum Steuerungs-Schritt. reduced-motion gated. (Step 11)
 
 ## M4.5 — Vercel-Live-Deploy (nach MVP)
-- [ ] GitHub-Repo mit Vercel verbinden (Auto-Deploy von `main`), Live-URL holen
-- [ ] Live-URL in README + STATUS eintragen
+- [x] Vercel-Projekt `quack-and-catch` angelegt (Vite erkannt), **Prod-Deploy live**: https://quack-and-catch.vercel.app
+- [x] Live-URL in README + STATUS eingetragen
+- [ ] **Git-Auto-Deploy von `main`** — `vercel git connect` schlägt fehl, solange die Vercel-GitHub-App keinen Zugriff auf den Repo hat. Einmalige Autorisierung durch Nutzer nötig (Vercel-Dashboard → Project → Settings → Git → Connect, oder GitHub-App installieren), danach `vercel git connect` erneut.
 
 ## M5 — Tipp-Codex-Screen ✅
 - [x] `data/tips.ts` auf ~50–60 Karten ausbauen (54 Karten, 9 Kategorien, alle Tiers, geprüft)

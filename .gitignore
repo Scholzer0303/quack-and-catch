@@ -27,3 +27,6 @@ ingame_screenshot.png
 *.njsproj
 *.sln
 Thumbs.db
+
+.vercel
+live_screenshot.png
