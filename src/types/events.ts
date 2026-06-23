@@ -1,6 +1,6 @@
 // Typisierte Payload-Map für den EventBus. Entkoppelt Systeme und UI.
 
-import type { Duck, DuckRarity, Rod, Tip } from './domain';
+import type { Duck, DuckRarity, RodStats, Tip } from './domain';
 
 export type GamePhase = 'start' | 'playing' | 'summary' | 'shop' | 'codex' | 'paused';
 
@@ -11,7 +11,8 @@ export type GameEvents = {
   'duck:landed': { rarity: DuckRarity; value: number };
   'reward:granted': { tokens: number; tip: Tip | null; isNewTip: boolean };
   'economy:changed': { tokens: number };
-  'rod:equipped': { rod: Rod };
+  // Aktive Rod-Stats haben sich geändert (Equip/Upgrade/Laden) → Engine übernimmt sie.
+  'rod:statsChanged': { stats: RodStats };
   'round:tick': { timeRemaining: number; score: number };
   'round:ended': { score: number };
   'audio:unlocked': Record<string, never>;

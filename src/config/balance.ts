@@ -209,6 +209,20 @@ export const BALANCE = {
     bloomThreshold: 0.9, // hoch → nur die hellsten Elemente blühen (heller Comic-Tag bleibt klar)
   },
 
+  // Upgrade-Shop (M6): Engine-Mapping-Konstanten. Der Katalog-Inhalt (Ruten/
+  // Upgrades inkl. Preise/Stats) lebt als Daten-of-Record in `data/rods.ts`
+  // (Präzedenz: RARITY_DEFS in data/ducks.ts) — hier nur die reinen Tunables,
+  // die festlegen, WIE Stats auf die Engine wirken.
+  shop: {
+    // Magnet: zieht den Wasserpunkt W pro Auflösung anteilig zur nächsten Ente
+    // im Magnet-Radius (0 = an W, 1 = ganz zur Ente). Bewusst moderat, damit es
+    // assistiert statt auto-aimt.
+    magnetPullFraction: 0.45,
+    // Glück: skaliert die Loot-Gewichte selten-wärts. Effektives Gewicht =
+    // weight × (1 + luck × luckWeightFactor)^rang (rang: common=0 … legendary=4).
+    luckWeightFactor: 1.0,
+  },
+
   rewards: {
     // Token-Spanne [min, max] je Rarität
     tokensByRarity: {

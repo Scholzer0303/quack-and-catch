@@ -33,12 +33,11 @@ export interface Duck {
 
 /** Stat-Block einer Angel/eines Upgrades. */
 export interface RodStats {
-  reach: number; // max. Hakendistanz (Welteinheiten)
-  castSpeed: number; // Auswurf-Multiplikator (×)
-  reelSpeed: number; // Einhol-Multiplikator (×)
-  timingWindowMul: number; // verbreitert/verengt das Timing-Window (×)
-  luck: number; // Loot-Table-Glück (0 = keins)
-  magnetRadius: number; // 0 = kein Magnet; sonst Anzieh-Radius
+  reach: number; // × auf catchRadius (größere Fang-Zone); 1 = Basis
+  castSpeed: number; // Senk-Tempo-Multiplikator (× → kürzere lowerDuration)
+  reelSpeed: number; // Einhol-Tempo-Multiplikator (× → kürzere reelDuration)
+  luck: number; // Loot-Table-Glück (0 = keins; verschiebt Richtung selten)
+  magnetRadius: number; // 0 = kein Magnet; sonst Anzieh-Radius (Welteinheiten)
   lineStrength: number; // max. fangbare Raritäts-Gewichtsstufe
 }
 
