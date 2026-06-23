@@ -7,7 +7,7 @@
 
 ## Session-Start-Routine (Pflicht)
 ```bash
-git log --oneline -15   # zuletzt: M9 (9.1 Crowd → 9.7 Politur/Tests); davor M8 Juice+Audio; M7 Progression; M6 Shop
+git log --oneline -15   # zuletzt: M9 Review-Fixes (Bloom/paint/dead-code); davor M9 (9.1 Crowd → 9.7 Politur/Tests) + Doku; M8 Juice+Audio
 git status              # sollte clean sein
 npm install             # falls node_modules fehlt (jetzt inkl. vitest + jsdom)
 npm test                # NEU seit M9: Vitest (Economy + SaveSystem), 13 Tests
@@ -55,7 +55,7 @@ src/systems/            ← DuckSpawner (Reel-API, instanceColor, +Toon-Gradient
                            AudioManager (M8: WebAudio-Synth, Lazy-Unlock, Mute via audio:muteChanged),
                            ComboSystem (M9: Fang-Serie → combo:changed), HighscoreSystem (M9: round:ended → highscore:changed)
 src/world/              ← StallBuilder (M9: +update/flash, drehbares Riesenrad), BasinBuilder(+shaders/water), RodBuilder(buildRod→{stick(Kamera),rig(world),line,hookGroup,tip}; Toon+Outline),
-                           DuckFactory (MeshToonMaterial+Gradient, buildToonGradient exportiert), CharacterFactory (M9: Zuschauer-Geo),
+                           DuckFactory (MeshToonMaterial+Gradient, buildToonGradient + bakeVertexColor exportiert — shared Vertex-Färbung), CharacterFactory (M9: Zuschauer-Geo),
                            CrowdBuilder (M9: Zuschauer-InstancedMesh+Outline, cheer), materials/OutlineMaterial (Inverted-Hull)
 src/ui/                 ← Reticle, UIRoot (besitzt Screens, Phase-Routing, hält `economy`-Ref), HUD (+Rod-Chip via rod:statsChanged),
                            IntroScreen (3-Schritt-Storyboard, Phase `start`, +Codex/Shop-Buttons), CardReveal (Modal),

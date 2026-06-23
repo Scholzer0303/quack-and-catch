@@ -107,6 +107,7 @@ Nutzer-Wunsch nach Live-Test: mehr Leben/Atmosphäre + „süchtiger". Alle Tuna
 - [x] **9.6 Persistenter Highscore:** `systems/HighscoreSystem` wertet `round:ended` aus → `highscore:changed`; SaveData um `highScore` additiv erweitert (feldweise validiert); SummaryScreen zeigt Rekord-Zeile bzw. „🏆 Neuer Rekord!".
 - [x] **9.7 Audit-Politur:** Vitest + jsdom (13 Tests: Economy Kauf/Equip/maxStacks + SaveSystem Defaults/Korruption/Version/Reparatur/Highscore-Persistenz); `:focus-visible` für Buttons/Mute; Highlight-Ring-Farbe → `balance.aim`. (SparkleFx + haptics hatten reduced-motion-Guards bereits → Audit-Befund war veraltet.)
 - Verifiziert: typecheck/lint/build grün; `npm test` 13/13; Smoke `ok:true` (0 Konsolenfehler); Playwright-Proben für Combo (Serie/Reset/Token-Skalierung) + Highscore (Rekord überlebt Reload) + In-Game-Shots (Crowd/Deko/Abend/Combo-Badge).
+- Review (8 Angles, high effort): **0 Korrektheits-Defekte**; 3 Cleanup/Kosmetik behoben (Bloom-Flicker `bulbMat`-Puls ≥1.0, `paint`→shared `bakeVertexColor`, toter `rotation.set`).
 
 ## Offene Reste (optional, nie auf Kosten der Stabilität)
 - [ ] Mehrere Becken/Themes
