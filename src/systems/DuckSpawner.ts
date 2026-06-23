@@ -77,9 +77,18 @@ export class DuckSpawner {
     this.writeMatrices(0);
   }
 
-  /** Rod-Glück setzen (M6): wirkt auf zukünftige Respawns (Loot-Table-Shift). */
+  /** Rod-Glück setzen (M6): Loot-Table-Shift für Respawns. Ändert sich das Glück
+   *  (Laden/Equip/Upgrade), würfelt der sichtbare Pool sofort neu — sonst behielten
+   *  die Boot-Enten luck=0, bis sie gefangen werden. Guard hält den luck=0-Boot
+   *  deterministisch (kein RNG-Verbrauch) und vermeidet Churn bei Nicht-Glück-Equips. */
   setLuck(luck: number): void {
+    if (luck === this.luck) return;
     this.luck = luck;
+    for (const duck of this.ducks) {
+      if (!duck.alive) continue; // gehakte/eingeholte Enten nicht anfassen
+      duck.rarity = rollRarity(this.rng, this.tier, this.luck);
+      this.setInstanceColor(duck.slot, duck.rarity);
+    }
   }
 
   /** Setzt die Raritäts-Körperfarbe eines Slots (InstancedMesh.instanceColor). */
