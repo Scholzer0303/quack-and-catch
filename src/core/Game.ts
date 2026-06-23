@@ -7,6 +7,7 @@ import { EventBus } from '../events/EventBus';
 import type { GameEvents, GamePhase } from '../types/events';
 import { buildStall, type StallParts } from '../world/StallBuilder';
 import { BasinBuilder } from '../world/BasinBuilder';
+import { CrowdBuilder } from '../world/CrowdBuilder';
 import { DuckSpawner } from '../systems/DuckSpawner';
 import { InputSystem } from '../systems/InputSystem';
 import { FishingRod } from '../systems/FishingRod';
@@ -34,6 +35,7 @@ export class Game {
   private readonly loop: GameLoop;
   private readonly stall: StallParts;
   private readonly basin: BasinBuilder;
+  private readonly crowd: CrowdBuilder;
   private readonly ducks: DuckSpawner;
   private readonly input: InputSystem;
   private readonly fishingRod: FishingRod;
@@ -64,6 +66,11 @@ export class Game {
     this.sceneManager.add(this.stall.group);
     this.basin = new BasinBuilder();
     this.sceneManager.add(this.basin.group);
+
+    // Zuschauer-Menge hinter dem Becken (eigener Seed → reproduzierbare Aufstellung).
+    this.crowd = new CrowdBuilder(mulberry32(0xc0cac0));
+    this.sceneManager.add(this.crowd.mesh);
+    if (this.crowd.outlineMesh) this.sceneManager.add(this.crowd.outlineMesh);
 
     // Enten (deterministischer Seed für reproduzierbare Startverteilung)
     this.ducks = new DuckSpawner(mulberry32(0xc0ffee), 0);
@@ -162,6 +169,8 @@ export class Game {
         if (e.duck && (e.duck.rarity === 'epic' || e.duck.rarity === 'legendary')) {
           this.sparkleFx.spawn(p.x, p.z);
         }
+        // Zuschauer jubeln bei jedem Fang (hochspringen, klingt ab).
+        this.crowd.cheer();
         // Mobile-Haptik: Doppel-Buzz bei Perfect, sonst kurzer Impuls.
         vibrate(e.perfect ? BALANCE.juice.haptics.perfectPattern : BALANCE.juice.haptics.catchMs);
       }),
@@ -237,6 +246,7 @@ export class Game {
       this.ducks.update(dt, elapsed); // schreibt frische worldX/Y/Z vor dem Raycast
       this.duckGlow?.update(); // Glow-Halos den Enten nachführen
     }
+    this.crowd.update(dt, elapsed); // Zuschauer leben in allen Phasen (Deko)
     this.fishingRod.update(dt);
     this.splashFx.update(dt);
     this.sparkleFx.update(dt);
@@ -291,6 +301,7 @@ export class Game {
     this.sparkleFx.dispose();
     this.duckGlow?.dispose();
     this.ducks.dispose();
+    this.crowd.dispose();
     this.basin.dispose();
     this.stall.dispose();
     this.post?.dispose();

@@ -92,6 +92,30 @@ export const BALANCE = {
     bulbCool: 0xfff7e6, // helles Cremeweiß
   },
 
+  // Zuschauer-Menge (M9): kleine Comic-Figuren im Bogen hinter dem Becken, die
+  // wippen und bei jedem Fang jubelnd hochspringen. Eine InstancedMesh (Toon) +
+  // eine Outline (wie Enten). Ganze Figur trägt die Kleidungsfarbe (instanceColor).
+  crowd: {
+    count: 14, // Figuren (1 InstancedMesh + 1 Outline)
+    scale: 0.8, // Gesamtgröße der Figur
+    arcWidth: 9.4, // x-Spannweite des Zuschauerbogens
+    backZ: -5.4, // Basis-z (hinter dem Becken, vor der Budenreihe bei z=-7)
+    bowDepth: 1.7, // Bogen: die Ränder kommen Richtung Kamera nach vorn
+    floorY: -0.33, // Fußhöhe (knapp über dem Boden bei -0.35)
+    posJitter: 0.28, // zufällige Positions-Streuung (Welteinheiten)
+    scaleJitter: 0.14, // ± Größen-Varianz pro Figur
+    // Kräftige Comic-Kleidungsfarben (ganze Figur ist einfarbig → liest als Menge)
+    clothColors: [
+      0xf2564e, 0x4fb0c6, 0xf2c14e, 0xef798a, 0x8e6fd0, 0x5ec56a, 0xff9f43, 0xf25fa0,
+    ] as number[],
+    faceColor: 0x1c2230, // dunkle Augenpunkte
+    bobAmp: 0.045, // Leerlauf-Wippen (Welteinheiten)
+    bobSpeed: 2.2, // Wipp-Frequenz
+    cheerJump: 0.5, // Sprunghöhe beim Jubeln (Welteinheiten)
+    cheerFreq: 9, // Hüpf-Frequenz während des Jubels (rad/s)
+    cheerDecaySec: 1.1, // Jubel klingt über diese Zeit ab
+  },
+
   duck: {
     scale: 0.42, // Gesamtgröße
     bodyRadius: 0.5,
