@@ -60,7 +60,15 @@ export const BALANCE = {
     waveFrequency: 1.9,
     rippleSpeed: 0.65,
     waterColor: 0x49d6ef, // helles Türkis (Comic-Wasser)
-    waterDeepColor: 0x1f93c9, // sattes Blau in der Tiefe
+    waterDeepColor: 0x127bb8, // M12: sattere, tiefere Blau-Tiefe
+    // M12 Wasser-Politur: Fresnel-Himmel-Reflexion + Crest-Glitzer + Caustics-
+    // Schimmer (rein im Shader, kein Render-Target → Mobile-sicher).
+    waterFresnelColor: 0xc7ecff, // heller Himmel-Tint am flachen Blickwinkel
+    waterFresnelPower: 3.5, // höher = schmalerer heller Rand
+    waterFresnelStrength: 0.5, // Mischanteil Richtung Himmel
+    waterSpecColor: 0xffffff, // Sonnen-Glitzer auf den Wellenkämmen
+    waterSpecShininess: 80, // hoch = kleine scharfe Glitzerpunkte
+    waterSpecStrength: 0.85, // Glitzer-Intensität (Spitzen blühen leicht in Bloom)
     rimColor: 0xcf9352, // warmer Holz-Plankenton (passend zu den Buden)
     innerWallColor: 0x2f9fce, // helle Innenwand (kein dunkles Loch mehr)
     innerWallHeight: 0.5,

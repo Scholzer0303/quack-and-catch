@@ -21,6 +21,8 @@ export class BasinBuilder {
 
     // --- Wasseroberfläche ---
     const waterGeo = new THREE.PlaneGeometry(b.radiusX * 2, b.radiusZ * 2, 48, 32);
+    // Sonnenrichtung (world) für den Crest-Glitzer = Position des Sonnen-DirLights.
+    const sunDir = new THREE.Vector3(...BALANCE.render.dirPosition).normalize();
     this.waterMaterial = new THREE.ShaderMaterial({
       uniforms: {
         u_time: { value: 0 },
@@ -31,6 +33,13 @@ export class BasinBuilder {
         u_deep: { value: new THREE.Color(b.waterDeepColor) },
         u_rx: { value: b.radiusX },
         u_rz: { value: b.radiusZ },
+        u_fresnelColor: { value: new THREE.Color(b.waterFresnelColor) },
+        u_fresnelPower: { value: b.waterFresnelPower },
+        u_fresnelStrength: { value: b.waterFresnelStrength },
+        u_sunDir: { value: sunDir },
+        u_specColor: { value: new THREE.Color(b.waterSpecColor) },
+        u_shininess: { value: b.waterSpecShininess },
+        u_specStrength: { value: b.waterSpecStrength },
       },
       vertexShader: waterVertexShader,
       fragmentShader: waterFragmentShader,
