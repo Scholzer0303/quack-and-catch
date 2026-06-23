@@ -69,6 +69,7 @@ export const BALANCE = {
     waterSpecColor: 0xffffff, // Sonnen-Glitzer auf den Wellenkämmen
     waterSpecShininess: 80, // hoch = kleine scharfe Glitzerpunkte
     waterSpecStrength: 0.85, // Glitzer-Intensität (Spitzen blühen leicht in Bloom)
+    waterShimmerAmp: 0.4, // Funkel-Amplitude (zeitanimiert); reduced-motion → 0 = ruhiges Specular
     rimColor: 0xcf9352, // warmer Holz-Plankenton (passend zu den Buden)
     innerWallColor: 0x2f9fce, // helle Innenwand (kein dunkles Loch mehr)
     innerWallHeight: 0.5,

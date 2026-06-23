@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 import { RendererManager } from './RendererManager';
 import { SceneManager } from './SceneManager';
 import { CameraRig } from './CameraRig';
@@ -120,13 +119,11 @@ export class Game {
             exposure: BALANCE.quality.gradeExposure,
             saturation: BALANCE.quality.gradeSaturation,
           });
-    // M12 Grading: Im Composer-Pfad macht der Grade-Pass das ACES (Renderer bleibt
-    // NoToneMapping → kein doppeltes Tonemapping). Im 'off'-Fallback tonemappt der
-    // Renderer direkt (ohne Sättigungs-Boost — vernachlässigbar auf Schwach-Geräten).
-    if (!this.post) {
-      this.renderer.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      this.renderer.renderer.toneMappingExposure = BALANCE.quality.gradeExposure;
-    }
+    // M12 Grading läuft NUR im Composer-Pfad (Grade-Pass macht ACES+Sättigung+sRGB
+    // einheitlich über den ganzen Frame inkl. Wasser-ShaderMaterial). Der 'off'-
+    // Fallback rendert bewusst ungetonemappt wie vor M12 — sonst bekämen die
+    // Toon-Materialien ACES, das rohe Wasser-ShaderMaterial aber nicht (Divergenz).
+    // 'off' ist ohnehin kein Auto-Default (high/low decken alle Geräte ab).
 
     // Glow seltener Enten füttert das Bloom — nur sinnvoll, wenn Bloom aktiv ist.
     this.duckGlow = this.post ? new DuckGlowFx(this.ducks) : null;

@@ -3,6 +3,7 @@ import { BALANCE } from '../config/balance';
 import { waterVertexShader, waterFragmentShader } from './shaders/water';
 import { buildToonGradient } from './DuckFactory';
 import { buildOutlineMaterial } from './materials/OutlineMaterial';
+import { prefersReducedMotion } from '../fx/reducedMotion';
 
 /**
  * Ovaler Wasserkanal: animierte Wasseroberfläche (Custom-Shader) + schlanker
@@ -40,6 +41,8 @@ export class BasinBuilder {
         u_specColor: { value: new THREE.Color(b.waterSpecColor) },
         u_shininess: { value: b.waterSpecShininess },
         u_specStrength: { value: b.waterSpecStrength },
+        // reduced-motion → Funkeln aus (Photosensitivität); Fresnel/Spec bleiben ruhig.
+        u_shimmerAmp: { value: prefersReducedMotion() ? 0 : b.waterShimmerAmp },
       },
       vertexShader: waterVertexShader,
       fragmentShader: waterFragmentShader,

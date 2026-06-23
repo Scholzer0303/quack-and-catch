@@ -52,6 +52,7 @@ export const waterFragmentShader = /* glsl */ `
   uniform vec3 u_specColor;
   uniform float u_shininess;
   uniform float u_specStrength;
+  uniform float u_shimmerAmp; // Funkel-Amplitude; 0 = ruhiges Specular (reduced-motion)
   varying float v_height;
   varying vec2 v_pos;
   varying vec3 v_world;
@@ -78,7 +79,8 @@ export const waterFragmentShader = /* glsl */ `
     // wanderndem Caustics-Schimmer moduliert (feines Funkeln → füttert Bloom).
     vec3 halfDir = normalize(u_sunDir + viewDir);
     float spec = pow(max(dot(normal, halfDir), 0.0), u_shininess);
-    float shimmer = 0.6 + 0.4 * sin(v_world.x * 8.0 + u_time * 1.7) * sin(v_world.z * 8.0 - u_time * 1.3);
+    // Zeitanimierter Funkel-Faktor um den DC-Mittelwert 0.6; u_shimmerAmp=0 → ruhig.
+    float shimmer = 0.6 + u_shimmerAmp * sin(v_world.x * 8.0 + u_time * 1.7) * sin(v_world.z * 8.0 - u_time * 1.3);
     col += u_specColor * (spec * u_specStrength * shimmer);
 
     // Wellenkämme zusätzlich leicht aufhellen.
