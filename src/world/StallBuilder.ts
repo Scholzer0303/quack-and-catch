@@ -3,6 +3,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { BALANCE } from '../config/balance';
 import { buildToonGradient } from './DuckFactory';
 import { buildOutlineMaterial } from './materials/OutlineMaterial';
+import { prefersReducedMotion } from '../fx/reducedMotion';
 
 /**
  * Comic-Jahrmarkt, der das Sichtfeld rahmt: eigener Stand (Theke, Pfosten,
@@ -17,6 +18,10 @@ import { buildOutlineMaterial } from './materials/OutlineMaterial';
  */
 export interface StallParts {
   group: THREE.Group;
+  /** Pro Frame: Riesenrad drehen + Lichterketten pulsieren/abklingen lassen. */
+  update(dt: number, elapsed: number): void;
+  /** Kurzes Aufblitzen aller Glühbirnen (bei einem Fang ausgelöst). */
+  flash(): void;
   dispose(): void;
 }
 
@@ -112,31 +117,32 @@ export function buildStall(): StallParts {
   });
 
   // ---- Fernkulisse: Riesenrad (rechts) — großer Bogen ragt über die Budenreihe ----
+  // Die drehenden Teile (Felge, Nabe, Speichen, Gondeln) liegen um den Ursprung
+  // und kommen in eine eigene, an der Nabe positionierte Group (rotiert in `update`).
+  // Die Standbeine bleiben statisch im großen `solid`-Merge.
+  const ferris: THREE.BufferGeometry[] = [];
+  const fx = 5.8;
+  const fy = 0.8; // Nabe tief hinter den Buden; oberer Bogen + Gondeln sichtbar
+  const fz = -11;
+  const R = 2.4;
   {
-    const fx = 5.8;
-    const fy = 0.8; // Nabe tief hinter den Buden; oberer Bogen + Gondeln sichtbar
-    const fz = -11;
-    const R = 2.4;
     const ring = new THREE.TorusGeometry(R, 0.12, 8, 28); // Felge (in XY-Ebene → zur Kamera)
-    ring.translate(fx, fy, fz);
-    push(solid, ring, c.ferrisColor);
+    push(ferris, ring, c.ferrisColor);
     const hub = new THREE.CylinderGeometry(0.28, 0.28, 0.26, 12);
     hub.rotateX(Math.PI / 2);
-    hub.translate(fx, fy, fz);
-    push(solid, hub, c.ferrisColor);
+    push(ferris, hub, c.ferrisColor);
     for (let k = 0; k < 4; k++) {
       const spoke = new THREE.BoxGeometry(0.07, R * 2, 0.07); // 4 Durchmesser-Speichen → 8 Arme
       spoke.rotateZ((k * Math.PI) / 4);
-      spoke.translate(fx, fy, fz);
-      push(solid, spoke, c.ferrisColor);
+      push(ferris, spoke, c.ferrisColor);
     }
     for (let k = 0; k < 8; k++) {
       const a = (k * Math.PI) / 4;
       const cabin = new THREE.BoxGeometry(0.32, 0.28, 0.22);
-      cabin.translate(fx + Math.cos(a) * R, fy + Math.sin(a) * R, fz);
-      push(solid, cabin, c.ferrisCabin);
+      cabin.translate(Math.cos(a) * R, Math.sin(a) * R, 0);
+      push(ferris, cabin, c.ferrisCabin);
     }
-    // Zwei leicht gespreizte Standbeine (Fuß auf dem Boden, Spitze an der Nabe)
+    // Zwei leicht gespreizte Standbeine (Fuß auf dem Boden, Spitze an der Nabe) — statisch.
     const legLen = fy + 0.4 + 0.35;
     const legMidY = (-0.35 + fy) / 2;
     const legL = new THREE.BoxGeometry(0.12, legLen, 0.12);
@@ -203,15 +209,23 @@ export function buildStall(): StallParts {
   const solidGeo = mergeGeometries(solid, false);
   const flatGeo = mergeGeometries(flat, false);
   const flagGeo = mergeGeometries(flags, false);
-  [...solid, ...flat, ...flags].forEach((g) => g.dispose());
+  const ferrisGeo = mergeGeometries(ferris, false);
+  [...solid, ...flat, ...flags, ...ferris].forEach((g) => g.dispose());
 
-  if (!solidGeo || !flatGeo || !flagGeo) {
+  if (!solidGeo || !flatGeo || !flagGeo || !ferrisGeo) {
     throw new Error('StallBuilder: mergeGeometries fehlgeschlagen');
   }
   group.add(new THREE.Mesh(solidGeo, toonMat));
   if (BALANCE.outline.enabled) group.add(new THREE.Mesh(solidGeo, outlineMat));
   group.add(new THREE.Mesh(flatGeo, toonMat));
   group.add(new THREE.Mesh(flagGeo, flagMat));
+
+  // Drehbares Riesenrad: eigene Group an der Nabe, rotiert in `update` um die z-Achse.
+  const ferrisGroup = new THREE.Group();
+  ferrisGroup.position.set(fx, fy, fz);
+  ferrisGroup.add(new THREE.Mesh(ferrisGeo, toonMat));
+  if (BALANCE.outline.enabled) ferrisGroup.add(new THREE.Mesh(ferrisGeo, outlineMat));
+  group.add(ferrisGroup);
 
   // ---- Glühbirnen (emissive, eine InstancedMesh, kein Fog) ----
   const bulbGeo = new THREE.SphereGeometry(0.055, 8, 6);
@@ -246,14 +260,32 @@ export function buildStall(): StallParts {
     solidGeo,
     flatGeo,
     flagGeo,
+    ferrisGeo,
     bulbs, // InstancedMesh: gibt instanceMatrix/instanceColor-Buffer frei (wie DuckSpawner)
     bulbGeo,
     bulbMat,
     floorGeo,
     floorMat,
   ];
+
+  // ---- Reaktive Animation: Riesenrad-Drehung + pulsierende/aufblitzende Birnen ----
+  const reduced = prefersReducedMotion();
+  const ferrisAngular = (c.ferrisRpm / 60) * Math.PI * 2; // rad/s
+  let flashLevel = 0; // 1 beim Fang-Aufblitzen, klingt zu 0 ab
   return {
     group,
+    update(dt: number, elapsed: number): void {
+      if (reduced) return; // bewegungslos bei reduced-motion (Birnen bleiben auf Grundhelligkeit)
+      ferrisGroup.rotation.z = elapsed * ferrisAngular;
+      if (flashLevel > 0) flashLevel = Math.max(0, flashLevel - dt / c.bulbFlashDecaySec);
+      // Helligkeits-Multiplikator (>1 = HDR → blüht im Bloom); instanceColor trägt warm/cool.
+      const pulse = Math.sin(elapsed * c.bulbPulseSpeed) * c.bulbPulseAmp;
+      bulbMat.color.setScalar(1 + pulse + flashLevel * c.bulbFlashGain);
+    },
+    flash(): void {
+      if (reduced) return; // kein Aufblitzen bei reduced-motion (Photosensitivität)
+      flashLevel = 1;
+    },
     dispose(): void {
       for (const d of disposables) d.dispose();
     },

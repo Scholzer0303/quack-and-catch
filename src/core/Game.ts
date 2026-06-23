@@ -171,6 +171,7 @@ export class Game {
         }
         // Zuschauer jubeln bei jedem Fang (hochspringen, klingt ab).
         this.crowd.cheer();
+        this.stall.flash(); // Lichterketten blitzen kurz auf
         // Mobile-Haptik: Doppel-Buzz bei Perfect, sonst kurzer Impuls.
         vibrate(e.perfect ? BALANCE.juice.haptics.perfectPattern : BALANCE.juice.haptics.catchMs);
       }),
@@ -246,6 +247,7 @@ export class Game {
       this.ducks.update(dt, elapsed); // schreibt frische worldX/Y/Z vor dem Raycast
       this.duckGlow?.update(); // Glow-Halos den Enten nachführen
     }
+    this.stall.update(dt, elapsed); // Riesenrad dreht, Lichterketten pulsieren (alle Phasen)
     this.crowd.update(dt, elapsed); // Zuschauer leben in allen Phasen (Deko)
     this.fishingRod.update(dt);
     this.splashFx.update(dt);

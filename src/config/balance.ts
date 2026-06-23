@@ -90,6 +90,12 @@ export const BALANCE = {
     // Lichterketten (emissive Glühbirnen, abwechselnd warm/cool)
     bulbWarm: 0xfff1b0, // warmes Glühbirnen-Gelb
     bulbCool: 0xfff7e6, // helles Cremeweiß
+    // Reaktive Welt (M9): Riesenrad-Drehung + pulsierende/aufblitzende Lichterketten.
+    ferrisRpm: 1.6, // Umdrehungen pro Minute (gemächliche Jahrmarkt-Drehung)
+    bulbPulseAmp: 0.22, // Helligkeits-Pulsieren der Birnen (± um 1.0)
+    bulbPulseSpeed: 2.4, // Pulsier-Frequenz (rad/s)
+    bulbFlashGain: 0.9, // zusätzliche Helligkeit beim Fang-Aufblitzen
+    bulbFlashDecaySec: 0.5, // Aufblitzen klingt über diese Zeit ab
   },
 
   // Zuschauer-Menge (M9): kleine Comic-Figuren im Bogen hinter dem Becken, die
